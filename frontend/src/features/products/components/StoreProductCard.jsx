@@ -16,7 +16,7 @@ function StoreProductCard({
   const isOutOfStockInSize = !isCreditUser && currentSizeStock <= 0;
 
   return (
-    <div className="group relative flex flex-col justify-between h-full bg-white border border-slate-150 hover:border-blue-200 hover:shadow-xl rounded-xl p-3 pb-4 transition-all duration-300">
+    <div className="group relative flex flex-col justify-between h-full bg-white border border-slate-200 hover:border-blue-200 hover:shadow-xl rounded-xl p-3 pb-4 transition-all duration-300">
       <div className="relative aspect-[3/4] bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
         <img
           src={product.image}
@@ -82,7 +82,7 @@ function StoreProductCard({
         </div>
 
         {/* Size Selector with Stock indicator per size */}
-        <div className="space-y-1.5 bg-slate-50/70 p-2 rounded-lg border border-slate-150">
+        <div className="space-y-1.5 bg-slate-50/70 p-2 rounded-lg border border-slate-200">
           <div className="flex items-center justify-between">
             <span className="text-[8px] font-black uppercase text-slate-400 tracking-wider">
               Tallas y Stock Disponible:
@@ -137,7 +137,7 @@ function StoreProductCard({
           className={`w-full py-2 text-[9px] font-black uppercase tracking-widest rounded transition-all flex items-center justify-center gap-1 font-mono ${
             isOutOfStockInSize
               ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
-              : "bg-slate-900 hover:bg-blue-600 text-white active:scale-95 shadow-sm"
+              : "bg-slate-50 text-slate-700 border border-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-100 active:scale-95 shadow-sm"
           }`}
         >
           {isOutOfStockInSize ? (
