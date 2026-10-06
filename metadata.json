@@ -1,0 +1,8 @@
+{
+  "name": "Remix Ultimo prototipo sigoe 270726 - Ordenado OK",
+  "description": "Sistema integral de E-commerce y ERP para Masterly. Gestión de producción y venta de camisas, control de inventario, Kardex, proveedores y seguimiento de etapas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
