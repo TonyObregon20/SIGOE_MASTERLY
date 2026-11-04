@@ -9,6 +9,7 @@ import CartDrawer from "@/features/cart/components/CartDrawer";
 import PaymentModal from "@/features/cart/components/PaymentModal";
 import OrderSuccessModal from "@/features/orders/components/OrderSuccessModal";
 import MyOrdersModal from "@/features/orders/components/MyOrdersModal";
+import CustomerDrawer from "@/features/users/components/CustomerDrawer";
 
 import StorePage from "@/pages/StorePage";
 import ProductsPage from "@/pages/ProductsPage";
@@ -50,6 +51,9 @@ function App() {
     setIsOrderSuccessOpen,
     isMyOrdersOpen,
     setIsMyOrdersOpen,
+    isCustomerDrawerOpen,
+    openCustomerDrawer,
+    closeCustomerDrawer,
     documentType,
     setDocumentType,
     customerDocument,
@@ -60,7 +64,7 @@ function App() {
   } = useAppModals();
 
   // Centralized Auth State from AuthContext
-  const { isLoggedIn, currentUser } = useAuth();
+  const { isLoggedIn, currentUser, setCurrentUser } = useAuth();
 
   // Centralized Cart State from CartContext
   const {
@@ -174,6 +178,7 @@ function App() {
     onInvoiceCreated: (newInv) => {
       setInvoices((prev) => [newInv, ...prev.filter((i) => i.id !== newInv.id)]);
     },
+    onUserUpdated: setCurrentUser,
     onWarehouseReload: loadWarehouseMovements,
     onCartClear: clearCart,
     onRequireAuth: () => openLogin("login"),
@@ -290,7 +295,7 @@ function App() {
         view={view}
         setView={setView}
         setIsLoginOpen={setIsLoginOpen}
-        setIsMyOrdersOpen={setIsMyOrdersOpen}
+        onOpenCustomerDrawer={openCustomerDrawer}
       />
 
       {/* Main Content View routing with motion transitions */}
@@ -355,6 +360,7 @@ function App() {
                 updateStage={handleUpdateStage}
                 users={users}
                 setUsers={setUsers}
+                onUpdateUser={handleUpdateUserAction}
                 orders={orders}
                 setOrders={setOrders}
                 handleShipOrder={handleShipOrder}
@@ -418,6 +424,7 @@ function App() {
         cart={cart}
         cartTotal={cartTotal}
         currentUser={currentUser}
+        orders={orders}
         isLoggedIn={isLoggedIn}
         handleCheckout={handleCheckout}
         documentType={documentType}
@@ -442,6 +449,20 @@ function App() {
         orders={orders}
         invoices={invoices}
         currentUser={currentUser}
+      />
+
+      <CustomerDrawer
+        isOpen={isCustomerDrawerOpen}
+        onClose={closeCustomerDrawer}
+        currentUser={currentUser}
+        orders={orders}
+        invoices={invoices}
+        productionOrders={productionOrders}
+        onSetView={setView}
+        onLogout={() => {
+          closeCustomerDrawer();
+          setView("store");
+        }}
       />
     </div>
   );

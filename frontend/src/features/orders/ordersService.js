@@ -22,8 +22,8 @@ export const ordersService = {
   /**
    * Submits a new order during checkout
    */
-  async createOrder({ order, docType, docNumber, invoiceSeriesNumber }) {
-    return createOrderApi({ order, docType, docNumber, invoiceSeriesNumber });
+  async createOrder({ order, docType, docNumber, invoiceSeriesNumber, productionOrder }) {
+    return createOrderApi({ order, docType, docNumber, invoiceSeriesNumber, productionOrder });
   },
 
   /**

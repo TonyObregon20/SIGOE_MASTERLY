@@ -32,8 +32,12 @@ export function useUsers(autoLoad = true) {
     setError(null);
     try {
       const result = await usersService.updateUser(id, updates);
-      if (result && result.success) {
-        await loadUsers();
+      if (result?.success) {
+        setUsersState((previousUsers) =>
+          previousUsers.map((user) =>
+            user.id === id ? { ...user, ...result.user, ...updates } : user
+          )
+        );
       }
       return result;
     } catch (err) {

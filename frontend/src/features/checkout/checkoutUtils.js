@@ -12,7 +12,7 @@ export const INVOICE_SERIES = {
  * Generates an order ID
  */
 export function generateOrderId() {
-  return `ORD-${Date.now().toString().slice(-4)}`;
+  return `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 }
 
 /**

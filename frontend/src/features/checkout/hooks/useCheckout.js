@@ -21,7 +21,8 @@ export function useCheckout({
   onWarehouseReload,
   onCartClear,
   onRequireAuth,
-  onSuccess
+  onSuccess,
+  onUserUpdated
 } = {}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -57,7 +58,8 @@ export function useCheckout({
           onProductionOrderCreated,
           onInvoiceCreated,
           onWarehouseReload,
-          onCartClear
+          onCartClear,
+          onUserUpdated
         });
 
         if (result && result.success) {
@@ -92,7 +94,8 @@ export function useCheckout({
       onWarehouseReload,
       onCartClear,
       onRequireAuth,
-      onSuccess
+      onSuccess,
+      onUserUpdated
     ]
   );
 

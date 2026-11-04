@@ -15,6 +15,7 @@ function PaymentModal({
   cart,
   cartTotal,
   currentUser,
+  orders = [],
   isLoggedIn,
   handleCheckout,
   documentType,
@@ -22,6 +23,7 @@ function PaymentModal({
   customerDocument,
   setCustomerDocument
 }) {
+  const CREDIT_LIMIT_EXCEEDED_MESSAGE = "Excede su linea de credito";
   const [acquisitionMode, setAcquisitionMode] = useState(
     currentUser?.creditEnabled ? "pedido" : "direct"
   );
@@ -31,6 +33,7 @@ function PaymentModal({
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
   const [isCvvFocused, setIsCvvFocused] = useState(false);
+  const [creditValidationError, setCreditValidationError] = useState("");
 
   if (!isOpen) return null;
 
@@ -75,8 +78,45 @@ function PaymentModal({
   };
 
   const handlePayClick = () => {
-    handleCheckout(acquisitionMode, documentType, customerDocument);
-    onClose();
+    if (acquisitionMode === "pedido") {
+      const creditLimit = Number(currentUser?.creditLimit || 0);
+      const creditUsed = orders
+        .filter((order) => (
+          order.type === "pedido" &&
+          (order.userId === currentUser?.id || order.customerName === currentUser?.name)
+        ))
+        .reduce((sum, order) => {
+          const total = Number(order.total);
+          return sum + (Number.isFinite(total) && total > 0 ? total : 0);
+        }, 0);
+      const availableCredit = Math.max(creditLimit - creditUsed, 0);
+      if (
+        !currentUser?.creditEnabled ||
+        !Number.isFinite(creditLimit) ||
+        creditLimit <= 0 ||
+        !Number.isFinite(Number(cartTotal)) ||
+        Number(cartTotal) <= 0 ||
+        Number(cartTotal) > availableCredit
+      ) {
+        setCreditValidationError(CREDIT_LIMIT_EXCEEDED_MESSAGE);
+        return;
+      }
+    }
+
+    const result = handleCheckout(acquisitionMode, documentType, customerDocument);
+    if (result?.then) {
+      result.then((checkoutResult) => {
+        if (checkoutResult?.success) {
+          onClose();
+        } else if (checkoutResult?.code === "CREDIT_LIMIT_EXCEEDED") {
+          setCreditValidationError(CREDIT_LIMIT_EXCEEDED_MESSAGE);
+        } else if (checkoutResult?.message) {
+          setCreditValidationError(checkoutResult.message);
+        }
+      });
+    } else {
+      onClose();
+    }
   };
 
   const finalAmount = acquisitionMode === "pedido" ? cartTotal * 0.5 : cartTotal;
@@ -150,6 +190,11 @@ function PaymentModal({
           )}
 
           {/* Comprobante de Pago Block */}
+          {creditValidationError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-700">
+              {creditValidationError}
+            </div>
+          )}
           <div className="space-y-4 pt-2">
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Documento de Facturación</label>

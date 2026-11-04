@@ -118,6 +118,22 @@ function UsersManagementView({
                 {user.role}
               </span>
             </div>
+            {user.role === "customer" && (
+              <button
+                type="button"
+                onClick={() => onUpdateUser(user.id, { isActive: user.isActive === false })}
+                className={`mt-4 flex w-full items-center justify-between rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${
+                  user.isActive === false
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                <span>{user.isActive === false ? "Usuario desactivado" : "Usuario activo"}</span>
+                <span className={`relative h-5 w-10 rounded-full ${user.isActive === false ? "bg-red-300" : "bg-emerald-500"}`}>
+                  <span className={`absolute top-1 h-3 w-3 rounded-full bg-white shadow transition-all ${user.isActive === false ? "left-1" : "left-6"}`} />
+                </span>
+              </button>
+            )}
 
             <div className="mt-8 space-y-4 relative z-10">
               {user.role === "customer" && (

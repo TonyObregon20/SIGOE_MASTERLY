@@ -9,14 +9,15 @@ export async function getOrdersApi() {
   return apiClient("/api/orders");
 }
 
-export async function createOrderApi({ order, docType = "Boleta", docNumber = "00000000", invoiceSeriesNumber = "000001" }) {
+export async function createOrderApi({ order, docType = "Boleta", docNumber = "00000000", invoiceSeriesNumber = "000001", productionOrder }) {
   return apiClient("/api/orders", {
     method: "POST",
     body: JSON.stringify({
       order,
       docType,
       docNumber,
-      invoiceSeriesNumber
+      invoiceSeriesNumber,
+      productionOrder
     })
   });
 }
@@ -30,4 +31,3 @@ export async function shipOrderApi(orderId) {
 
 // Backwards compatibility alias
 export const checkoutOrderApi = createOrderApi;
-
