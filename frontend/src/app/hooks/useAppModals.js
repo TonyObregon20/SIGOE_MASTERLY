@@ -9,6 +9,7 @@ export function useAppModals() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isOrderSuccessOpen, setIsOrderSuccessOpen] = useState(false);
   const [isMyOrdersOpen, setIsMyOrdersOpen] = useState(false);
+  const [isCustomerDrawerOpen, setIsCustomerDrawerOpen] = useState(false);
   const [documentType, setDocumentType] = useState("Boleta");
   const [customerDocument, setCustomerDocument] = useState("");
 
@@ -46,9 +47,17 @@ export function useAppModals() {
     setIsMyOrdersOpen(false);
   }, []);
 
+  const openCustomerDrawer = useCallback(() => {
+    setIsCustomerDrawerOpen(true);
+  }, []);
+
+  const closeCustomerDrawer = useCallback(() => {
+    setIsCustomerDrawerOpen(false);
+  }, []);
+
   const handleOpenMyOrdersFromSuccess = useCallback(() => {
     setIsOrderSuccessOpen(false);
-    setIsMyOrdersOpen(true);
+    setIsCustomerDrawerOpen(true);
   }, []);
 
   return {
@@ -62,6 +71,8 @@ export function useAppModals() {
     setIsOrderSuccessOpen,
     isMyOrdersOpen,
     setIsMyOrdersOpen,
+    isCustomerDrawerOpen,
+    setIsCustomerDrawerOpen,
     documentType,
     setDocumentType,
     customerDocument,
@@ -74,6 +85,8 @@ export function useAppModals() {
     closeOrderSuccess,
     openMyOrders,
     closeMyOrders,
+    openCustomerDrawer,
+    closeCustomerDrawer,
     handleOpenMyOrdersFromSuccess
   };
 }

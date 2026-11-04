@@ -1,5 +1,5 @@
 import React from "react";
-import { User, FileText, ShoppingBag } from "lucide-react";
+import { User, ShoppingBag } from "lucide-react";
 import { motion } from "motion/react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useCart } from "@/features/cart/hooks/useCart";
@@ -9,7 +9,7 @@ function Navbar({
   view,
   setView,
   setIsLoginOpen,
-  setIsMyOrdersOpen
+  onOpenCustomerDrawer
 }) {
   const { isLoggedIn, currentUser, logout } = useAuth();
   const { cart, openCart } = useCart();
@@ -100,13 +100,6 @@ function Navbar({
                 </button>
               )}
               <button
-                onClick={() => setIsMyOrdersOpen(true)}
-                className="px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 font-mono shadow-sm"
-              >
-                <FileText className="w-3.5 h-3.5 text-blue-600" />
-                <span>Mis Comprobantes</span>
-              </button>
-              <button
                 onClick={handleLogout}
                 className="px-5 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
               >
@@ -137,7 +130,12 @@ function Navbar({
               </button>
             </div>
           )}
-          <div className="w-10 h-10 rounded-xl bg-slate-100 p-0.5 border border-slate-200">
+          <button
+            type="button"
+            onClick={isLoggedIn ? onOpenCustomerDrawer : () => setIsLoginOpen(true)}
+            aria-label={isLoggedIn ? "Abrir perfil de cliente" : "Iniciar sesión"}
+            className="relative w-10 h-10 rounded-xl bg-slate-100 p-0.5 border border-slate-200 transition-all hover:border-blue-500 hover:ring-4 hover:ring-blue-500/10 active:scale-95"
+          >
             <img 
               className="w-full h-full rounded-[10px] object-cover" 
               src={isLoggedIn 
@@ -149,7 +147,10 @@ function Navbar({
               alt="User" 
               referrerPolicy="no-referrer" 
             />
-          </div>
+            {isLoggedIn && (
+              <span className="absolute -right-0.5 -bottom-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" aria-label="Conectado" />
+            )}
+          </button>
         </div>
       </div>
     </nav>

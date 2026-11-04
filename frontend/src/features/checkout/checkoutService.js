@@ -33,7 +33,8 @@ export const checkoutService = {
     onProductionOrderCreated,
     onInvoiceCreated,
     onWarehouseReload,
-    onCartClear
+    onCartClear,
+    onUserUpdated
   }) {
     if (!currentUser) {
       throw new Error("Se requiere autenticación para procesar la compra.");
@@ -107,6 +108,9 @@ export const checkoutService = {
     }
     if (orderResult.invoice && typeof onInvoiceCreated === "function") {
       onInvoiceCreated(orderResult.invoice);
+    }
+    if (orderResult.user && typeof onUserUpdated === "function") {
+      onUserUpdated(orderResult.user);
     }
 
     // 3. Clear cart

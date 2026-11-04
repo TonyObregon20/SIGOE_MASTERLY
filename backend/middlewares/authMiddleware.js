@@ -23,6 +23,9 @@ export async function authenticate(req, res, next) {
     if (!user) {
       return res.status(401).json({ success: false, message: "Usuario no encontrado" });
     }
+    if (user.isActive === false) {
+      return res.status(403).json({ success: false, message: "Usuario desactivado. Contacte al administrador." });
+    }
 
     req.user = decoded;
     req.currentUser = user;
