@@ -38,6 +38,7 @@ export const login = async (req, res, next) => {
         email: "admin@masterly.com",
         password: hashedAdminPassword,
         role: "admin",
+        isActive: true,
         creditEnabled: false,
         creditLimit: 0,
         creditUsed: 0
@@ -48,6 +49,9 @@ export const login = async (req, res, next) => {
 
     if (!user) {
       return res.status(401).json({ success: false, message: "Usuario no encontrado" });
+    }
+    if (user.isActive === false) {
+      return res.status(403).json({ success: false, message: "Usuario desactivado. Contacte al administrador." });
     }
 
     // Check password using bcrypt (with backward-compatible migration)
@@ -124,7 +128,7 @@ export const register = async (req, res, next) => {
 
 export const createUser = async (req, res, next) => {
   try {
-    const { name, email, password, role, creditEnabled, creditLimit } = req.body;
+    const { name, email, password, role, creditEnabled, creditLimit, isActive } = req.body;
     const cleanEmail = (email || "").trim().toLowerCase();
 
     if (!cleanEmail) {
@@ -146,6 +150,7 @@ export const createUser = async (req, res, next) => {
       email: cleanEmail,
       password: hashedPassword,
       role: chosenRole,
+      isActive: isActive !== false,
       creditEnabled: creditEnabled === true || creditEnabled === "true",
       creditLimit: Number(creditLimit) || 0,
       creditUsed: 0
@@ -183,7 +188,7 @@ export const getUsers = async (req, res, next) => {
 
 export const updateUser = async (req, res, next) => {
   try {
-    const { id, role, creditEnabled, creditLimit, creditUsed, name, email } = req.body;
+    const { id, role, creditEnabled, creditLimit, creditUsed, name, email, isActive } = req.body;
     
     const targetUser = await UserModel.findOne({ id });
     if (!targetUser) {
@@ -205,6 +210,9 @@ export const updateUser = async (req, res, next) => {
       creditLimit: creditLimit !== undefined ? Number(creditLimit) : targetUser.creditLimit,
       creditUsed: creditUsed !== undefined ? Number(creditUsed) : targetUser.creditUsed
     };
+    if (targetUser.role !== "admin" && isActive !== undefined) {
+      updateFields.isActive = isActive === true || isActive === "true";
+    }
 
     if (name) updateFields.name = name;
     if (email) updateFields.email = (email || "").trim().toLowerCase();

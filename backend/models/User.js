@@ -6,6 +6,7 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, default: "customer" },
+  isActive: { type: Boolean, default: true },
   creditEnabled: { type: Boolean, default: false },
   creditLimit: { type: Number, default: 0 },
   creditUsed: { type: Number, default: 0 },

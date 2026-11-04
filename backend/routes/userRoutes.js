@@ -8,7 +8,7 @@ import {
   getUsers,
   updateUser
 } from "../controllers/authController.js";
-import { authenticate } from "../middlewares/authMiddleware.js";
+import { authenticate, requireAdmin } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
@@ -21,8 +21,8 @@ router.post("/auth/register", register);
 router.get("/auth/me", authenticate, getMe);
 
 // User management routes
-router.get("/users", getUsers);
-router.post("/users/create", createUser);
-router.post("/users/update", updateUser);
+router.get("/users", authenticate, requireAdmin, getUsers);
+router.post("/users/create", authenticate, requireAdmin, createUser);
+router.post("/users/update", authenticate, requireAdmin, updateUser);
 
 export default router;
