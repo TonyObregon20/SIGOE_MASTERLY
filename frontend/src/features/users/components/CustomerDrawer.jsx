@@ -14,8 +14,9 @@ import {
   X
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { generateInvoicePDF } from "@/utils/pdfGenerator";
+import { generateInvoicePDF, generateInvoicePDFBase64 } from "@/utils/pdfGenerator";
 import { sendInvoiceEmailApi } from "@/features/invoices/invoicesApi";
+import InvoiceEmailModal from "@/features/invoices/components/InvoiceEmailModal";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 
 const STAGES = ["Tendido", "Corte", "Costura", "Limpieza", "Planchado y Empaquetado"];
@@ -32,6 +33,7 @@ function CustomerDrawer({
 }) {
   const [activeTab, setActiveTab] = useState("summary");
   const [sentInvoices, setSentInvoices] = useState({});
+  const [emailInvoice, setEmailInvoice] = useState(null);
   const { logout } = useAuth();
 
   const userOrders = useMemo(
@@ -60,7 +62,7 @@ function CustomerDrawer({
       invoiceNumber: invoice?.number || "000001",
       orderId: order.id,
       customerName: order.customerName || displayName,
-      docNumber: invoice?.customerDoc || "00000000",
+      docNumber: invoice?.customerDocument || invoice?.customerDoc || "00000000",
       items: order.items || [],
       total: order.total || 0,
       date: order.date || new Date().toISOString().split("T")[0],
@@ -69,20 +71,34 @@ function CustomerDrawer({
     });
   };
 
-  const sendInvoice = async (order, invoice) => {
-    try {
-      await sendInvoiceEmailApi({
-        email: currentUser?.email,
-        orderId: order.id,
-        docType: invoice?.type || "Boleta",
-        fullInvoiceCode: `${invoice?.series || "B001"}-${invoice?.number || "000001"}`,
-        customerName: order.customerName || displayName,
-        total: order.total
-      });
-      setSentInvoices((previous) => ({ ...previous, [order.id]: true }));
-    } catch (error) {
-      console.error("Error sending invoice email:", error);
+  const sendInvoice = async (order, invoice, email) => {
+    const pdf = await generateInvoicePDFBase64({
+      docType: invoice?.type || "Boleta",
+      series: invoice?.series || (invoice?.type === "Factura" ? "F001" : "B001"),
+      invoiceNumber: invoice?.number || "000001",
+      orderId: order.id,
+      customerName: order.customerName || displayName,
+      docNumber: invoice?.customerDocument || invoice?.customerDoc || "00000000",
+      items: order.items || [],
+      total: order.total || 0,
+      date: order.date || new Date().toISOString().split("T")[0],
+      type: order.type || "direct",
+      initialPayment: order.initialPayment
+    });
+    const response = await sendInvoiceEmailApi({
+      email,
+      orderId: order.id,
+      pdfBase64: pdf.base64,
+      pdfFileName: pdf.fileName,
+      docType: invoice?.type || "Boleta",
+      fullInvoiceCode: `${invoice?.series || "B001"}-${invoice?.number || "000001"}`,
+      customerName: order.customerName || displayName,
+      total: order.total
+    });
+    if (!response?.success) {
+      throw new Error(response?.message || "No se pudo enviar el comprobante.");
     }
+    setSentInvoices((previous) => ({ ...previous, [order.id]: true }));
   };
 
   const handleLogout = () => {
@@ -184,11 +200,11 @@ function CustomerDrawer({
               {activeTab === "orders" && (
                 <div className="space-y-4">
                   {userOrders.length === 0 ? <EmptyState icon={ShoppingBag} text="Aún no tienes pedidos registrados." /> : userOrders.map((order) => {
-                    const production = productionOrders.find((op) => op.orderId === order.id);
+                    const production = productionOrders.find((op) => op.orderId === order.id) || order.production;
                     return (
                       <section key={order._id || order.id} className="rounded-2xl border border-slate-200 bg-white p-5">
                         <div className="flex items-center justify-between gap-3"><div><p className="font-black text-slate-900">{order.id}</p><p className="text-xs text-slate-500">{order.type === "pedido" ? "A Pedido" : "Venta Directa"} · {order.date}</p></div><strong className="text-blue-600">S/ {Number(order.total || 0).toFixed(2)}</strong></div>
-                        {production ? <div className="mt-5"><p className="mb-3 text-[10px] font-black uppercase tracking-wider text-slate-400">Seguimiento de confección · {production.currentStage}</p><div className="flex items-start">{STAGES.map((stage, index) => { const stageData = production.stages?.find((item) => item.name === stage); const done = stageData?.status === "completed"; const current = stage === production.currentStage; return <React.Fragment key={stage}><div className="flex min-w-0 flex-1 flex-col items-center text-center"><span className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-black ${done ? "bg-emerald-500 text-white" : current ? "bg-blue-600 text-white ring-4 ring-blue-100" : "bg-slate-100 text-slate-400"}`}>{done ? <Check className="w-4 h-4" /> : index + 1}</span><span className={`mt-2 text-[9px] font-bold ${current ? "text-blue-600" : "text-slate-400"}`}>{stage === "Planchado y Empaquetado" ? "Empaque" : stage}</span></div>{index < STAGES.length - 1 && <div className={`mt-3 h-0.5 flex-1 ${done ? "bg-emerald-400" : "bg-slate-200"}`} />}</React.Fragment>; })}</div></div> : <p className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-500">Tu pedido está siendo preparado.</p>}
+                        {production ? <div className="mt-5"><p className="mb-3 text-[10px] font-black uppercase tracking-wider text-slate-400">Seguimiento de confección · {production.currentStage}</p><div className="flex items-start">{STAGES.map((stage, index) => { const stageData = production.stages?.find((item) => item.name === stage); const done = stageData?.status === "completed"; const current = stage === production.currentStage; return <React.Fragment key={stage}><div className="flex min-w-0 flex-1 flex-col items-center text-center"><span className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-black ${done ? "bg-emerald-500 text-white" : current ? "bg-blue-600 text-white ring-4 ring-blue-100" : "bg-slate-100 text-slate-400"}`}>{done ? <Check className="w-4 h-4" /> : index + 1}</span><span className={`mt-2 text-[9px] font-bold ${current ? "text-blue-600" : "text-slate-400"}`}>{stage === "Planchado y Empaquetado" ? "Empaque" : stage}</span></div>{index < STAGES.length - 1 && <div className={`mt-3 h-0.5 flex-1 ${done ? "bg-emerald-400" : "bg-slate-200"}`} />}</React.Fragment>; })}</div></div> : <p className={`mt-4 rounded-xl p-3 text-xs ${order.type === "direct" && order.status === "Enviado" ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-500"}`}>{order.type === "direct" && order.status === "Enviado" ? "Su pedido ha sido enviado." : "Tu pedido está siendo preparado."}</p>}
                       </section>
                     );
                   })}
@@ -197,7 +213,7 @@ function CustomerDrawer({
 
               {activeTab === "invoices" && (
                 <div className="space-y-4">
-                  {userOrders.length === 0 ? <EmptyState icon={FileText} text="Todavía no tienes comprobantes emitidos." /> : userOrders.map((order) => { const invoice = userInvoices.find((item) => item.orderId === order.id); return <section key={order._id || order.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4"><div><p className="font-bold text-slate-900">{invoice ? `${invoice.type} ${invoice.series}-${invoice.number}` : "Comprobante de compra"}</p><p className="text-xs text-slate-500">{order.id} · S/ {Number(order.total || 0).toFixed(2)}</p></div><div className="flex gap-2"><button type="button" title="Enviar al correo" onClick={() => sendInvoice(order, invoice)} className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:text-blue-600">{sentInvoices[order.id] ? <Check className="w-4 h-4 text-emerald-500" /> : <Mail className="w-4 h-4" />}</button><button type="button" title="Descargar PDF" onClick={() => downloadInvoice(order, invoice)} className="rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700"><Download className="w-4 h-4" /></button></div></section>; })}
+                  {userOrders.length === 0 ? <EmptyState icon={FileText} text="Todavía no tienes comprobantes emitidos." /> : userOrders.map((order) => { const invoice = userInvoices.find((item) => item.orderId === order.id); return <section key={order._id || order.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4"><div><p className="font-bold text-slate-900">{invoice ? `${invoice.type} ${invoice.series}-${invoice.number}` : "Comprobante de compra"}</p><p className="text-xs text-slate-500">{order.id} · S/ {Number(order.total || 0).toFixed(2)}</p></div><div className="flex gap-2"><button type="button" title="Enviar al correo" onClick={() => setEmailInvoice({ order, invoice })} className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:text-blue-600">{sentInvoices[order.id] ? <Check className="w-4 h-4 text-emerald-500" /> : <Mail className="w-4 h-4" />}</button><button type="button" title="Descargar PDF" onClick={() => downloadInvoice(order, invoice)} className="rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700"><Download className="w-4 h-4" /></button></div></section>; })}
                 </div>
               )}
             </div>
@@ -207,6 +223,13 @@ function CustomerDrawer({
               <button type="button" onClick={onClose} className="rounded-xl bg-slate-950 px-5 py-3 text-xs font-black uppercase tracking-wider text-white">Cerrar</button>
             </footer>
           </motion.aside>
+          <InvoiceEmailModal
+            isOpen={Boolean(emailInvoice)}
+            onClose={() => setEmailInvoice(null)}
+            defaultEmail={currentUser?.email || ""}
+            invoiceLabel={emailInvoice?.invoice ? `${emailInvoice.invoice.type} ${emailInvoice.invoice.series}-${emailInvoice.invoice.number}` : "Comprobante de compra"}
+            onSend={(email) => sendInvoice(emailInvoice.order, emailInvoice.invoice, email)}
+          />
         </div>
       )}
     </AnimatePresence>

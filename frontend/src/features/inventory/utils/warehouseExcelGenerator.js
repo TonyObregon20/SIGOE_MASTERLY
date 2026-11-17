@@ -7,6 +7,7 @@ export function generateWarehouseExcel({
   ordersData = [],
   products = [],
   kardex = [],
+  productSummaries = [],
   summary = {
     totalIngresos: 0,
     totalSalidas: 0,
@@ -138,26 +139,60 @@ export function generateWarehouseExcel({
     "Precio Venta (S/)"
   ]);
 
-  products.forEach((p) => {
-    const productKardex = kardex.filter((k) => k.productId === p.id);
-    const prodIngresos = productKardex
-      .filter((k) => k.type === "Ingreso")
-      .reduce((sum, k) => sum + (Number(k.quantity) || 0), 0);
-    const prodSalidas = productKardex
-      .filter((k) => k.type === "Salida")
-      .reduce((sum, k) => sum + (Number(k.quantity) || 0), 0);
-    const net = prodIngresos - prodSalidas;
+  const productRows = productSummaries.length > 0 ? productSummaries : products.map((p) => ({
+    product: p,
+    stockPhysical: p.stockPhysical || 0,
+    totalIngresos: kardex
+      .filter((k) => String(k.productId) === String(p.id) && k.type === "Ingreso")
+      .reduce((sum, k) => sum + (Number(k.quantity) || 0), 0),
+    totalSalidas: kardex
+      .filter((k) => String(k.productId) === String(p.id) && k.type === "Salida")
+      .reduce((sum, k) => sum + (Number(k.quantity) || 0), 0)
+  }));
+
+  productRows.forEach((summary) => {
+    const p = summary.product;
+    const net = summary.totalIngresos - summary.totalSalidas;
 
     addRow([
       p.id,
       p.name || "Prenda",
       p.category || "General",
-      p.stockPhysical || 0,
-      prodIngresos,
-      prodSalidas,
+      summary.stockPhysical || 0,
+      summary.totalIngresos,
+      summary.totalSalidas,
       net,
       Number(p.price || 0).toFixed(2)
     ]);
+  });
+  addRow([]);
+
+  // Section 5: Product-level Kardex detail
+  addRow(["5. REGISTRO DETALLADO DE INVENTARIO POR PRODUCTO"]);
+  addRow([
+    "Fecha",
+    "ID Producto",
+    "Nombre de Prenda",
+    "Tipo de Movimiento",
+    "Concepto / Glosa",
+    "Referencia",
+    "Cantidad (Uds)",
+    "Saldo Resultante (Uds)"
+  ]);
+
+  productSummaries.forEach((summary) => {
+    (summary.history || []).forEach((entry) => {
+      addRow([
+        entry.date || "-",
+        summary.product?.id || "-",
+        summary.product?.name || "Prenda",
+        entry.type || "-",
+        entry.reason || "Movimiento de almacén",
+        entry.documentRef || "-",
+        entry.type === "Ingreso" ? Number(entry.quantity || 0) : -Number(entry.quantity || 0),
+        entry.balance || 0
+      ]);
+    });
   });
 
   // Download Trigger

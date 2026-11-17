@@ -95,7 +95,7 @@ function App() {
     loadOrders,
     createOrder,
     shipOrder
-  } = useOrders();
+  } = useOrders(false);
 
   // Centralized Production State from useProduction
   const {
@@ -104,7 +104,7 @@ function App() {
     loadProductionOrders,
     createProductionOrder,
     updateStage: updateProductionStage
-  } = useProduction();
+  } = useProduction(false);
 
   // Centralized Inventory / Kardex State from useInventory
   const {
@@ -112,7 +112,7 @@ function App() {
     setKardex,
     loadKardex,
     addStock: handleInventoryAddStock
-  } = useInventory();
+  } = useInventory(false);
 
   // Centralized Suppliers State from useSuppliers
   const {
@@ -124,7 +124,7 @@ function App() {
     deleteSupplier,
     addRecord: addSupplierRecord,
     deleteRecord: deleteSupplierRecord
-  } = useSuppliers();
+  } = useSuppliers(false);
 
   // Centralized Warehouse State from useWarehouse
   const {
@@ -134,7 +134,7 @@ function App() {
     acceptMovement: handleAcceptWarehouseMovementAction,
     createSalida: handleCreateWarehouseSalidaAction,
     createIngreso: handleCreateWarehouseIngresoAction
-  } = useWarehouse();
+  } = useWarehouse(false);
 
   // Centralized Users State from useUsers
   const {
@@ -143,14 +143,14 @@ function App() {
     loadUsers,
     updateUser: handleUpdateUserAction,
     createUser: handleCreateUserAction
-  } = useUsers();
+  } = useUsers(false);
 
   // Centralized Invoices State from useInvoices
   const {
     invoices,
     setInvoices,
     loadInvoices
-  } = useInvoices();
+  } = useInvoices(false);
 
   // Document & Billing Configuration
   const [invoiceSeries] = useState(INVOICE_SERIES);
@@ -191,8 +191,28 @@ function App() {
       loadOrders();
       loadProductionOrders();
       loadWarehouseMovements();
+      loadKardex();
+      loadSuppliers();
+      loadUsers();
+      loadInvoices();
     }
-  }, [view, loadOrders, loadProductionOrders, loadWarehouseMovements]);
+  }, [
+    view,
+    loadOrders,
+    loadProductionOrders,
+    loadWarehouseMovements,
+    loadKardex,
+    loadSuppliers,
+    loadUsers,
+    loadInvoices
+  ]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadOrders();
+      loadInvoices();
+    }
+  }, [isLoggedIn, loadOrders, loadInvoices]);
 
   // Cross-Domain Orchestration Handlers
   const handleAcceptWarehouseMovement = async (movementId) => {
@@ -449,6 +469,7 @@ function App() {
         orders={orders}
         invoices={invoices}
         currentUser={currentUser}
+        onRefresh={loadOrders}
       />
 
       <CustomerDrawer

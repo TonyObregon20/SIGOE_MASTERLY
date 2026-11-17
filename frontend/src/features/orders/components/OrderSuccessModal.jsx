@@ -12,13 +12,14 @@ import {
   Building2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { generateInvoicePDF } from "@/utils/pdfGenerator";
+import { generateInvoicePDF, generateInvoicePDFBase64 } from "@/utils/pdfGenerator";
 import { sendInvoiceEmailApi } from "@/features/invoices/invoicesApi";
 
 function OrderSuccessModal({ isOpen, onClose, orderData, currentUser, onOpenMyOrders }) {
   const [email, setEmail] = useState(currentUser?.email || "cliente@ejemplo.com");
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailSentSuccess, setEmailSentSuccess] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   if (!isOpen || !orderData) return null;
 
@@ -60,11 +61,27 @@ function OrderSuccessModal({ isOpen, onClose, orderData, currentUser, onOpenMyOr
 
     setIsSendingEmail(true);
     setEmailSentSuccess(false);
+    setEmailError("");
 
     try {
+      const pdf = await generateInvoicePDFBase64({
+        docType,
+        series,
+        invoiceNumber,
+        orderId,
+        customerName,
+        docNumber,
+        items,
+        total,
+        date,
+        type,
+        initialPayment
+      });
       const data = await sendInvoiceEmailApi({
         email: email.trim(),
         orderId,
+        pdfBase64: pdf.base64,
+        pdfFileName: pdf.fileName,
         docType,
         fullInvoiceCode,
         customerName,
@@ -73,11 +90,12 @@ function OrderSuccessModal({ isOpen, onClose, orderData, currentUser, onOpenMyOr
 
       if (data && data.success) {
         setEmailSentSuccess(true);
+      } else {
+        throw new Error(data?.message || "No se pudo enviar el comprobante.");
       }
     } catch (err) {
       console.error("Error sending invoice email:", err);
-      // Fallback UI simulation
-      setEmailSentSuccess(true);
+      setEmailError(err.message || "No se pudo enviar el comprobante.");
     } finally {
       setIsSendingEmail(false);
     }
@@ -229,6 +247,11 @@ function OrderSuccessModal({ isOpen, onClose, orderData, currentUser, onOpenMyOr
                   <p className="text-[11px] text-blue-700 font-medium bg-blue-50 border border-blue-200 p-2.5 rounded-xl flex items-center gap-2 font-sans">
                     <Sparkles className="w-4 h-4 text-blue-600 flex-shrink-0" />
                     <span>¡Se ha enviado una copia digital de tu {docType} N° {fullInvoiceCode} a <strong className="font-bold">{email}</strong>!</span>
+                  </p>
+                )}
+                {emailError && (
+                  <p className="text-[11px] text-red-700 font-medium bg-red-50 border border-red-200 p-2.5 rounded-xl font-sans">
+                    {emailError}
                   </p>
                 )}
               </div>
