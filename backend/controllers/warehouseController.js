@@ -384,10 +384,18 @@ export const createIngresoMovement = async (req, res, next) => {
         const itemSum = (wm.items || []).reduce((s, it) => s + (Number(it.quantity) || 0), 0);
         return sum + (itemSum || Number(wm.quantity) || 0);
       }, 0);
+      const ingressByItem = existingIngresos.reduce((totals, movement) => {
+        (movement.items || []).forEach((item) => {
+          const key = `${item.productId}:${item.selectedSize || ""}`;
+          totals[key] = (totals[key] || 0) + (Number(item.quantity) || 0);
+        });
+        return totals;
+      }, {});
 
       itemsToProcess = targetOp.items.map((i) => {
         const totalItemQty = (Number(i.quantityOrdered) || 0) + (Number(i.quantityExtras) || 0) || 1;
-        const remainingQty = Math.max(1, totalItemQty - alreadyIngressedQty);
+        const key = `${i.productId}:${i.selectedSize || ""}`;
+        const remainingQty = Math.max(0, totalItemQty - (ingressByItem[key] || 0));
         return {
           productId: i.productId,
           productName: i.productName || "Prenda",

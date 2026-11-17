@@ -200,6 +200,15 @@ export default function CreateIngresoModal({
 
         const sublotObj = selectedOp.sublotsList.find((s) => s.id === selectedSublotId);
         const sublotLabel = sublotObj ? ` - ${sublotObj.name}` : "";
+        let remainingToAllocate = qtyToIngress;
+
+        const ingressByItem = (selectedOp.opIngresos || []).reduce((totals, movement) => {
+          (movement.items || []).forEach((item) => {
+            const key = `${item.productId}:${item.selectedSize || ""}`;
+            totals[key] = (totals[key] || 0) + (Number(item.quantity) || 0);
+          });
+          return totals;
+        }, {});
 
         const payload = {
           opId: selectedOp.id,
@@ -208,12 +217,20 @@ export default function CreateIngresoModal({
           reason: reason || `Ingreso de producción (${qtyToIngress} uds${sublotLabel}) - OP ${selectedOp.id}`,
           notes: notes ? `${notes} (Ubicación: ${location || "Almacén Central"})` : `Ubicación: ${location || "Almacén Central"}`,
           autoAccept,
-          items: (selectedOp.items || []).map((i) => ({
-            productId: i.productId,
-            productName: i.productName || "Prenda",
-            quantity: qtyToIngress,
-            selectedSize: i.selectedSize
-          }))
+          items: (selectedOp.items || []).flatMap((i) => {
+            const key = `${i.productId}:${i.selectedSize || ""}`;
+            const totalItemQty = (Number(i.quantityOrdered) || 0) + (Number(i.quantityExtras) || 0);
+            const itemRemaining = Math.max(0, totalItemQty - (ingressByItem[key] || 0));
+            const quantity = Math.min(itemRemaining, remainingToAllocate);
+            remainingToAllocate -= quantity;
+
+            return quantity > 0 ? [{
+              productId: i.productId,
+              productName: i.productName || "Prenda",
+              quantity,
+              selectedSize: i.selectedSize
+            }] : [];
+          })
         };
 
         const res = await onCreateIngreso(payload);

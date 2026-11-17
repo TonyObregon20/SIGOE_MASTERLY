@@ -12,12 +12,14 @@ import {
   PackageCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { generateInvoicePDF } from "@/utils/pdfGenerator";
+import { generateInvoicePDF, generateInvoicePDFBase64 } from "@/utils/pdfGenerator";
 import { sendInvoiceEmailApi } from "@/features/invoices/invoicesApi";
+import InvoiceEmailModal from "@/features/invoices/components/InvoiceEmailModal";
 
 function MyOrdersModal({ isOpen, onClose, orders = [], invoices = [], currentUser, onRefresh }) {
   const [sentEmailStatus, setSentEmailStatus] = useState({}); // { [orderId]: email }
   const [sendingOrderId, setSendingOrderId] = useState(null);
+  const [emailOrder, setEmailOrder] = useState(null);
 
   useEffect(() => {
     if (isOpen && typeof onRefresh === "function") {
@@ -41,7 +43,7 @@ function MyOrdersModal({ isOpen, onClose, orders = [], invoices = [], currentUse
       invoiceNumber: inv.number || "000001",
       orderId: order.id,
       customerName: order.customerName || currentUser?.name || "Cliente",
-      docNumber: inv.customerDoc || "00000000",
+      docNumber: inv.customerDocument || inv.customerDoc || "00000000",
       items: order.items || [],
       total: order.total || 0,
       date: order.date || new Date().toISOString().split("T")[0],
@@ -50,24 +52,40 @@ function MyOrdersModal({ isOpen, onClose, orders = [], invoices = [], currentUse
     });
   };
 
-  const handleSendEmail = async (order) => {
+  const handleSendEmail = async (order, email) => {
     const inv = invoices.find((i) => i.orderId === order.id) || {};
-    const emailTo = currentUser?.email || "cliente@ejemplo.com";
     setSendingOrderId(order.id);
 
     try {
-      await sendInvoiceEmailApi({
-        email: emailTo,
+      const pdf = await generateInvoicePDFBase64({
+        docType: inv.type || "Boleta",
+        series: inv.series || (inv.type === "Factura" ? "F001" : "B001"),
+        invoiceNumber: inv.number || "000001",
         orderId: order.id,
+        customerName: order.customerName || currentUser?.name || "Cliente",
+        docNumber: inv.customerDocument || inv.customerDoc || "00000000",
+        items: order.items || [],
+        total: order.total || 0,
+        date: order.date || new Date().toISOString().split("T")[0],
+        type: order.type || "direct",
+        initialPayment: order.initialPayment
+      });
+      const response = await sendInvoiceEmailApi({
+        email,
+        orderId: order.id,
+        pdfBase64: pdf.base64,
+        pdfFileName: pdf.fileName,
         docType: inv.type || "Boleta",
         fullInvoiceCode: `${inv.series || 'B001'}-${inv.number || '000001'}`,
         customerName: order.customerName || currentUser?.name || "Cliente",
         total: order.total
       });
-      setSentEmailStatus((prev) => ({ ...prev, [order.id]: emailTo }));
+      if (!response?.success) {
+        throw new Error(response?.message || "No se pudo enviar el comprobante.");
+      }
+      setSentEmailStatus((prev) => ({ ...prev, [order.id]: email }));
     } catch (err) {
-      console.error(err);
-      setSentEmailStatus((prev) => ({ ...prev, [order.id]: emailTo }));
+      throw err;
     } finally {
       setSendingOrderId(null);
     }
@@ -178,7 +196,7 @@ function MyOrdersModal({ isOpen, onClose, orders = [], invoices = [], currentUse
                     {/* Action buttons: Download PDF & Send Email */}
                     <div className="pt-2 flex flex-wrap gap-2 justify-end border-t border-slate-200">
                       <button
-                        onClick={() => handleSendEmail(ord)}
+                        onClick={() => setEmailOrder(ord)}
                         disabled={sendingOrderId === ord.id}
                         className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 font-mono uppercase ${
                           isSent 
@@ -214,6 +232,13 @@ function MyOrdersModal({ isOpen, onClose, orders = [], invoices = [], currentUse
           </div>
         </motion.div>
       </div>
+      <InvoiceEmailModal
+        isOpen={Boolean(emailOrder)}
+        onClose={() => setEmailOrder(null)}
+        defaultEmail={currentUser?.email || ""}
+        invoiceLabel={emailOrder ? `Comprobante de ${emailOrder.id}` : "Comprobante de compra"}
+        onSend={(email) => handleSendEmail(emailOrder, email)}
+      />
     </AnimatePresence>
   );
 }
