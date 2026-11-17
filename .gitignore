@@ -8,3 +8,31 @@ coverage/
 .env.*
 !.env.example
 
+
+# Configuración privada, certificados y copias locales
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+secrets/
+/backups/
+/exports/
+/dump/
+/dumps/
+/tmp/
+/temp/
+/output/
+/artifacts/
+*.bak
+*.tsbuildinfo
+.cache/
+.vite/
+playwright-report/
+test-results/
+Thumbs.db
+Desktop.ini
+.codex/
+.claude/
+ui-review.*

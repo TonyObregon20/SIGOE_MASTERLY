@@ -29,13 +29,18 @@ export const login = async (req, res, next) => {
       user = await UserModel.findOne({ email });
     }
 
-    // Auto-fallback for default admin credential if missing
-    if (!user && cleanEmail === "admin@masterly.com" && (password === "admin" || !password)) {
-      const hashedAdminPassword = await hashPassword("admin");
+    // Optional recovery is disabled unless private credentials are configured.
+    const bootstrapEmail = (process.env.BOOTSTRAP_ADMIN_EMAIL || '').trim().toLowerCase();
+    const bootstrapPassword = process.env.BOOTSTRAP_ADMIN_PASSWORD;
+    const isBootstrapCredential = Boolean(bootstrapEmail && bootstrapPassword && cleanEmail === bootstrapEmail && password === bootstrapPassword);
+
+    // Create the initial admin only with the explicitly configured credentials.
+    if (!user && isBootstrapCredential) {
+      const hashedAdminPassword = await hashPassword(bootstrapPassword);
       const adminUser = await UserModel.create({
         id: "U1",
         name: "Admin Masterly",
-        email: "admin@masterly.com",
+        email: bootstrapEmail,
         password: hashedAdminPassword,
         role: "admin",
         isActive: true,
@@ -58,9 +63,9 @@ export const login = async (req, res, next) => {
     const isPasswordValid = await comparePassword(password, user.password);
 
     if (!isPasswordValid) {
-      // Special check for default admin recovery
-      if (cleanEmail === "admin@masterly.com" && password === "admin") {
-        const newHashed = await hashPassword("admin");
+      // Recovery requires the explicitly configured private credentials.
+      if (isBootstrapCredential) {
+        const newHashed = await hashPassword(bootstrapPassword);
         await UserModel.findOneAndUpdate({ id: user.id }, { $set: { password: newHashed } });
       } else {
         return res.status(401).json({ success: false, message: "Contraseña incorrecta" });
@@ -140,7 +145,10 @@ export const createUser = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "El correo electrónico ya está registrado" });
     }
 
-    const hashedPassword = await hashPassword(password || "123456");
+    if (!password) {
+      return res.status(400).json({ success: false, message: "Contraseña requerida para crear el usuario" });
+    }
+    const hashedPassword = await hashPassword(password);
     // Los admins creados directamente desde el panel administrativo por el admin
     const chosenRole = role === "admin" ? "admin" : "customer";
 
