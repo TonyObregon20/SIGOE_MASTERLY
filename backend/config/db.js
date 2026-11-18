@@ -7,7 +7,14 @@ export let isMongoConnected = false;
 export let connectionErrorMsg = "";
 
 export async function connectDB() {
-  const uri = process.env.MONGODB_URI || "mongodb+srv://202120468_db_user:9nU94F6p8F1H93zd@masterly.ffk2uoy.mongodb.net/test?retryWrites=true&w=majority";
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri) {
+    isMongoConnected = false;
+    connectionErrorMsg = "Configura MONGODB_URI en tu entorno local.";
+    console.error(connectionErrorMsg);
+    return false;
+  }
 
   try {
     if (mongoose.connection.readyState >= 1) {

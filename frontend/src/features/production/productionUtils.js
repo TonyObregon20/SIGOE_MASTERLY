@@ -1,4 +1,4 @@
-import { STAGES } from "@/data/mockData";
+import { STAGES } from "@/config/productionStages";
 
 export const OP_STAGES = ["TODAS", ...STAGES, "Finalizado"];
 

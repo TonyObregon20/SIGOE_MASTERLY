@@ -38,6 +38,12 @@ import { INVOICE_SERIES } from "@/features/checkout/checkoutUtils";
 function App() {
   // Navigation State
   const [view, setView] = useState("store");
+  const [catalogSearch, setCatalogSearch] = useState({ category: 'Todos', query: '', revision: 0 });
+  const browseProducts = (category = 'Todos', query = '') => {
+    setCatalogSearch(previous => ({ category, query, revision: previous.revision + 1 }));
+    setView('products');
+  };
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [view]);
 
   // Application Modal Overlays State & Actions
   const {
@@ -81,6 +87,7 @@ function App() {
   // Centralized Products State from useProducts
   const {
     products,
+    loading: productsLoading,
     setProducts,
     loadProducts,
     addProduct,
@@ -309,17 +316,18 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] text-slate-900 font-sans">
+    <div className={view === 'admin' ? 'min-h-screen bg-[#F9FAFB] text-slate-900 font-sans' : 'min-h-screen bg-white font-shop text-[15px] leading-relaxed text-shop-ink'}>
       {/* Navigation Bar Header */}
       <Navbar
         view={view}
         setView={setView}
         setIsLoginOpen={setIsLoginOpen}
         onOpenCustomerDrawer={openCustomerDrawer}
+        onSearch={query => browseProducts("Todos", query)}
       />
 
       {/* Main Content View routing with motion transitions */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main id="main-content" tabIndex={-1} className={view === 'admin' ? 'mx-auto max-w-7xl px-4 py-8' : 'outline-none'}>
         <AnimatePresence mode="wait">
           <motion.div
             key={view}
@@ -329,44 +337,50 @@ function App() {
             transition={{ duration: 0.25, ease: "easeInOut" }}
           >
             {view === "store" && (
-              <StorePage 
-                products={products} 
-                addToCart={addToCart} 
-                isLoggedIn={isLoggedIn} 
-                currentUser={currentUser} 
-                setView={setView} 
+              <StorePage
+                products={products}
+                addToCart={addToCart}
+                isLoggedIn={isLoggedIn}
+                currentUser={currentUser}
+                setView={setView}
+                onBrowse={browseProducts}
+                loading={productsLoading}
               />
             )}
-            
+
             {view === "products" && (
-              <ProductsPage 
-                products={products} 
-                addToCart={addToCart} 
-                isLoggedIn={isLoggedIn} 
-                currentUser={currentUser} 
+              <ProductsPage key={catalogSearch.revision}
+                initialQuery={catalogSearch.query}
+                initialCategory={catalogSearch.category}
+                loading={productsLoading}
+
+                products={products}
+                addToCart={addToCart}
+                isLoggedIn={isLoggedIn}
+                currentUser={currentUser}
               />
             )}
-            
+
             {view === "pedido" && (
-              <OnDemandPage 
-                products={products} 
-                addToCart={addToCart} 
-                isLoggedIn={isLoggedIn} 
-                currentUser={currentUser} 
+              <OnDemandPage
+                products={products}
+                addToCart={addToCart}
+                isLoggedIn={isLoggedIn}
+                currentUser={currentUser}
               />
             )}
-            
+
             {view === "collections" && (
-              <CollectionsPage 
-                products={products} 
-                addToCart={addToCart} 
+              <CollectionsPage onBrowse={browseProducts}
+                products={products}
+                addToCart={addToCart}
               />
             )}
-            
+
             {view === "about" && (
-              <AboutUsPage />
+              <AboutUsPage onBrowse={browseProducts} />
             )}
-            
+
             {view === "admin" && (
               <AdminPage
                 products={products}

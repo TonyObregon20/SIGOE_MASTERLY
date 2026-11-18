@@ -1,4 +1,4 @@
-import { STAGES } from "@/data/mockData";
+import { STAGES } from "@/config/productionStages";
 
 /**
  * Pure calculations and transformation helpers for Admin Dashboard & Analytics

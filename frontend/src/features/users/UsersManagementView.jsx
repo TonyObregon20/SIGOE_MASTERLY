@@ -66,7 +66,7 @@ function UsersManagementView({
     } else {
       const newUser = {
         ...userData,
-        password: formData.get("password") || "123456",
+        password: formData.get("password"),
         creditUsed: 0,
         joinDate: new Date().toISOString().split("T")[0]
       };
