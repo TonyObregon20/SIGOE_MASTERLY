@@ -28,7 +28,21 @@ export default function OnDemandProductCard({ product, addToCart }) {
       <p className="mt-4 text-[11px] text-shop-muted">{product.category}</p><h3 className="mt-1 text-sm font-medium">{product.name}</h3><p className="mt-1 text-sm">{money(product.price)} <span className="text-xs text-shop-muted">/ unidad</span></p>
       <div className="my-4 bg-shop-light p-3 sm:p-4">
         <label className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs">Unidades del lote<input type="number" min="1" aria-label={`Unidades del lote de ${product.name}`} value={qty} onChange={event => handleTotalQtyChange(parseInt(event.target.value) || 1)} className="w-16 border border-shop-line bg-white px-2 py-2 text-base sm:text-sm" /></label>
-        <div className="grid grid-cols-4 gap-1 sm:gap-2">{['S', 'M', 'L', 'XL'].map(size => <label key={size} className="text-[11px] text-shop-muted">{size}<input type="number" min="0" aria-label={`Cantidad talla ${size} de ${product.name}`} value={sizes[size] || 0} onChange={event => changeSize(size, event.target.value)} className="mt-1 w-full border border-shop-line bg-white py-2 text-center text-base text-shop-ink sm:text-xs" /></label>)}</div>
+        <div className="grid grid-cols-4 gap-1 sm:gap-2">
+          {['S', 'M', 'L', 'XL'].map(size => (
+            <label key={size} className="flex min-w-0 flex-col items-center gap-1 text-center text-[11px] text-shop-muted">
+              <span className="font-medium">{size}</span>
+              <input
+                type="number"
+                min="0"
+                aria-label={`Cantidad talla ${size} de ${product.name}`}
+                value={sizes[size] || 0}
+                onChange={event => changeSize(size, event.target.value)}
+                className="h-9 w-full min-w-0 appearance-none border border-shop-line bg-white p-0 text-center text-base tabular-nums text-shop-ink sm:text-xs [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+            </label>
+          ))}
+        </div>
       </div>
       <div className="mb-4 flex flex-wrap justify-between gap-2 text-xs text-shop-muted"><span>Total del lote</span><strong className="font-medium text-shop-ink">{money(product.price * qty)}</strong></div>
       <ShopButton className="mt-auto w-full px-2 text-xs" disabled={qty <= 0} onClick={() => addToCart(product, qty, null, sizes)}><Plus size={15} />Agregar lote</ShopButton>
