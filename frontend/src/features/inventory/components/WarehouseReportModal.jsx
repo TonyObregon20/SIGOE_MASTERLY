@@ -311,10 +311,45 @@ export default function WarehouseReportModal({
     };
   }, [filteredMovements, filteredOrders]);
 
-  // Product balance metrics (incorporating movements and kardex)
+  const filteredKardex = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return (kardex || []).filter((entry) => {
+      if (typeFilter !== "Todos" && entry.type !== typeFilter) return false;
+      if (selectedProductId !== "Todos" && String(entry.productId) !== String(selectedProductId)) return false;
+      if (datePreset === "custom") {
+        if (customStartDate && entry.date < customStartDate) return false;
+        if (customEndDate && entry.date > customEndDate) return false;
+      }
+      if (datePreset === "Hoy" && entry.date !== new Date().toISOString().split("T")[0]) return false;
+      if (datePreset === "7dias") {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+        if (entry.date < sevenDaysAgo) return false;
+      }
+      if (datePreset === "mes") {
+        const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+          .toISOString().split("T")[0];
+        if (entry.date < firstDayOfMonth) return false;
+      }
+      if (q) {
+        const product = products.find((p) => String(p.id) === String(entry.productId));
+        const searchable = [
+          entry.productId,
+          entry.reason,
+          entry.documentRef,
+          product?.name
+        ].filter(Boolean).join(" ").toLowerCase();
+        if (!searchable.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [kardex, products, typeFilter, selectedProductId, datePreset, customStartDate, customEndDate, searchQuery]);
+
+  // Product balance metrics (incorporating the active filters and Kardex)
   const productSummaries = useMemo(() => {
     return products.map((p) => {
-      const prodKardex = (kardex || []).filter((k) => String(k.productId) === String(p.id));
+      const prodKardex = filteredKardex
+        .filter((k) => String(k.productId) === String(p.id))
+        .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
       const totalIngresos = prodKardex
         .filter((k) => k.type === "Ingreso")
         .reduce((sum, k) => sum + (Number(k.quantity) || 0), 0);
@@ -338,7 +373,7 @@ export default function WarehouseReportModal({
         history: prodKardex
       };
     });
-  }, [products, kardex, normalizedMovements]);
+  }, [products, filteredKardex, normalizedMovements]);
 
   if (!isOpen) return null;
 
@@ -348,6 +383,7 @@ export default function WarehouseReportModal({
       ordersData: filteredOrders,
       products,
       kardex,
+      productSummaries,
       summary: summaryMetrics,
       filters: {
         type: typeFilter,
@@ -363,6 +399,7 @@ export default function WarehouseReportModal({
       ordersData: filteredOrders,
       products,
       kardex,
+      productSummaries,
       summary: summaryMetrics,
       filters: {
         type: typeFilter,
@@ -503,7 +540,7 @@ export default function WarehouseReportModal({
               { id: "orders", label: "Trazabilidad por Pedido (ORD)", icon: ShoppingBag, count: filteredOrders.length },
               { id: "general", label: "Movimientos Generales", icon: Layers, count: filteredMovements.length },
               { id: "products", label: "Movimientos por Producto", icon: Package, count: products.length },
-              { id: "kardex", label: "Historial Kardex Detallado", icon: FileText, count: kardex.length }
+              { id: "kardex", label: "Historial Kardex Detallado", icon: FileText, count: filteredKardex.length }
             ].map((tab) => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
@@ -1156,14 +1193,14 @@ export default function WarehouseReportModal({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-xs">
-                      {kardex.length === 0 ? (
+                      {filteredKardex.length === 0 ? (
                         <tr>
                           <td colSpan={7} className="py-12 text-center text-slate-400 italic">
                             No hay registros de Kardex en el sistema.
                           </td>
                         </tr>
                       ) : (
-                        kardex.slice(-50).reverse().map((entry, idx) => {
+                        filteredKardex.slice(-50).reverse().map((entry, idx) => {
                           const prod = products.find((p) => String(p.id) === String(entry.productId));
                           return (
                             <tr key={entry._id || entry.id || `k-${idx}`} className="hover:bg-slate-50/80 transition-colors">

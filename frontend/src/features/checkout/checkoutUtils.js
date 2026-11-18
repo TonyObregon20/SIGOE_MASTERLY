@@ -61,7 +61,7 @@ export function buildOrderPayload({
     userId: currentUser.id,
     customerName: currentUser.name,
     items: cart.map((i) => ({
-      productId: i.product.id,
+      productId: String(i.product?.id ?? i.product?._id ?? ""),
       quantity: i.quantity,
       price: i.product.price,
       selectedSize: i.selectedSize,

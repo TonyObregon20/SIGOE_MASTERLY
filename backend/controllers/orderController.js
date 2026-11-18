@@ -13,8 +13,21 @@ export const getOrders = async (req, res, next) => {
     const filter = req.user?.role === "admin"
       ? {}
       : { userId: req.currentUser.id };
-    const list = await OrderModel.find(filter).sort({ _id: -1 });
-    res.json(list);
+    const list = await OrderModel.find(filter).sort({ _id: -1 }).lean();
+    const orderIds = list.map((order) => order.id).filter(Boolean);
+    const productionOrders = orderIds.length
+      ? await ProductionOrderModel.find({ orderId: { $in: orderIds } })
+        .select("id orderId currentStage progress stages")
+        .lean()
+      : [];
+    const productionByOrderId = new Map(
+      productionOrders.map((productionOrder) => [productionOrder.orderId, productionOrder])
+    );
+
+    res.json(list.map((order) => {
+      const production = productionByOrderId.get(order.id);
+      return production ? { ...order, production } : order;
+    }));
   } catch (err) {
     next(err);
   }
@@ -39,8 +52,14 @@ export const createOrder = async (req, res, next) => {
       return res.status(403).json({ success: false, message: "La orden no pertenece al usuario autenticado." });
     }
 
-    const productIds = order.items.map((item) => item?.productId);
-    if (productIds.some((id) => typeof id !== "string" || !id.trim()) || new Set(productIds).size !== productIds.length) {
+    const normalizedItems = order.items.map((item) => ({
+      ...item,
+      productId: typeof item?.productId === "string"
+        ? item.productId.trim()
+        : String(item?.productId ?? "").trim()
+    }));
+    const productIds = normalizedItems.map((item) => item.productId);
+    if (productIds.some((id) => typeof id !== "string" || !id.trim())) {
       return res.status(400).json({ success: false, message: "Los productos de la orden no son válidos." });
     }
     const products = await ProductModel.find({ id: { $in: productIds } }).lean();
@@ -48,7 +67,7 @@ export const createOrder = async (req, res, next) => {
     let computedTotal = 0;
     const validatedItems = [];
 
-    for (const item of validatedItems) {
+    for (const item of normalizedItems) {
       const product = productsById.get(item.productId);
       const quantity = Number(item.quantity);
       if (!product || !Number.isInteger(quantity) || quantity <= 0 || quantity > 1000) {

@@ -3,7 +3,11 @@ import mongoose from "mongoose";
 const WarehouseMovementSchema = new mongoose.Schema({
   id: { type: String, unique: true },
   type: { type: String, enum: ["Ingreso", "Salida"], required: true },
-  originType: { type: String, enum: ["A Pedido", "Venta Directa", "Autostock"], required: true },
+  originType: {
+    type: String,
+    enum: ["A Pedido", "Venta Directa", "Autostock", "Producción OP", "Ajuste / Merma"],
+    required: true
+  },
   status: { type: String, enum: ["Pendiente", "Aceptado", "Rechazado"], default: "Pendiente" },
   opId: { type: String },
   orderId: { type: String },

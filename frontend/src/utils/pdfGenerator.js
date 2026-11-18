@@ -13,7 +13,8 @@ export function generateInvoicePDF(invoiceData) {
     total = 0,
     date = new Date().toISOString().split("T")[0],
     type = "direct",
-    initialPayment = undefined
+    initialPayment = undefined,
+    returnBlob = false
   } = invoiceData;
 
   const doc = new jsPDF();
@@ -199,6 +200,23 @@ export function generateInvoicePDF(invoiceData) {
   doc.text("Esta es una representación impresa de la Boleta/Factura Electrónica emitida según normativa SUNAT.", 14, footerY + 6);
   doc.text("¡Gracias por confiar en la calidad textil y confección de MASTERLY!", 14, footerY + 11);
 
-  // Save PDF
-  doc.save(`${docType}_${comprobanteCode}.pdf`);
+  const fileName = `${docType}_${comprobanteCode}.pdf`;
+  if (returnBlob) {
+    return { blob: doc.output("blob"), fileName };
+  }
+
+  doc.save(fileName);
+}
+
+export async function generateInvoicePDFBase64(invoiceData) {
+  const result = generateInvoicePDF({ ...invoiceData, returnBlob: true });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve({
+      base64: String(reader.result).split(",")[1],
+      fileName: result.fileName
+    });
+    reader.onerror = reject;
+    reader.readAsDataURL(result.blob);
+  });
 }

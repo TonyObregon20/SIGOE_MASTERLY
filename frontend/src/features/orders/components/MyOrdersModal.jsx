@@ -1,8 +1,9 @@
+import InvoiceEmailModal from "@/features/invoices/components/InvoiceEmailModal";
 import { ShopModal } from "@/components/shop/ShopUI";
 import React, { useState, useEffect } from "react";
 import { X, FileText, Download, Mail, CheckCircle2, Clock, ShoppingBag, Send, Calendar, PackageCheck } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { generateInvoicePDF } from "@/utils/pdfGenerator";
+import { generateInvoicePDF, generateInvoicePDFBase64 } from "@/utils/pdfGenerator";
 import { sendInvoiceEmailApi } from "@/features/invoices/invoicesApi";
 function MyOrdersModal({
   isOpen,
@@ -14,6 +15,7 @@ function MyOrdersModal({
 }) {
   const [sentEmailStatus, setSentEmailStatus] = useState({}); // { [orderId]: email }
   const [sendingOrderId, setSendingOrderId] = useState(null);
+  const [emailOrder, setEmailOrder] = useState(null);
   useEffect(() => {
     if (isOpen && typeof onRefresh === "function") {
       onRefresh();
@@ -32,7 +34,7 @@ function MyOrdersModal({
       invoiceNumber: inv.number || "000001",
       orderId: order.id,
       customerName: order.customerName || currentUser?.name || "Cliente",
-      docNumber: inv.customerDoc || "00000000",
+      docNumber: inv.customerDocument || inv.customerDoc || "00000000",
       items: order.items || [],
       total: order.total || 0,
       date: order.date || new Date().toISOString().split("T")[0],
@@ -40,33 +42,50 @@ function MyOrdersModal({
       initialPayment: order.initialPayment
     });
   };
-  const handleSendEmail = async order => {
-    const inv = invoices.find(i => i.orderId === order.id) || {};
-    const emailTo = currentUser?.email || "cliente@ejemplo.com";
+  const handleSendEmail = async (order, email) => {
+    const inv = invoices.find((i) => i.orderId === order.id) || {};
     setSendingOrderId(order.id);
+
     try {
-      await sendInvoiceEmailApi({
-        email: emailTo,
+      const pdf = await generateInvoicePDFBase64({
+        docType: inv.type || "Boleta",
+        series: inv.series || (inv.type === "Factura" ? "F001" : "B001"),
+        invoiceNumber: inv.number || "000001",
         orderId: order.id,
+        customerName: order.customerName || currentUser?.name || "Cliente",
+        docNumber: inv.customerDocument || inv.customerDoc || "00000000",
+        items: order.items || [],
+        total: order.total || 0,
+        date: order.date || new Date().toISOString().split("T")[0],
+        type: order.type || "direct",
+        initialPayment: order.initialPayment
+      });
+      const response = await sendInvoiceEmailApi({
+        email,
+        orderId: order.id,
+        pdfBase64: pdf.base64,
+        pdfFileName: pdf.fileName,
         docType: inv.type || "Boleta",
         fullInvoiceCode: `${inv.series || 'B001'}-${inv.number || '000001'}`,
         customerName: order.customerName || currentUser?.name || "Cliente",
         total: order.total
       });
-      setSentEmailStatus(prev => ({
-        ...prev,
-        [order.id]: emailTo
-      }));
-    } catch (err) {
-      console.error(err);
-      setSentEmailStatus(prev => ({
-        ...prev,
-        [order.id]: emailTo
-      }));
+      if (!response?.success) {
+        throw new Error(response?.message || "No se pudo enviar el comprobante.");
+      }
+      setSentEmailStatus((prev) => ({ ...prev, [order.id]: email }));
     } finally {
       setSendingOrderId(null);
     }
   };
+  if (emailOrder) return <InvoiceEmailModal
+    isOpen
+    onClose={() => setEmailOrder(null)}
+    defaultEmail={currentUser?.email || ""}
+    invoiceLabel={`Comprobante de ${emailOrder.id}`}
+    onSend={email => handleSendEmail(emailOrder, email)}
+  />;
+
   return <ShopModal title="Mis pedidos y comprobantes" eyebrow="Tu cuenta Masterly" onClose={onClose} wide><div className="p-6 overflow-y-auto space-y-4 flex-1">
             {userOrders.length === 0 ? <div className="text-center py-12 space-y-3">
                 <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
@@ -123,7 +142,7 @@ function MyOrdersModal({
 
                     {/* Action buttons: Download PDF & Send Email */}
                     <div className="pt-2 flex flex-wrap gap-2 justify-end border-t border-shop-line">
-                      <button onClick={() => handleSendEmail(ord)} disabled={sendingOrderId === ord.id} className={`px-3 py-2 rounded-none text-xs font-medium transition-all flex items-center gap-1.5 font-shop  ${isSent ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-white border border-slate-300 text-slate-700 hover:bg-shop-light"}`}>
+                      <button onClick={() => setEmailOrder(ord)} disabled={sendingOrderId === ord.id} className={`px-3 py-2 rounded-none text-xs font-medium transition-all flex items-center gap-1.5 font-shop  ${isSent ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-white border border-slate-300 text-slate-700 hover:bg-shop-light"}`}>
                         {isSent ? <>
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Enviado a Correo</span>

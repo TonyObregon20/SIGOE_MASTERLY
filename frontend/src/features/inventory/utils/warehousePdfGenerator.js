@@ -10,6 +10,7 @@ export function generateWarehousePDF({
   ordersData = [],
   products = [],
   kardex = [],
+  productSummaries = [],
   summary = {
     totalIngresos: 0,
     totalSalidas: 0,
@@ -196,23 +197,26 @@ export function generateWarehousePDF({
   doc.setTextColor(30, 41, 59);
   doc.text("4. Balance de Existencias por Producto", 14, startYProd);
 
-  const productRows = products.map((p) => {
-    const productKardex = kardex.filter((k) => k.productId === p.id);
-    const prodIngresos = productKardex
-      .filter((k) => k.type === "Ingreso")
-      .reduce((sum, k) => sum + (Number(k.quantity) || 0), 0);
-    const prodSalidas = productKardex
-      .filter((k) => k.type === "Salida")
-      .reduce((sum, k) => sum + (Number(k.quantity) || 0), 0);
-    const net = prodIngresos - prodSalidas;
+  const productRows = (productSummaries.length > 0 ? productSummaries : products.map((p) => ({
+    product: p,
+    stockPhysical: p.stockPhysical || 0,
+    totalIngresos: kardex
+      .filter((k) => String(k.productId) === String(p.id) && k.type === "Ingreso")
+      .reduce((sum, k) => sum + (Number(k.quantity) || 0), 0),
+    totalSalidas: kardex
+      .filter((k) => String(k.productId) === String(p.id) && k.type === "Salida")
+      .reduce((sum, k) => sum + (Number(k.quantity) || 0), 0)
+  }))).map((summary) => {
+    const p = summary.product;
+    const net = summary.totalIngresos - summary.totalSalidas;
 
     return [
       p.id,
       p.name || "Prenda",
       p.category || "General",
-      `${p.stockPhysical || 0} uds`,
-      `+${prodIngresos} uds`,
-      `-${prodSalidas} uds`,
+      `${summary.stockPhysical || 0} uds`,
+      `+${summary.totalIngresos} uds`,
+      `-${summary.totalSalidas} uds`,
       `${net >= 0 ? "+" : ""}${net} uds`,
       `S/ ${Number(p.price || 0).toFixed(2)}`
     ];
@@ -235,6 +239,51 @@ export function generateWarehousePDF({
     },
     head: [["ID", "Producto", "Categoría", "Stock Físico", "Total Ingresos", "Total Salidas", "Neto", "Precio Unit."]],
     body: productRows
+  });
+
+  // 5. Kardex detallado por producto
+  doc.addPage();
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.setTextColor(30, 41, 59);
+  doc.text("5. Registro de Inventario por Producto", 14, 20);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text("Detalle cronológico de ingresos, salidas y saldo resultante según los filtros seleccionados.", 14, 26);
+
+  const productHistoryRows = productSummaries.flatMap((summary) =>
+    (summary.history || []).map((entry) => [
+      entry.date || "-",
+      summary.product?.id || "-",
+      summary.product?.name || "Prenda",
+      entry.type || "-",
+      entry.reason || "Movimiento de almacén",
+      entry.documentRef || "-",
+      `${entry.type === "Ingreso" ? "+" : "-"}${entry.quantity || 0} uds`,
+      `${entry.balance || 0} uds`
+    ])
+  );
+
+  autoTable(doc, {
+    startY: 31,
+    theme: "striped",
+    headStyles: { fillColor: [37, 99, 235], fontStyle: "bold" },
+    styles: { fontSize: 7, cellPadding: 2 },
+    columnStyles: {
+      0: { cellWidth: 18 },
+      1: { cellWidth: 19 },
+      2: { cellWidth: 42, fontStyle: "bold" },
+      3: { cellWidth: 18 },
+      4: { cellWidth: 38 },
+      5: { cellWidth: 22 },
+      6: { cellWidth: 20, halign: "right", fontStyle: "bold" },
+      7: { cellWidth: 20, halign: "right", fontStyle: "bold" }
+    },
+    head: [["Fecha", "ID Producto", "Producto / Modelo", "Tipo", "Concepto / Glosa", "Referencia", "Cantidad", "Saldo"]],
+    body: productHistoryRows.length > 0
+      ? productHistoryRows
+      : [["-", "-", "Sin movimientos", "-", "-", "-", "-", "-"]]
   });
 
   // Footer Signature Block

@@ -13,6 +13,10 @@ La conexión conserva la base `test`. No ejecutes el servidor si solo necesitas 
 
 La recuperación inicial de administrador está desactivada por defecto. Si necesitas habilitarla temporalmente, configura ambas variables `BOOTSTRAP_ADMIN_*` con credenciales privadas y retíralas al terminar. La creación de usuarios exige una contraseña explícita.
 
+## Correo de comprobantes
+
+Para habilitar el envío, solicita al equipo la configuración por un canal privado y agrega `EMAIL_USER` y `EMAIL_PASSWORD` al `.env` que usa el backend. `EMAIL_FROM` es opcional. El servicio usa Gmail. Ejecuta `npm ci` desde la raíz para instalar Nodemailer y reinicia el backend después de configurar el correo.
+
 ## Antes de publicar
 
 ```sh
