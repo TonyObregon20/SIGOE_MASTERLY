@@ -22,27 +22,27 @@ export default function InventoryProductRow({
   const sizeBreakdown = getSizeStockBreakdown(p);
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white border border-shop-line rounded-[2px] overflow-hidden transition-shadow">
       <div className="p-5 flex items-center justify-between flex-wrap gap-4">
         {/* Product image & ID/Category info */}
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-slate-50 rounded-xl overflow-hidden border border-slate-200 p-1 flex-shrink-0">
+          <div className="w-16 h-16 bg-shop-light rounded-[2px] overflow-hidden border border-shop-line p-1 flex-shrink-0">
             <img
               src={p.image}
               alt={p.name}
-              className="w-full h-full object-cover rounded-lg"
+              className="w-full h-full object-cover rounded-[2px]"
               referrerPolicy="no-referrer"
             />
           </div>
           <div>
-            <h4 className="font-black text-slate-900 text-base uppercase tracking-tight leading-tight">
+            <h4 className="font-semibold text-shop-ink text-base tracking-tight leading-tight">
               {p.name}
             </h4>
             <div className="flex items-center gap-3 mt-1">
-              <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+              <span className="text-[11px] font-semibold text-shop-blue bg-shop-light px-2 py-0.5 rounded-[2px] border border-shop-light">
                 ID: {formattedId}
               </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              <span className="text-[11px] font-medium text-shop-muted">
                 {p.category}
               </span>
             </div>
@@ -50,19 +50,19 @@ export default function InventoryProductRow({
         </div>
 
         {/* Stock Breakdown by Sizes */}
-        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 min-w-[220px]">
-          <div className="flex items-center justify-between text-[9px] font-black uppercase text-slate-500 font-mono mb-1">
+        <div className="bg-shop-light p-2.5 rounded-[2px] border border-shop-line/80 min-w-[220px]">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-shop-muted tabular-nums mb-1">
             <span className="flex items-center gap-1">
-              <Layers className="w-3 h-3 text-blue-600" /> Tallas Disponibles
+              <Layers className="w-3 h-3 text-shop-blue" /> Tallas Disponibles
             </span>
           </div>
-          <div className="grid grid-cols-4 gap-1.5 text-center font-mono">
+          <div className="grid grid-cols-4 gap-1.5 text-center tabular-nums">
             {["S", "M", "L", "XL"].map((sz) => {
               const avail = sizeBreakdown[sz] ?? 0;
               return (
-                <div key={sz} className="bg-white px-1.5 py-1 rounded border border-slate-200 shadow-2xs">
-                  <span className="text-[9px] font-bold text-slate-500 block leading-tight">{sz}</span>
-                  <span className={`text-[10px] font-black leading-tight ${avail > 0 ? "text-blue-700" : "text-rose-600"}`}>
+                <div key={sz} className="bg-white px-1.5 py-1 rounded-[2px] border border-shop-line">
+                  <span className="text-[11px] font-medium text-shop-muted block leading-tight">{sz}</span>
+                  <span className={`text-[11px] font-semibold leading-tight ${avail > 0 ? "text-shop-blue" : "text-rose-600"}`}>
                     {avail}
                   </span>
                 </div>
@@ -75,12 +75,12 @@ export default function InventoryProductRow({
         <div className="flex items-center gap-8 flex-wrap sm:flex-nowrap">
           {/* Physical stock */}
           <div className="text-center">
-            <div className="text-[9px] text-slate-400 uppercase font-black tracking-[0.2em] mb-0.5 font-mono">
+            <div className="text-[11px] text-shop-muted font-semibold mb-0.5 tabular-nums">
               Físico
             </div>
-            <div className="text-xl font-black text-slate-950 font-mono">
+            <div className="text-xl font-semibold text-shop-ink tabular-nums">
               {p.stockPhysical}{" "}
-              <span className="text-[10px] font-normal text-slate-400 uppercase tracking-widest ml-0.5">
+              <span className="text-[11px] font-normal text-shop-muted ml-0.5">
                 uds
               </span>
             </div>
@@ -88,29 +88,29 @@ export default function InventoryProductRow({
 
           {/* Committed stock */}
           <div className="text-center">
-            <div className="text-[9px] text-slate-400 uppercase font-black tracking-[0.2em] mb-0.5 font-mono">
+            <div className="text-[11px] text-shop-muted font-semibold mb-0.5 tabular-nums">
               Comprometido
             </div>
-            <div className="text-xl font-black text-blue-600 font-mono">
+            <div className="text-xl font-semibold text-shop-blue tabular-nums">
               {p.stockCommitted}{" "}
-              <span className="text-[10px] font-normal text-slate-400 uppercase tracking-widest ml-0.5">
+              <span className="text-[11px] font-normal text-shop-muted ml-0.5">
                 uds
               </span>
             </div>
           </div>
 
           {/* Web / Available stock */}
-          <div className="text-center bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 min-w-[110px]">
-            <div className="text-[9px] text-blue-500 uppercase font-black tracking-[0.2em] mb-0.5 font-mono">
+          <div className="text-center bg-shop-light px-4 py-2 rounded-[2px] border border-shop-light min-w-[110px]">
+            <div className="text-[11px] text-shop-blue font-semibold mb-0.5 tabular-nums">
               Web (Disponible)
             </div>
             <div
-              className={`text-2xl font-black font-mono ${
-                isLowStock ? "text-rose-600" : "text-blue-700"
+              className={`text-2xl font-semibold tabular-nums ${
+                isLowStock ? "text-rose-600" : "text-shop-blue"
               }`}
             >
               {availableStock}{" "}
-              <span className="text-xs font-normal text-blue-400 uppercase tracking-widest ml-1">
+              <span className="text-xs font-normal text-blue-400 ml-1">
                 uds
               </span>
             </div>
@@ -121,15 +121,15 @@ export default function InventoryProductRow({
             <button
               type="button"
               onClick={() => onOpenAddStock(p.id)}
-              className="p-3 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-all border border-slate-200 shadow-sm shadow-blue-900/5 active:scale-95 group"
+              className="p-3 bg-white text-shop-blue rounded-[2px] hover:bg-shop-light transition-all border border-shop-line group"
               title="Añadir Stock"
             >
-              <Plus className="w-5 h-5 group-hover:scale-125 transition-transform" />
+              <Plus className="w-5 h-5 transition-transform" />
             </button>
             <button
               type="button"
               onClick={() => onNewProduction([{ product: p, quantity: 10 }])}
-              className="p-3 bg-white text-slate-600 rounded-xl hover:bg-slate-50 transition-all border border-slate-200 shadow-sm active:scale-95"
+              className="p-3 bg-white text-shop-muted rounded-[2px] hover:bg-shop-light transition-all border border-shop-line"
               title="Producir más"
             >
               <ClipboardList className="w-5 h-5" />
@@ -137,10 +137,10 @@ export default function InventoryProductRow({
             <button
               type="button"
               onClick={onToggleSelect}
-              className={`p-3 rounded-xl transition-all border shadow-sm active:scale-95 ${
+              className={`p-3 rounded-[2px] transition-all border ${
                 isSelected
-                  ? "bg-slate-950 text-white border-slate-950 shadow-slate-900/20"
-                  : "bg-white text-slate-600 hover:bg-slate-50 border-slate-200"
+                  ? "bg-shop-ink text-white border-slate-950"
+                  : "bg-white text-shop-muted hover:bg-shop-light border-shop-line"
               }`}
               title="Ver Historial (Kardex)"
             >

@@ -1,3 +1,4 @@
+import AdminDialog from "@/components/admin/AdminDialog";
 import React, { useState, useMemo } from "react";
 import { motion } from "motion/react";
 import {
@@ -280,7 +281,7 @@ export default function CreateSalidaModal({
         orderId: sourceType === "order" ? selectedOrderId : (sourceType === "op" && selectedOp?.orderId ? selectedOp.orderId : null),
         opId: sourceType === "op" ? selectedOpId : null,
         items: sourceType === "manual" ? manualItems : undefined,
-        originType: sourceType === "order" 
+        originType: sourceType === "order"
           ? (selectedOrder?.type === "pedido" ? "A Pedido" : "Venta Directa")
           : (sourceType === "op" ? "Producción OP" : "Ajuste / Merma"),
         reason: reason || (sourceType === "order" ? `Salida Almacén para Despacho Orden ${selectedOrderId}` : `Salida OP ${selectedOpId}`),
@@ -300,55 +301,55 @@ export default function CreateSalidaModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+    <AdminDialog label="Registrar salida" onClose={onClose} className="fixed inset-0 z-[120] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-shop-ink/60 backdrop-blur-sm"
       />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200"
+        className="relative w-full max-w-2xl bg-white rounded-[2px] overflow-y-auto border border-shop-line max-h-[90dvh]"
       >
         <div className="p-7 space-y-6 max-h-[90vh] overflow-y-auto">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="flex items-center justify-between border-b border-shop-line pb-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-150">
+                <div className="w-8 h-8 rounded-[2px] bg-shop-light text-shop-blue flex items-center justify-center border border-blue-150">
                   <Truck className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-black text-slate-900 tracking-tight uppercase">
+                <h3 className="text-lg font-semibold text-shop-ink tracking-tight">
                   Generar Salida de Almacén
                 </h3>
               </div>
-              <p className="text-xs text-slate-500 font-serif italic">
+              <p className="text-xs text-shop-muted font-shop">
                 Verifica las prendas antes de habilitar el botón de Despacho en Ventas.
               </p>
             </div>
-            <button
+            <button aria-label="Cerrar ventana"
               type="button"
               onClick={onClose}
-              className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors"
+              className="p-2 bg-shop-light text-shop-muted rounded-[2px] hover:bg-red-50 hover:text-red-500 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Type Selector Tabs */}
-          <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-100 rounded-xl">
+          <div className="grid grid-cols-3 gap-2 p-1.5 bg-shop-light rounded-[2px]">
             <button
               type="button"
               onClick={() => setSourceType("order")}
-              className={`py-2.5 px-3 rounded-lg text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+              className={`py-2.5 px-3 rounded-[2px] text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                 sourceType === "order"
-                  ? "bg-white text-slate-950 shadow-sm border border-slate-200"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-white text-shop-ink border border-shop-line"
+                  : "text-shop-muted hover:text-shop-ink"
               }`}
             >
               <ShoppingBag className="w-4 h-4" /> Por Pedido / Venta
@@ -356,10 +357,10 @@ export default function CreateSalidaModal({
             <button
               type="button"
               onClick={() => setSourceType("op")}
-              className={`py-2.5 px-3 rounded-lg text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+              className={`py-2.5 px-3 rounded-[2px] text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                 sourceType === "op"
-                  ? "bg-white text-slate-950 shadow-sm border border-slate-200"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-white text-shop-ink border border-shop-line"
+                  : "text-shop-muted hover:text-shop-ink"
               }`}
             >
               <Layers className="w-4 h-4" /> Por OP (Producción)
@@ -367,10 +368,10 @@ export default function CreateSalidaModal({
             <button
               type="button"
               onClick={() => setSourceType("manual")}
-              className={`py-2.5 px-3 rounded-lg text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+              className={`py-2.5 px-3 rounded-[2px] text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                 sourceType === "manual"
-                  ? "bg-white text-slate-950 shadow-sm border border-slate-200"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-white text-shop-ink border border-shop-line"
+                  : "text-shop-muted hover:text-shop-ink"
               }`}
             >
               <Package className="w-4 h-4" /> Salida Manual
@@ -382,27 +383,27 @@ export default function CreateSalidaModal({
             {sourceType === "order" && (
               <div className="space-y-4">
                 {eligibleOrders.length === 0 ? (
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                    <div className="flex items-center gap-2 text-slate-700">
-                      <Package className="w-4 h-4 text-slate-400" />
-                      <p className="text-xs font-bold">No hay pedidos listos para autorizar salida en este momento.</p>
+                  <div className="p-4 bg-shop-light border border-shop-line rounded-[2px] space-y-3">
+                    <div className="flex items-center gap-2 text-shop-muted">
+                      <Package className="w-4 h-4 text-shop-muted" />
+                      <p className="text-xs font-medium">No hay pedidos listos para autorizar salida en este momento.</p>
                     </div>
-                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                    <p className="text-[11px] text-shop-muted leading-relaxed">
                       Los pedidos personalizados a medida deben primero completar todas sus etapas en <strong>Taller / Producción</strong> (100%) y el almacenero debe dar clic en <strong>"Aceptar Ingreso"</strong> para que las prendas ingresen formalmente a Almacén.
                     </p>
                     {inProgressOrders.length > 0 && (
-                      <div className="pt-2 border-t border-slate-200/80 space-y-2">
-                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      <div className="pt-2 border-t border-shop-line/80 space-y-2">
+                        <p className="text-[11px] font-semibold text-shop-muted">
                           Pedidos en Fabricación / Pendientes de Ingreso ({inProgressOrders.length}):
                         </p>
                         <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                           {inProgressOrders.map((ord) => (
-                            <div key={ord.id} className="flex items-center justify-between text-[11px] bg-white p-2.5 rounded-lg border border-slate-200">
+                            <div key={ord.id} className="flex items-center justify-between text-[11px] bg-white p-2.5 rounded-[2px] border border-shop-line">
                               <div>
-                                <span className="font-bold text-slate-800">{ord.id} • {ord.customerName}</span>
-                                <span className="text-[10px] text-slate-500 font-mono ml-2">({ord.type === "pedido" ? "A Pedido" : "Venta Directa"})</span>
+                                <span className="font-medium text-shop-ink">{ord.id} • {ord.customerName}</span>
+                                <span className="text-[11px] text-shop-muted tabular-nums ml-2">({ord.type === "pedido" ? "A Pedido" : "Venta Directa"})</span>
                               </div>
-                              <span className="font-mono text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold border border-blue-100">
+                              <span className="tabular-nums text-[11px] bg-shop-light text-shop-blue px-2 py-0.5 rounded-[2px] font-medium border border-shop-light">
                                 {ord.statusMessage}
                               </span>
                             </div>
@@ -413,14 +414,14 @@ export default function CreateSalidaModal({
                   </div>
                 ) : (
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1">
+                    <label className="text-[11px] font-semibold text-shop-muted pl-1">
                       Seleccionar Pedido con Ingreso Aceptado en Almacén
                     </label>
                     <select
                       value={selectedOrderId}
                       onChange={(e) => setSelectedOrderId(e.target.value)}
                       required
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full px-4 py-3 bg-white border border-shop-line rounded-[2px] font-medium text-shop-ink outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]"
                     >
                       <option value="" disabled>
                         Seleccione una orden lista en almacén...
@@ -435,7 +436,7 @@ export default function CreateSalidaModal({
                 )}
 
                 {orderExistingSalida && (
-                  <div className={`p-3 rounded-xl border text-xs font-medium flex items-center gap-2.5 ${
+                  <div className={`p-3 rounded-[2px] border text-xs font-medium flex items-center gap-2.5 ${
                     orderExistingSalida.status === "Aceptado"
                       ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                       : "bg-amber-50 text-amber-800 border-amber-200"
@@ -446,42 +447,42 @@ export default function CreateSalidaModal({
                       <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                     )}
                     <div>
-                      <strong className="font-bold">Movimiento {orderExistingSalida.id} existente:</strong> Estado: <strong>{orderExistingSalida.status}</strong>.
+                      <strong className="font-medium">Movimiento {orderExistingSalida.id} existente:</strong> Estado: <strong>{orderExistingSalida.status}</strong>.
                       {orderExistingSalida.status === "Aceptado" && " Este pedido ya tiene salida aprobada y está listo para despachar en Ventas."}
                     </div>
                   </div>
                 )}
 
                 {selectedOrder && (
-                  <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between text-xs border-b border-slate-200 pb-2">
+                  <div className="bg-shop-light/70 p-4 rounded-[2px] border border-shop-line space-y-3">
+                    <div className="flex items-center justify-between text-xs border-b border-shop-line pb-2">
                       <div className="flex items-center gap-2">
-                        <User className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="font-bold text-slate-800">{selectedOrder.customerName}</span>
+                        <User className="w-3.5 h-3.5 text-shop-muted" />
+                        <span className="font-medium text-shop-ink">{selectedOrder.customerName}</span>
                       </div>
-                      <span className="font-mono text-[10px] bg-slate-200 px-2 py-0.5 rounded font-black text-slate-700">
+                      <span className="tabular-nums text-[11px] bg-slate-200 px-2 py-0.5 rounded-[2px] font-semibold text-shop-muted">
                         {selectedOrder.type === "pedido" ? "A PEDIDO (EN ALMACÉN)" : "VENTA DIRECTA"}
                       </span>
                     </div>
 
                     <div className="space-y-2">
-                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                      <p className="text-[11px] font-semibold text-shop-muted">
                         Prendas a Despachar:
                       </p>
                       {orderStockCheck.items.map((it, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between text-xs bg-white p-2.5 rounded-lg border border-slate-200"
+                          className="flex items-center justify-between text-xs bg-white p-2.5 rounded-[2px] border border-shop-line"
                         >
                           <div>
-                            <p className="font-bold text-slate-900">{it.productName}</p>
-                            <p className="text-[10px] text-slate-500 font-mono">
-                              Solicitado: <strong className="text-blue-600">{it.required} Uds</strong> {it.selectedSize ? `(Talla ${it.selectedSize})` : ""}
+                            <p className="font-medium text-shop-ink">{it.productName}</p>
+                            <p className="text-[11px] text-shop-muted tabular-nums">
+                              Solicitado: <strong className="text-shop-blue">{it.required} Uds</strong> {it.selectedSize ? `(Talla ${it.selectedSize})` : ""}
                             </p>
                           </div>
-                          <div className="text-right font-mono text-[10px]">
+                          <div className="text-right tabular-nums text-[11px]">
                             <span
-                              className={`px-2 py-0.5 rounded font-black ${
+                              className={`px-2 py-0.5 rounded-[2px] font-semibold ${
                                 it.isSufficient
                                   ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                   : "bg-rose-50 text-rose-700 border border-rose-200"
@@ -495,7 +496,7 @@ export default function CreateSalidaModal({
                     </div>
 
                     {!orderStockCheck.canFulfill && (
-                      <p className="text-[11px] text-rose-600 font-bold flex items-center gap-1.5 mt-2 bg-rose-50 p-2 rounded-lg border border-rose-200">
+                      <p className="text-[11px] text-rose-600 font-medium flex items-center gap-1.5 mt-2 bg-rose-50 p-2 rounded-[2px] border border-rose-200">
                         <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                         Atención: El stock físico en almacén es menor a la cantidad requerida. Verifica si la OP ya ingresó a almacén.
                       </p>
@@ -509,26 +510,26 @@ export default function CreateSalidaModal({
             {sourceType === "op" && (
               <div className="space-y-4">
                 {eligibleOps.length === 0 ? (
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                    <div className="flex items-center gap-2 text-slate-700">
-                      <Layers className="w-4 h-4 text-slate-400" />
-                      <p className="text-xs font-bold">No hay OPs con ingreso aceptado en almacén pendientes de salida.</p>
+                  <div className="p-4 bg-shop-light border border-shop-line rounded-[2px] space-y-3">
+                    <div className="flex items-center gap-2 text-shop-muted">
+                      <Layers className="w-4 h-4 text-shop-muted" />
+                      <p className="text-xs font-medium">No hay OPs con ingreso aceptado en almacén pendientes de salida.</p>
                     </div>
-                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                    <p className="text-[11px] text-shop-muted leading-relaxed">
                       Una Orden de Producción (OP) solo puede registrar salida una vez que finalice todas sus etapas en Taller (100%) y se haya aceptado su movimiento de <strong>Ingreso a Almacén</strong>.
                     </p>
                     {inProgressOps.length > 0 && (
-                      <div className="pt-2 border-t border-slate-200/80 space-y-2">
-                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      <div className="pt-2 border-t border-shop-line/80 space-y-2">
+                        <p className="text-[11px] font-semibold text-shop-muted">
                           OPs en Fabricación o Pendientes de Ingreso ({inProgressOps.length}):
                         </p>
                         <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                           {inProgressOps.map((opItem) => (
-                            <div key={opItem.id} className="flex items-center justify-between text-[11px] bg-white p-2.5 rounded-lg border border-slate-200">
+                            <div key={opItem.id} className="flex items-center justify-between text-[11px] bg-white p-2.5 rounded-[2px] border border-shop-line">
                               <div>
-                                <span className="font-bold text-slate-800">{opItem.id} {opItem.orderId ? `• Pedido: ${opItem.orderId}` : "• Autostock"}</span>
+                                <span className="font-medium text-shop-ink">{opItem.id} {opItem.orderId ? `• Pedido: ${opItem.orderId}` : "• Autostock"}</span>
                               </div>
-                              <span className="font-mono text-[10px] bg-amber-50 text-amber-800 px-2 py-0.5 rounded font-bold border border-amber-200">
+                              <span className="tabular-nums text-[11px] bg-amber-50 text-amber-800 px-2 py-0.5 rounded-[2px] font-medium border border-amber-200">
                                 {!opItem.isFinished
                                   ? `Etapa: ${opItem.currentStage} (${Math.round(opItem.progress || 0)}%)`
                                   : opItem.isIngresoPending
@@ -543,14 +544,14 @@ export default function CreateSalidaModal({
                   </div>
                 ) : (
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1">
+                    <label className="text-[11px] font-semibold text-shop-muted pl-1">
                       Seleccionar Orden de Producción (OP en Almacén)
                     </label>
                     <select
                       value={selectedOpId}
                       onChange={(e) => setSelectedOpId(e.target.value)}
                       required
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full px-4 py-3 bg-white border border-shop-line rounded-[2px] font-medium text-shop-ink outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]"
                     >
                       <option value="" disabled>
                         Seleccione una OP en almacén...
@@ -565,32 +566,32 @@ export default function CreateSalidaModal({
                 )}
 
                 {opExistingSalida && (
-                  <div className="p-3 rounded-xl border bg-amber-50 text-amber-800 border-amber-200 text-xs font-medium flex items-center gap-2">
+                  <div className="p-3 rounded-[2px] border bg-amber-50 text-amber-800 border-amber-200 text-xs font-medium flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                     <span>Ya existe una salida registrada para esta OP: <strong>{opExistingSalida.id} ({opExistingSalida.status})</strong></span>
                   </div>
                 )}
 
                 {selectedOp && (
-                  <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between text-xs border-b border-slate-200 pb-2">
-                      <span className="font-bold text-slate-800 font-mono">OP: {selectedOp.id}</span>
-                      <span className="font-mono text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-black">
+                  <div className="bg-shop-light/70 p-4 rounded-[2px] border border-shop-line space-y-3">
+                    <div className="flex items-center justify-between text-xs border-b border-shop-line pb-2">
+                      <span className="font-medium text-shop-ink tabular-nums">OP: {selectedOp.id}</span>
+                      <span className="tabular-nums text-[11px] bg-shop-light text-shop-blue px-2 py-0.5 rounded-[2px] font-semibold">
                         Etapa: {selectedOp.currentStage}
                       </span>
                     </div>
 
                     <div className="space-y-2">
-                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                      <p className="text-[11px] font-semibold text-shop-muted">
                         Prendas producidas en esta OP:
                       </p>
                       {selectedOp.items?.map((it, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between text-xs bg-white p-2.5 rounded-lg border border-slate-200 font-mono"
+                          className="flex items-center justify-between text-xs bg-white p-2.5 rounded-[2px] border border-shop-line tabular-nums"
                         >
-                          <span className="font-bold text-slate-800">{it.productName || it.productId}</span>
-                          <span className="font-black text-blue-600">
+                          <span className="font-medium text-shop-ink">{it.productName || it.productId}</span>
+                          <span className="font-semibold text-shop-blue">
                             {(it.quantityOrdered || 0) + (it.quantityExtras || 0)} Uds {it.selectedSize ? `(${it.selectedSize})` : ""}
                           </span>
                         </div>
@@ -604,15 +605,15 @@ export default function CreateSalidaModal({
             {/* SOURCE: MANUAL */}
             {sourceType === "manual" && (
               <div className="space-y-4">
-                <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200 space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1">
+                <div className="bg-shop-light/70 p-4 rounded-[2px] border border-shop-line space-y-3">
+                  <label className="text-[11px] font-semibold text-shop-muted pl-1">
                     Agregar Prenda Manual
                   </label>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <select
                       value={manualProductId}
                       onChange={(e) => setManualProductId(e.target.value)}
-                      className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none"
+                      className="flex-1 px-3 py-2 bg-white border border-shop-line rounded-[2px] font-medium text-shop-muted outline-none min-h-10 min-w-0 text-base sm:text-[13px]"
                     >
                       <option value="" disabled>
                         Seleccione producto...
@@ -629,7 +630,7 @@ export default function CreateSalidaModal({
                       placeholder="Talla (S, M, L)"
                       value={manualSize}
                       onChange={(e) => setManualSize(e.target.value)}
-                      className="w-24 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold uppercase outline-none"
+                      className="w-24 px-3 py-2 bg-white border border-shop-line rounded-[2px] font-medium outline-none min-h-10 min-w-0 text-base sm:text-[13px]"
                     />
 
                     <input
@@ -638,13 +639,13 @@ export default function CreateSalidaModal({
                       placeholder="Cant"
                       value={manualQuantity}
                       onChange={(e) => setManualQuantity(Number(e.target.value))}
-                      className="w-20 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold outline-none"
+                      className="w-20 px-3 py-2 bg-white border border-shop-line rounded-[2px] tabular-nums font-medium outline-none min-h-10 min-w-0 text-base sm:text-[13px]"
                     />
 
                     <button
                       type="button"
                       onClick={handleAddManualItem}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 flex items-center justify-center gap-1 shadow-md shadow-blue-200"
+                      className="px-4 py-2 bg-shop-ink text-white rounded-[2px] text-xs font-medium hover:bg-shop-ink flex items-center justify-center gap-1 min-h-9"
                     >
                       <Plus className="w-4 h-4" /> Agregar
                     </button>
@@ -655,18 +656,18 @@ export default function CreateSalidaModal({
                       {manualItems.map((item, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between text-xs bg-white p-2.5 rounded-lg border border-slate-200"
+                          className="flex items-center justify-between text-xs bg-white p-2.5 rounded-[2px] border border-shop-line"
                         >
                           <div>
-                            <p className="font-bold text-slate-800">{item.productName}</p>
-                            <p className="text-[10px] text-slate-500 font-mono">
+                            <p className="font-medium text-shop-ink">{item.productName}</p>
+                            <p className="text-[11px] text-shop-muted tabular-nums">
                               Cant: {item.quantity} Uds • Talla: {item.selectedSize}
                             </p>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleRemoveManualItem(idx)}
-                            className="p-1 text-slate-400 hover:text-red-500"
+                            className="p-1 text-shop-muted hover:text-red-500"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -674,8 +675,8 @@ export default function CreateSalidaModal({
                       ))}
                     </div>
                   ) : (
-                    <div className="py-6 text-center border-2 border-dashed border-slate-200 rounded-xl">
-                      <p className="text-[10px] font-bold text-slate-400 font-mono uppercase">
+                    <div className="py-6 text-center border-2 border-dashed border-shop-line rounded-[2px]">
+                      <p className="text-[11px] font-medium text-shop-muted tabular-nums">
                         Agregue las prendas para la salida manual
                       </p>
                     </div>
@@ -685,9 +686,9 @@ export default function CreateSalidaModal({
             )}
 
             {/* Additional Fields: Reason and Notes */}
-            <div className="space-y-3 pt-1 border-t border-slate-100">
+            <div className="space-y-3 pt-1 border-t border-shop-line">
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">
+                <label className="text-[11px] font-semibold text-shop-muted pl-1">
                   Motivo / Observaciones
                 </label>
                 <input
@@ -701,33 +702,33 @@ export default function CreateSalidaModal({
                       ? "Ejem: Salida de lote completado para entrega"
                       : "Ejem: Ajuste de inventario, Merma o Muestra comercial"
                   }
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-4 py-2.5 bg-white border border-shop-line rounded-[2px] font-medium outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">
+                <label className="text-[11px] font-semibold text-shop-muted pl-1">
                   N° Guía / Transportista / Responsable (Opcional)
                 </label>
                 <div className="relative">
-                  <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-shop-muted" />
                   <input
                     type="text"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Ejem: Guía GR-0012, Courier Olva / Carlos Almacenero"
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-shop-line rounded-[2px] tabular-nums outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]"
                   />
                 </div>
               </div>
 
               {/* Auto Accept Switch */}
-              <div className="flex items-center justify-between p-3 bg-blue-50/50 rounded-xl border border-blue-100">
+              <div className="flex items-center justify-between p-3 bg-shop-light/50 rounded-[2px] border border-shop-light">
                 <div>
-                  <p className="text-xs font-bold text-slate-800">
+                  <p className="text-xs font-medium text-shop-ink">
                     Aprobar y Descontar Stock Inmediatamente
                   </p>
-                  <p className="text-[10px] text-slate-500 font-medium">
+                  <p className="text-[11px] text-shop-muted font-medium">
                     {autoAccept
                       ? "Descuenta el stock físico, asienta en Kardex y activa el botón de Despacho en Ventas."
                       : "Crea la salida en estado 'Pendiente' para que el almacenero la verifique luego."}
@@ -737,7 +738,7 @@ export default function CreateSalidaModal({
                   type="checkbox"
                   checked={autoAccept}
                   onChange={(e) => setAutoAccept(e.target.checked)}
-                  className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                  className="w-5 h-5 text-shop-blue rounded-[2px] focus:ring-shop-blue cursor-pointer"
                 />
               </div>
             </div>
@@ -747,14 +748,14 @@ export default function CreateSalidaModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-3 px-4 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors uppercase tracking-wider"
+                className="flex-1 py-3 px-4 border border-shop-line rounded-[2px] text-xs font-medium text-shop-muted hover:bg-shop-light transition-colors min-h-9"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || (sourceType === "order" && !selectedOrderId) || (sourceType === "op" && !selectedOpId) || (sourceType === "manual" && manualItems.length === 0)}
-                className="flex-1 py-3 px-4 bg-slate-950 hover:bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 bg-shop-ink hover:bg-shop-ink text-white rounded-[2px] text-xs font-semibold transition-all disabled:bg-slate-200 disabled:text-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-9"
               >
                 <Truck className="w-4 h-4" />
                 {autoAccept ? "Aprobar y Habilitar Despacho" : "Crear Salida Pendiente"}
@@ -763,6 +764,6 @@ export default function CreateSalidaModal({
           </form>
         </div>
       </motion.div>
-    </div>
+    </AdminDialog>
   );
 }

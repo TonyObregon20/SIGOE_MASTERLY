@@ -1,3 +1,4 @@
+import AdminDialog from "@/components/admin/AdminDialog";
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -415,37 +416,37 @@ export default function WarehouseReportModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[130] flex items-center justify-center p-2 sm:p-4 overflow-hidden">
+      <AdminDialog label="Reporte de almacén" onClose={onClose} className="fixed inset-0 z-[130] flex items-center justify-center p-2 sm:p-4 overflow-hidden">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+          className="fixed inset-0 bg-shop-ink/60 backdrop-blur-xs"
         />
 
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
-          className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-6xl overflow-hidden z-[140] flex flex-col h-[92vh] max-h-[880px] relative"
+          className="bg-white rounded-[2px] border border-shop-line w-full max-w-6xl overflow-y-auto z-[140] flex flex-col h-[92vh] max-h-[880px] relative max-h-[90dvh]"
         >
           {/* Modal Header */}
-          <div className="bg-slate-900 text-white px-5 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 shrink-0">
+          <div className="bg-shop-ink text-white px-5 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-600/30 border border-blue-500/40 flex items-center justify-center text-blue-400 shrink-0">
+              <div className="w-10 h-10 rounded-[2px] bg-shop-ink/30 border border-shop-line/40 flex items-center justify-center text-blue-400 shrink-0">
                 <FileSpreadsheet className="w-5 h-5" />
               </div>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-black text-base md:text-lg tracking-tight text-white font-mono">
+                  <h3 className="font-semibold text-base md:text-lg tracking-tight text-white tabular-nums">
                     Reporte de Almacén: Control por Pedido, Ingresos y Salidas
                   </h3>
-                  <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono">
+                  <span className="text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full tabular-nums">
                     Auditoría ORD
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-300">
                   Trazabilidad directa por pedido (ORD): relación de ingreso de taller y salida de despacho, balance y kardex.
                 </p>
               </div>
@@ -455,7 +456,7 @@ export default function WarehouseReportModal({
               <button
                 type="button"
                 onClick={handleDownloadExcel}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-emerald-900/30 flex items-center gap-1.5 active:scale-95 font-mono"
+                className="px-3 py-1.5 bg-shop-ink hover:bg-shop-blue text-white rounded-[2px] text-xs font-semibold transition-all flex items-center gap-1.5 tabular-nums min-h-9"
                 title="Descargar en Excel CSV"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -465,7 +466,7 @@ export default function WarehouseReportModal({
               <button
                 type="button"
                 onClick={handleDownloadPDF}
-                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-blue-900/30 flex items-center gap-1.5 active:scale-95 font-mono"
+                className="px-3 py-1.5 bg-shop-ink hover:bg-shop-ink text-white rounded-[2px] text-xs font-semibold transition-all flex items-center gap-1.5 tabular-nums min-h-9"
                 title="Descargar en PDF oficial"
               >
                 <Printer className="w-3.5 h-3.5" />
@@ -475,7 +476,7 @@ export default function WarehouseReportModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+                className="p-1.5 rounded-[2px] text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
                 title="Cerrar modal"
               >
                 <X className="w-5 h-5" />
@@ -484,58 +485,58 @@ export default function WarehouseReportModal({
           </div>
 
           {/* Quick KPI Summary Banner */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 px-5 py-2.5 bg-slate-50 border-b border-slate-200 shrink-0">
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 px-5 py-2.5 bg-shop-light border-b border-shop-line shrink-0">
+            <div className="bg-white p-2.5 rounded-[2px] border border-shop-line/80 flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-[2px] bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
                 <ArrowDownLeft className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">Total Ingresos</p>
-                <p className="text-base font-black text-emerald-600 font-mono leading-tight">
-                  +{summaryMetrics.totalIngresos} <span className="text-[10px] font-semibold text-slate-400">uds</span>
+                <p className="text-[11px] font-semibold text-shop-muted">Total Ingresos</p>
+                <p className="text-base font-semibold text-emerald-600 tabular-nums leading-tight">
+                  +{summaryMetrics.totalIngresos} <span className="text-[11px] font-semibold text-shop-muted">uds</span>
                 </p>
               </div>
             </div>
 
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0">
+            <div className="bg-white p-2.5 rounded-[2px] border border-shop-line/80 flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-[2px] bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0">
                 <ArrowUpRight className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">Total Salidas</p>
-                <p className="text-base font-black text-rose-600 font-mono leading-tight">
-                  -{summaryMetrics.totalSalidas} <span className="text-[10px] font-semibold text-slate-400">uds</span>
+                <p className="text-[11px] font-semibold text-shop-muted">Total Salidas</p>
+                <p className="text-base font-semibold text-rose-600 tabular-nums leading-tight">
+                  -{summaryMetrics.totalSalidas} <span className="text-[11px] font-semibold text-shop-muted">uds</span>
                 </p>
               </div>
             </div>
 
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+            <div className="bg-white p-2.5 rounded-[2px] border border-shop-line/80 flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-[2px] bg-shop-light text-shop-blue border border-shop-light flex items-center justify-center shrink-0">
                 <TrendingUp className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">Saldo Neto</p>
-                <p className={`text-base font-black font-mono leading-tight ${summaryMetrics.saldoNeto >= 0 ? "text-blue-600" : "text-amber-600"}`}>
-                  {summaryMetrics.saldoNeto >= 0 ? "+" : ""}{summaryMetrics.saldoNeto} <span className="text-[10px] font-semibold text-slate-400">uds</span>
+                <p className="text-[11px] font-semibold text-shop-muted">Saldo Neto</p>
+                <p className={`text-base font-semibold tabular-nums leading-tight ${summaryMetrics.saldoNeto >= 0 ? "text-shop-blue" : "text-amber-600"}`}>
+                  {summaryMetrics.saldoNeto >= 0 ? "+" : ""}{summaryMetrics.saldoNeto} <span className="text-[11px] font-semibold text-shop-muted">uds</span>
                 </p>
               </div>
             </div>
 
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 border border-purple-100 flex items-center justify-center shrink-0">
+            <div className="bg-white p-2.5 rounded-[2px] border border-shop-line/80 flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-[2px] bg-purple-50 text-purple-700 border border-purple-100 flex items-center justify-center shrink-0">
                 <ShoppingBag className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">Pedidos / ORD</p>
-                <p className="text-base font-black text-purple-700 font-mono leading-tight">
-                  {summaryMetrics.totalPedidos} <span className="text-[10px] font-semibold text-slate-400">órdenes</span>
+                <p className="text-[11px] font-semibold text-shop-muted">Pedidos / ORD</p>
+                <p className="text-base font-semibold text-purple-700 tabular-nums leading-tight">
+                  {summaryMetrics.totalPedidos} <span className="text-[11px] font-semibold text-shop-muted">órdenes</span>
                 </p>
               </div>
             </div>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex border-b border-slate-200 bg-white px-5 text-xs font-bold uppercase tracking-wider text-slate-500 overflow-x-auto shrink-0 min-h-[44px]">
+          <div className="flex border-b border-shop-line bg-white px-5 text-xs font-medium text-shop-muted overflow-x-auto shrink-0 min-h-[44px]">
             {[
               { id: "orders", label: "Trazabilidad por Pedido (ORD)", icon: ShoppingBag, count: filteredOrders.length },
               { id: "general", label: "Movimientos Generales", icon: Layers, count: filteredMovements.length },
@@ -549,15 +550,15 @@ export default function WarehouseReportModal({
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 py-2.5 px-4 border-b-2 transition-all shrink-0 font-mono text-xs ${
+                  className={`flex items-center gap-2 py-2.5 px-4 border-b-2 transition-all shrink-0 tabular-nums text-xs ${
                     active
-                      ? "border-blue-600 text-blue-600 font-black bg-blue-50/40"
-                      : "border-transparent hover:text-slate-900 hover:border-slate-300"
+                      ? "border-shop-line text-shop-blue font-semibold bg-shop-light/40"
+                      : "border-transparent hover:text-shop-ink hover:border-slate-300"
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
                   <span>{tab.label}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${active ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-500"}`}>
+                  <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-medium ${active ? "bg-shop-light text-shop-blue" : "bg-shop-light text-shop-muted"}`}>
                     {tab.count}
                   </span>
                 </button>
@@ -566,23 +567,23 @@ export default function WarehouseReportModal({
           </div>
 
           {/* Filters Toolbar */}
-          <div className="px-5 py-2.5 bg-slate-50/70 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2.5 text-xs shrink-0">
+          <div className="px-5 py-2.5 bg-shop-light/70 border-b border-shop-line flex flex-wrap items-center justify-between gap-2.5 text-xs shrink-0">
             <div className="flex flex-wrap items-center gap-2">
               {/* Type Filter */}
-              <div className="flex items-center bg-white border border-slate-200 rounded-xl p-0.5 shadow-2xs font-mono">
+              <div className="flex items-center bg-white border border-shop-line rounded-[2px] p-0.5 tabular-nums">
                 {["Todos", "Ingreso", "Salida"].map((t) => (
                   <button
                     key={t}
                     type="button"
                     onClick={() => setTypeFilter(t)}
-                    className={`px-2.5 py-1 rounded-lg font-bold text-[11px] uppercase tracking-wider transition-all ${
+                    className={`px-2.5 py-1 rounded-[2px] font-medium text-[11px] transition-all ${
                       typeFilter === t
                         ? t === "Ingreso"
-                          ? "bg-emerald-600 text-white shadow-2xs"
+                          ? "bg-shop-ink text-white"
                           : t === "Salida"
-                          ? "bg-rose-600 text-white shadow-2xs"
-                          : "bg-slate-900 text-white shadow-2xs"
-                        : "text-slate-600 hover:text-slate-900"
+                          ? "bg-rose-600 text-white"
+                          : "bg-shop-ink text-white"
+                        : "text-shop-muted hover:text-shop-ink"
                     }`}
                   >
                     {t === "Todos" ? "Todos" : t === "Ingreso" ? "+ Ingresos" : "- Salidas"}
@@ -594,7 +595,7 @@ export default function WarehouseReportModal({
               <select
                 value={orderTypeFilter}
                 onChange={(e) => setOrderTypeFilter(e.target.value)}
-                className="bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs outline-none font-mono"
+                className="bg-white border border-shop-line rounded-[2px] px-2.5 py-1 font-medium text-shop-muted outline-none tabular-nums min-h-10 min-w-0 text-base sm:text-[13px]"
               >
                 <option value="Todos">Tipo: Todos</option>
                 <option value="A Pedido">Tipo: A Pedido</option>
@@ -602,12 +603,12 @@ export default function WarehouseReportModal({
               </select>
 
               {/* Date Preset */}
-              <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2.5 py-1 shadow-2xs">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              <div className="flex items-center gap-1 bg-white border border-shop-line rounded-[2px] px-2.5 py-1">
+                <Calendar className="w-3.5 h-3.5 text-shop-muted" />
                 <select
                   value={datePreset}
                   onChange={(e) => setDatePreset(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer font-mono"
+                  className="bg-transparent font-medium text-shop-muted outline-none cursor-pointer tabular-nums min-h-10 min-w-0 text-base sm:text-[13px]"
                 >
                   <option value="Todo">Todo el periodo</option>
                   <option value="Hoy">Solo Hoy</option>
@@ -618,19 +619,19 @@ export default function WarehouseReportModal({
               </div>
 
               {datePreset === "custom" && (
-                <div className="flex items-center gap-1.5 animate-in fade-in">
+                <div className="flex items-center gap-1.5 fade-in">
                   <input
                     type="date"
                     value={customStartDate}
                     onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold outline-none"
+                    className="px-2 py-1 bg-white border border-shop-line rounded-[2px] tabular-nums font-medium outline-none min-h-10 min-w-0 text-base sm:text-[13px]"
                   />
-                  <span className="text-slate-400">-</span>
+                  <span className="text-shop-muted">-</span>
                   <input
                     type="date"
                     value={customEndDate}
                     onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold outline-none"
+                    className="px-2 py-1 bg-white border border-shop-line rounded-[2px] tabular-nums font-medium outline-none min-h-10 min-w-0 text-base sm:text-[13px]"
                   />
                 </div>
               )}
@@ -639,7 +640,7 @@ export default function WarehouseReportModal({
               <select
                 value={selectedProductId}
                 onChange={(e) => setSelectedProductId(e.target.value)}
-                className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs outline-none max-w-[180px] truncate"
+                className="bg-white border border-shop-line rounded-[2px] px-3 py-1.5 font-medium text-shop-muted outline-none max-w-[180px] truncate min-h-10 min-w-0 text-base sm:text-[13px]"
               >
                 <option value="Todos">Todos los Productos</option>
                 {products.map((p) => (
@@ -652,19 +653,19 @@ export default function WarehouseReportModal({
 
             {/* Search Input */}
             <div className="relative w-full sm:w-60">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-3.5 h-3.5 text-shop-muted absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Buscar ORD, OP, ID o prenda..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1 bg-white border border-slate-200 rounded-xl text-xs font-semibold placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full pl-9 pr-3 py-1 bg-white border border-shop-line rounded-[2px] font-semibold placeholder:text-shop-muted outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-shop-muted hover:text-shop-muted"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -677,39 +678,39 @@ export default function WarehouseReportModal({
             {/* TAB 1: TRAZABILIDAD POR PEDIDO (ORD) - DEFAULT */}
             {activeTab === "orders" && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs text-slate-500 pb-1">
-                  <span className="font-bold">
-                    Mostrando <span className="text-slate-900 font-mono font-black">{filteredOrders.length}</span> órdenes de pedido con su respectivo Ingreso y Salida
+                <div className="flex items-center justify-between text-xs text-shop-muted pb-1">
+                  <span className="font-medium">
+                    Mostrando <span className="text-shop-ink tabular-nums font-semibold">{filteredOrders.length}</span> órdenes de pedido con su respectivo Ingreso y Salida
                   </span>
-                  <span className="text-[11px] italic font-serif">
+                  <span className="text-[11px] font-shop">
                     Cada pedido refleja el ID de ingreso recibido de taller y el ID de salida despachado.
                   </span>
                 </div>
 
-                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider font-mono">
+                <div className="border border-shop-line rounded-[2px] overflow-x-auto max-w-full">
+                  <table className="w-full text-left border-collapse min-w-[680px] text-[13px]">
+                    <thead className="bg-shop-ink text-white text-[11px] font-semibold tabular-nums">
                       <tr>
-                        <th className="py-3 px-3.5 w-24">Fecha</th>
-                        <th className="py-3 px-4">ORD / Pedido (Tipo)</th>
-                        <th className="py-3 px-4">ID Operación (Ingreso / Salida)</th>
-                        <th className="py-3 px-4">Prendas y Modelos</th>
-                        <th className="py-3 px-4 text-right">Cantidades (Flujo)</th>
-                        <th className="py-3 px-3.5 text-center">Estado</th>
+                        <th className="py-3 px-3.5 w-24 whitespace-nowrap">Fecha</th>
+                        <th className="py-3 px-4 whitespace-nowrap">ORD / Pedido (Tipo)</th>
+                        <th className="py-3 px-4 whitespace-nowrap">ID Operación (Ingreso / Salida)</th>
+                        <th className="py-3 px-4 whitespace-nowrap">Prendas y Modelos</th>
+                        <th className="py-3 px-4 text-right whitespace-nowrap">Cantidades (Flujo)</th>
+                        <th className="py-3 px-3.5 text-center whitespace-nowrap">Estado</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
+                    <tbody className="divide-y divide-shop-line text-xs">
                       {filteredOrders.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="py-12 text-center text-slate-400 italic">
+                          <td colSpan={6} className="py-12 text-center text-shop-muted">
                             No se encontraron pedidos con los filtros seleccionados.
                           </td>
                         </tr>
                       ) : (
                         filteredOrders.map((ord, idx) => (
-                          <tr key={ord.orderId || `ord-${idx}`} className="hover:bg-slate-50/80 transition-colors">
+                          <tr key={ord.orderId || `ord-${idx}`} className="hover:bg-shop-light/80 transition-colors">
                             {/* 1. FECHA AL INICIO */}
-                            <td className="py-3 px-3.5 font-mono font-bold text-slate-500 text-[11px] align-top">
+                            <td className="py-3 px-3.5 tabular-nums font-medium text-shop-muted text-[11px] align-top">
                               {ord.date || "-"}
                             </td>
 
@@ -717,25 +718,25 @@ export default function WarehouseReportModal({
                             <td className="py-3 px-4 align-top">
                               <div className="space-y-1">
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="font-mono font-black text-slate-900 text-xs bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                  <span className="tabular-nums font-semibold text-shop-ink text-xs bg-shop-light px-2 py-0.5 rounded-[2px] border border-shop-line">
                                     {ord.orderId}
                                   </span>
                                   <span
-                                    className={`px-2 py-0.2 rounded text-[10px] font-black uppercase font-mono border ${
+                                    className={`px-2 py-0.2 rounded-[2px] text-[11px] font-semibold tabular-nums border ${
                                       ord.orderType === "A Pedido"
                                         ? "bg-purple-50 text-purple-700 border-purple-200"
                                         : ord.orderType === "Directo"
-                                        ? "bg-blue-50 text-blue-700 border-blue-200"
-                                        : "bg-slate-100 text-slate-700 border-slate-200"
+                                        ? "bg-shop-light text-shop-blue border-shop-line"
+                                        : "bg-shop-light text-shop-muted border-shop-line"
                                     }`}
                                   >
                                     {ord.orderType}
                                   </span>
                                 </div>
                                 {ord.opId && (
-                                  <div className="flex items-center gap-1 text-[10px] font-mono text-slate-500">
-                                    <span className="font-bold text-slate-400">OP Origen:</span>
-                                    <span className="bg-blue-50 text-blue-700 px-1 rounded font-semibold">{ord.opId}</span>
+                                  <div className="flex items-center gap-1 text-[11px] tabular-nums text-shop-muted">
+                                    <span className="font-medium text-shop-muted">OP Origen:</span>
+                                    <span className="bg-shop-light text-shop-blue px-1 rounded-[2px] font-semibold">{ord.opId}</span>
                                   </div>
                                 )}
                               </div>
@@ -746,79 +747,79 @@ export default function WarehouseReportModal({
                               <div className="space-y-1.5">
                                 {/* Ingreso correspondiente */}
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-0.5">
+                                  <span className="px-1.5 py-0.2 rounded-[2px] text-[11px] font-semibold tabular-nums bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-0.5">
                                     <ArrowDownLeft className="w-2.5 h-2.5 text-emerald-600" /> Ingreso:
                                   </span>
                                   {ord.ingresos.length > 0 ? (
                                     ord.ingresos.map((ing, iIdx) => (
                                       <span
                                         key={iIdx}
-                                        className="font-mono font-bold text-slate-800 text-xs bg-white px-1.5 py-0.2 rounded border border-slate-200"
+                                        className="tabular-nums font-medium text-shop-ink text-xs bg-white px-1.5 py-0.2 rounded-[2px] border border-shop-line"
                                       >
                                         {ing.id}{" "}
-                                        <span className="text-emerald-600 font-black text-[11px]">(+{ing.quantity}u)</span>
+                                        <span className="text-emerald-600 font-semibold text-[11px]">(+{ing.quantity}u)</span>
                                       </span>
                                     ))
                                   ) : (
-                                    <span className="text-slate-400 italic text-[10px] font-mono">Pendiente ingreso</span>
+                                    <span className="text-shop-muted text-[11px] tabular-nums">Pendiente ingreso</span>
                                   )}
                                 </div>
 
                                 {/* Salida correspondiente */}
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase font-mono bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-0.5">
+                                  <span className="px-1.5 py-0.2 rounded-[2px] text-[11px] font-semibold tabular-nums bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-0.5">
                                     <ArrowUpRight className="w-2.5 h-2.5 text-rose-600" /> Salida:
                                   </span>
                                   {ord.salidas.length > 0 ? (
                                     ord.salidas.map((sal, sIdx) => (
                                       <span
                                         key={sIdx}
-                                        className="font-mono font-bold text-slate-800 text-xs bg-white px-1.5 py-0.2 rounded border border-slate-200"
+                                        className="tabular-nums font-medium text-shop-ink text-xs bg-white px-1.5 py-0.2 rounded-[2px] border border-shop-line"
                                       >
                                         {sal.id}{" "}
-                                        <span className="text-rose-600 font-black text-[11px]">(-{sal.quantity}u)</span>
+                                        <span className="text-rose-600 font-semibold text-[11px]">(-{sal.quantity}u)</span>
                                       </span>
                                     ))
                                   ) : (
-                                    <span className="text-slate-400 italic text-[10px] font-mono">Sin salida (En almacén)</span>
+                                    <span className="text-shop-muted text-[11px] tabular-nums">Sin salida (En almacén)</span>
                                   )}
                                 </div>
                               </div>
                             </td>
 
                             {/* 4. PRENDAS Y MODELOS */}
-                            <td className="py-3 px-4 align-top text-slate-700">
+                            <td className="py-3 px-4 align-top text-shop-muted">
                               {ord.items && ord.items.length > 0 ? (
                                 <div className="space-y-0.5">
                                   {ord.items.map((it, itIdx) => (
                                     <div key={itIdx} className="flex items-center gap-1.5 text-xs">
-                                      <span className="font-semibold text-slate-800">{it.productName || "Prenda"}</span>
-                                      <span className="text-[10px] font-mono text-slate-400">({it.quantity}u)</span>
+                                      <span className="font-semibold text-shop-ink">{it.productName || "Prenda"}</span>
+                                      <span className="text-[11px] tabular-nums text-shop-muted">({it.quantity}u)</span>
                                     </div>
                                   ))}
                                 </div>
                               ) : (
-                                <span className="italic text-slate-400 text-xs">Prendas según orden</span>
+                                <span className="text-shop-muted text-xs">Prendas según orden</span>
                               )}
                             </td>
 
                             {/* 5. CANTIDADES (FLUJO) */}
-                            <td className="py-3 px-4 align-top text-right font-mono">
+                            <td className="py-3 px-4 align-top text-right tabular-nums">
                               <div className="space-y-0.5">
                                 <div className="text-xs">
-                                  <span className="text-emerald-600 font-bold">+{ord.totalIngreso}u</span>
+                                  <span className="text-emerald-600 font-medium">+{ord.totalIngreso}u</span>
                                   <span className="text-slate-300 mx-1">/</span>
-                                  <span className="text-rose-600 font-bold">-{ord.totalSalida}u</span>
+                                  <span className="text-rose-600 font-medium">-{ord.totalSalida}u</span>
                                 </div>
-                                <div className="text-[10px] font-bold text-slate-500">
+                                <div className="text-[11px] font-medium text-shop-muted">
                                   Saldo:{" "}
                                   <span
                                     className={
                                       ord.balance === 0
-                                        ? "text-slate-600 font-black"
+                                        ? "text-shop-muted font-semibold"
                                         : ord.balance > 0
-                                        ? "text-blue-600 font-black"
-                                        : "text-amber-600 font-black"
+                                        ? "text-shop-blue font-semibold"
+                                        : "text-amber-600 font-semibold"
                                     }
                                   >
                                     {ord.balance >= 0 ? "+" : ""}{ord.balance} uds
@@ -830,20 +831,20 @@ export default function WarehouseReportModal({
                             {/* 6. ESTADO */}
                             <td className="py-3 px-3.5 align-top text-center">
                               <span
-                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase font-mono tracking-wider border ${
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold tabular-nums border ${
                                   ord.orderStatus.includes("Completado")
                                     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                     : ord.orderStatus.includes("Almacén")
-                                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                                    ? "bg-shop-light text-shop-blue border-shop-line"
                                     : ord.orderStatus.includes("Parcial")
                                     ? "bg-amber-50 text-amber-700 border-amber-200"
-                                    : "bg-slate-100 text-slate-700 border-slate-200"
+                                    : "bg-shop-light text-shop-muted border-shop-line"
                                 }`}
                               >
                                 {ord.orderStatus.includes("Completado") ? (
                                   <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                                 ) : (
-                                  <Clock className="w-3 h-3 text-blue-500" />
+                                  <Clock className="w-3 h-3 text-shop-blue" />
                                 )}
                                 {ord.orderStatus}
                               </span>
@@ -860,33 +861,33 @@ export default function WarehouseReportModal({
             {/* TAB 2: GENERAL MOVEMENTS (Listado Cronológico) */}
             {activeTab === "general" && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs text-slate-500 pb-1">
-                  <span className="font-bold">
-                    Mostrando <span className="text-slate-900 font-mono font-black">{filteredMovements.length}</span> operaciones individuales de almacén
+                <div className="flex items-center justify-between text-xs text-shop-muted pb-1">
+                  <span className="font-medium">
+                    Mostrando <span className="text-shop-ink tabular-nums font-semibold">{filteredMovements.length}</span> operaciones individuales de almacén
                   </span>
-                  <span className="text-[11px] italic font-serif">
+                  <span className="text-[11px] font-shop">
                     Ordenado por fecha cronológica al inicio, indicando la orden y tipo de operación.
                   </span>
                 </div>
 
-                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider font-mono">
+                <div className="border border-shop-line rounded-[2px] overflow-x-auto max-w-full">
+                  <table className="w-full text-left border-collapse min-w-[680px] text-[13px]">
+                    <thead className="bg-shop-ink text-white text-[11px] font-semibold tabular-nums">
                       <tr>
-                        <th className="py-3 px-3.5 w-24">Fecha</th>
-                        <th className="py-3 px-4">ORD / Pedido (Tipo)</th>
-                        <th className="py-3 px-4">ID Operación</th>
-                        <th className="py-3 px-3.5">Tipo</th>
-                        <th className="py-3 px-4">Referencia / OP</th>
-                        <th className="py-3 px-4">Prendas y Modelos</th>
-                        <th className="py-3 px-4 text-right">Cantidad</th>
-                        <th className="py-3 px-3.5 text-center">Estado</th>
+                        <th className="py-3 px-3.5 w-24 whitespace-nowrap">Fecha</th>
+                        <th className="py-3 px-4 whitespace-nowrap">ORD / Pedido (Tipo)</th>
+                        <th className="py-3 px-4 whitespace-nowrap">ID Operación</th>
+                        <th className="py-3 px-3.5 whitespace-nowrap">Tipo</th>
+                        <th className="py-3 px-4 whitespace-nowrap">Referencia / OP</th>
+                        <th className="py-3 px-4 whitespace-nowrap">Prendas y Modelos</th>
+                        <th className="py-3 px-4 text-right whitespace-nowrap">Cantidad</th>
+                        <th className="py-3 px-3.5 text-center whitespace-nowrap">Estado</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
+                    <tbody className="divide-y divide-shop-line text-xs">
                       {filteredMovements.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-12 text-center text-slate-400 italic">
+                          <td colSpan={8} className="py-12 text-center text-shop-muted">
                             No se encontraron movimientos con los filtros seleccionados.
                           </td>
                         </tr>
@@ -894,23 +895,23 @@ export default function WarehouseReportModal({
                         filteredMovements.map((m, idx) => {
                           const orderCode = m.orderId || (m.originType === "Autostock" ? "Autostock" : "Directo");
                           return (
-                            <tr key={m.id || `m-${idx}`} className="hover:bg-slate-50/80 transition-colors">
+                            <tr key={m.id || `m-${idx}`} className="hover:bg-shop-light/80 transition-colors">
                               {/* 1. FECHA AL INICIO */}
-                              <td className="py-3 px-3.5 font-mono font-bold text-slate-500 text-[11px] align-top">
+                              <td className="py-3 px-3.5 tabular-nums font-medium text-shop-muted text-[11px] align-top">
                                 {m.date}
                               </td>
 
                               {/* 2. ORD / PEDIDO (TIPO) */}
                               <td className="py-3 px-4 align-top">
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="font-mono font-black text-slate-800 text-xs">
+                                  <span className="tabular-nums font-semibold text-shop-ink text-xs">
                                     {orderCode}
                                   </span>
                                   <span
-                                    className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase font-mono border ${
+                                    className={`px-1.5 py-0.2 rounded-[2px] text-[11px] font-semibold tabular-nums border ${
                                       m.originType === "A Pedido"
                                         ? "bg-purple-50 text-purple-700 border-purple-200"
-                                        : "bg-blue-50 text-blue-700 border-blue-200"
+                                        : "bg-shop-light text-shop-blue border-shop-line"
                                     }`}
                                   >
                                     {m.originType}
@@ -919,14 +920,14 @@ export default function WarehouseReportModal({
                               </td>
 
                               {/* 3. ID OPERACIÓN */}
-                              <td className="py-3 px-4 font-mono font-black text-slate-800 align-top">
+                              <td className="py-3 px-4 tabular-nums font-semibold text-shop-ink align-top">
                                 {m.id}
                               </td>
 
                               {/* 4. TIPO */}
                               <td className="py-3 px-3.5 align-top">
                                 <span
-                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border font-mono ${
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border tabular-nums ${
                                     m.type === "Ingreso"
                                       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                       : "bg-rose-50 text-rose-700 border-rose-200"
@@ -945,49 +946,49 @@ export default function WarehouseReportModal({
                               </td>
 
                               {/* 5. REFERENCIA / OP */}
-                              <td className="py-3 px-4 text-slate-700 align-top">
-                                <div className="font-bold text-xs flex items-center gap-1.5">
+                              <td className="py-3 px-4 text-shop-muted align-top">
+                                <div className="font-medium text-xs flex items-center gap-1.5">
                                   {m.opId && (
-                                    <span className="bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded border border-blue-200 font-mono text-[10px]">
+                                    <span className="bg-shop-light text-shop-blue px-1.5 py-0.2 rounded-[2px] border border-shop-line tabular-nums text-[11px]">
                                       OP: {m.opId}
                                     </span>
                                   )}
                                   {!m.opId && (
-                                    <span className="font-mono text-slate-500 text-[11px]">{m.reason}</span>
+                                    <span className="tabular-nums text-shop-muted text-[11px]">{m.reason}</span>
                                   )}
                                 </div>
                               </td>
 
                               {/* 6. PRENDAS Y MODELOS */}
-                              <td className="py-3 px-4 text-slate-600 align-top">
+                              <td className="py-3 px-4 text-shop-muted align-top">
                                 {m.items && m.items.length > 0 ? (
                                   <div className="space-y-0.5">
                                     {m.items.map((item, iIdx) => (
                                       <div key={iIdx} className="flex items-center gap-2">
-                                        <span className="font-semibold text-slate-800">{item.productName || "Prenda"}</span>
-                                        <span className="text-[10px] font-mono text-slate-400">({item.quantity}u)</span>
+                                        <span className="font-semibold text-shop-ink">{item.productName || "Prenda"}</span>
+                                        <span className="text-[11px] tabular-nums text-shop-muted">({item.quantity}u)</span>
                                       </div>
                                     ))}
                                   </div>
                                 ) : (
-                                  <span className="italic text-slate-400 text-[11px]">{m.reason || "Operación regular"}</span>
+                                  <span className="text-shop-muted text-[11px]">{m.reason || "Operación regular"}</span>
                                 )}
                               </td>
 
                               {/* 7. CANTIDAD */}
                               <td
-                                className={`py-3 px-4 text-right font-black font-mono text-sm align-top ${
+                                className={`py-3 px-4 text-right font-semibold tabular-nums text-sm align-top ${
                                   m.type === "Ingreso" ? "text-emerald-600" : "text-rose-600"
                                 }`}
                               >
                                 {m.type === "Ingreso" ? "+" : "-"}{m.totalQuantity}{" "}
-                                <span className="text-[10px] font-bold text-slate-400">uds</span>
+                                <span className="text-[11px] font-medium text-shop-muted">uds</span>
                               </td>
 
                               {/* 8. ESTADO */}
                               <td className="py-3 px-3.5 text-center align-top">
                                 <span
-                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider font-mono ${
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[2px] text-[11px] font-medium tabular-nums ${
                                     m.status === "Aceptado"
                                       ? "bg-emerald-100 text-emerald-800"
                                       : "bg-amber-100 text-amber-800"
@@ -1010,40 +1011,40 @@ export default function WarehouseReportModal({
             {/* TAB 3: PRODUCTS BREAKDOWN */}
             {activeTab === "products" && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between text-xs text-slate-500 pb-1">
-                  <span className="font-bold">
+                <div className="flex items-center justify-between text-xs text-shop-muted pb-1">
+                  <span className="font-medium">
                     Control de existencias, entradas y salidas consolidado por cada producto
                   </span>
-                  <span className="text-[11px] italic font-serif">
+                  <span className="text-[11px] font-shop">
                     Haz clic en una fila para desplegar su historial detallado de movimientos.
                   </span>
                 </div>
 
-                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider font-mono">
+                <div className="border border-shop-line rounded-[2px] overflow-x-auto max-w-full">
+                  <table className="w-full text-left border-collapse min-w-[680px] text-[13px]">
+                    <thead className="bg-shop-ink text-white text-[11px] font-semibold tabular-nums">
                       <tr>
-                        <th className="py-3 px-4">Producto / Modelo</th>
-                        <th className="py-3 px-4">Categoría</th>
-                        <th className="py-3 px-4 text-right">Stock Físico</th>
-                        <th className="py-3 px-4 text-right">Total Ingresos</th>
-                        <th className="py-3 px-4 text-right">Total Salidas</th>
-                        <th className="py-3 px-4 text-right">Saldo Neto</th>
-                        <th className="py-3 px-4 text-center">Acciones</th>
+                        <th className="py-3 px-4 whitespace-nowrap">Producto / Modelo</th>
+                        <th className="py-3 px-4 whitespace-nowrap">Categoría</th>
+                        <th className="py-3 px-4 text-right whitespace-nowrap">Stock Físico</th>
+                        <th className="py-3 px-4 text-right whitespace-nowrap">Total Ingresos</th>
+                        <th className="py-3 px-4 text-right whitespace-nowrap">Total Salidas</th>
+                        <th className="py-3 px-4 text-right whitespace-nowrap">Saldo Neto</th>
+                        <th className="py-3 px-4 text-center whitespace-nowrap">Acciones</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
+                    <tbody className="divide-y divide-shop-line text-xs">
                       {productSummaries.map((ps) => {
                         const isExpanded = expandedProductId === ps.product.id;
                         return (
                           <React.Fragment key={ps.product.id}>
                             <tr
                               onClick={() => setExpandedProductId(isExpanded ? null : ps.product.id)}
-                              className="hover:bg-slate-50/80 cursor-pointer transition-colors"
+                              className="hover:bg-shop-light/80 cursor-pointer transition-colors"
                             >
                               <td className="py-3 px-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
+                                  <div className="w-10 h-10 rounded-[2px] bg-shop-light border border-shop-line overflow-hidden shrink-0">
                                     {ps.product.image ? (
                                       <img
                                         src={ps.product.image}
@@ -1051,38 +1052,38 @@ export default function WarehouseReportModal({
                                         className="w-full h-full object-cover"
                                       />
                                     ) : (
-                                      <Package className="w-5 h-5 text-slate-400 m-auto mt-2.5" />
+                                      <Package className="w-5 h-5 text-shop-muted m-auto mt-2.5" />
                                     )}
                                   </div>
                                   <div>
-                                    <p className="font-bold text-slate-900">{ps.product.name}</p>
-                                    <p className="text-[10px] text-slate-400 font-mono">ID: {ps.product.id} • S/ {ps.product.price}</p>
+                                    <p className="font-medium text-shop-ink">{ps.product.name}</p>
+                                    <p className="text-[11px] text-shop-muted tabular-nums">ID: {ps.product.id} • S/ {ps.product.price}</p>
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-3 px-4 text-slate-600 font-medium">
-                                <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-bold">
+                              <td className="py-3 px-4 text-shop-muted font-medium">
+                                <span className="bg-shop-light text-shop-muted px-2 py-0.5 rounded-[2px] text-[11px] font-medium">
                                   {ps.product.category || "General"}
                                 </span>
                               </td>
-                              <td className="py-3 px-4 text-right font-black font-mono text-sm text-slate-900">
-                                {ps.stockPhysical} <span className="text-[10px] font-normal text-slate-400">uds</span>
+                              <td className="py-3 px-4 text-right font-semibold tabular-nums text-sm text-shop-ink">
+                                {ps.stockPhysical} <span className="text-[11px] font-normal text-shop-muted">uds</span>
                               </td>
-                              <td className="py-3 px-4 text-right font-black font-mono text-sm text-emerald-600">
-                                +{ps.totalIngresos} <span className="text-[10px] font-normal text-slate-400">uds</span>
+                              <td className="py-3 px-4 text-right font-semibold tabular-nums text-sm text-emerald-600">
+                                +{ps.totalIngresos} <span className="text-[11px] font-normal text-shop-muted">uds</span>
                               </td>
-                              <td className="py-3 px-4 text-right font-black font-mono text-sm text-rose-600">
-                                -{ps.totalSalidas} <span className="text-[10px] font-normal text-slate-400">uds</span>
+                              <td className="py-3 px-4 text-right font-semibold tabular-nums text-sm text-rose-600">
+                                -{ps.totalSalidas} <span className="text-[11px] font-normal text-shop-muted">uds</span>
                               </td>
-                              <td className="py-3 px-4 text-right font-black font-mono text-sm">
-                                <span className={ps.net >= 0 ? "text-blue-600" : "text-amber-600"}>
+                              <td className="py-3 px-4 text-right font-semibold tabular-nums text-sm">
+                                <span className={ps.net >= 0 ? "text-shop-blue" : "text-amber-600"}>
                                   {ps.net >= 0 ? "+" : ""}{ps.net} uds
                                 </span>
                               </td>
                               <td className="py-3 px-4 text-center">
                                 <button
                                   type="button"
-                                  className="text-[10px] font-black text-blue-600 hover:text-blue-800 uppercase font-mono tracking-wider flex items-center gap-1 mx-auto"
+                                  className="text-[11px] font-semibold text-shop-blue hover:text-shop-blue tabular-nums flex items-center gap-1 mx-auto"
                                 >
                                   <span>{isExpanded ? "Ocultar" : "Ver Detalle"}</span>
                                   {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -1093,41 +1094,41 @@ export default function WarehouseReportModal({
                             {/* Expanded Row */}
                             {isExpanded && (
                               <tr>
-                                <td colSpan={7} className="p-0 bg-slate-50/70 border-b border-slate-200">
+                                <td colSpan={7} className="p-0 bg-shop-light/70 border-b border-shop-line">
                                   <div className="p-4 md:p-5 space-y-3">
-                                    <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
-                                      <h5 className="text-[11px] font-black uppercase tracking-wider text-slate-800 font-mono flex items-center gap-1.5">
-                                        <FileText className="w-3.5 h-3.5 text-blue-600" /> Historial de Movimientos de {ps.product.name}
+                                    <div className="flex items-center justify-between border-b border-shop-line/80 pb-2">
+                                      <h5 className="text-[11px] font-semibold text-shop-ink tabular-nums flex items-center gap-1.5">
+                                        <FileText className="w-3.5 h-3.5 text-shop-blue" /> Historial de Movimientos de {ps.product.name}
                                       </h5>
-                                      <span className="text-[10px] text-slate-400 font-mono">
+                                      <span className="text-[11px] text-shop-muted tabular-nums">
                                         {ps.history.length} registros en Kardex
                                       </span>
                                     </div>
 
                                     {ps.history.length === 0 ? (
-                                      <p className="text-xs text-slate-400 italic py-3 text-center">
+                                      <p className="text-xs text-shop-muted py-3 text-center">
                                         No hay movimientos registrados para este producto todavía.
                                       </p>
                                     ) : (
-                                      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
-                                        <table className="w-full text-left text-xs">
-                                          <thead className="bg-slate-100 text-slate-500 text-[9px] uppercase font-mono font-bold">
+                                      <div className="bg-white rounded-[2px] border border-shop-line overflow-x-auto max-w-full">
+                                        <table className="w-full text-left text-xs min-w-[680px] text-[13px]">
+                                          <thead className="bg-shop-light text-shop-muted text-[11px] tabular-nums font-medium">
                                             <tr>
-                                              <th className="py-2 px-3">Fecha</th>
-                                              <th className="py-2 px-3">Operación</th>
-                                              <th className="py-2 px-3">Concepto / Glosa</th>
-                                              <th className="py-2 px-3">Referencia</th>
-                                              <th className="py-2 px-3 text-right">Cantidad</th>
-                                              <th className="py-2 px-3 text-right">Saldo Resultante</th>
+                                              <th className="py-2 px-3 whitespace-nowrap">Fecha</th>
+                                              <th className="py-2 px-3 whitespace-nowrap">Operación</th>
+                                              <th className="py-2 px-3 whitespace-nowrap">Concepto / Glosa</th>
+                                              <th className="py-2 px-3 whitespace-nowrap">Referencia</th>
+                                              <th className="py-2 px-3 text-right whitespace-nowrap">Cantidad</th>
+                                              <th className="py-2 px-3 text-right whitespace-nowrap">Saldo Resultante</th>
                                             </tr>
                                           </thead>
-                                          <tbody className="divide-y divide-slate-100">
+                                          <tbody className="divide-y divide-shop-line">
                                             {ps.history.map((h, hIdx) => (
-                                              <tr key={h._id || h.id || `ph-${hIdx}`} className="hover:bg-slate-50">
-                                                <td className="py-2 px-3 font-mono text-[10px] text-slate-500">{h.date}</td>
+                                              <tr key={h._id || h.id || `ph-${hIdx}`} className="hover:bg-shop-light">
+                                                <td className="py-2 px-3 tabular-nums text-[11px] text-shop-muted">{h.date}</td>
                                                 <td className="py-2 px-3">
                                                   <span
-                                                    className={`px-2 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                                    className={`px-2 py-0.2 rounded-[2px] text-[11px] font-medium ${
                                                       h.type === "Ingreso"
                                                         ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                                         : "bg-rose-50 text-rose-700 border border-rose-200"
@@ -1136,16 +1137,16 @@ export default function WarehouseReportModal({
                                                     {h.type}
                                                   </span>
                                                 </td>
-                                                <td className="py-2 px-3 font-medium text-slate-700">{h.reason}</td>
-                                                <td className="py-2 px-3 font-mono text-[10px] text-slate-500">{h.documentRef || "-"}</td>
+                                                <td className="py-2 px-3 font-medium text-shop-muted">{h.reason}</td>
+                                                <td className="py-2 px-3 tabular-nums text-[11px] text-shop-muted">{h.documentRef || "-"}</td>
                                                 <td
-                                                  className={`py-2 px-3 text-right font-mono font-bold ${
+                                                  className={`py-2 px-3 text-right tabular-nums font-medium ${
                                                     h.type === "Ingreso" ? "text-emerald-600" : "text-rose-600"
                                                   }`}
                                                 >
                                                   {h.type === "Ingreso" ? "+" : "-"}{h.quantity} uds
                                                 </td>
-                                                <td className="py-2 px-3 text-right font-mono font-black text-slate-900">
+                                                <td className="py-2 px-3 text-right tabular-nums font-semibold text-shop-ink">
                                                   {h.balance} uds
                                                 </td>
                                               </tr>
@@ -1170,32 +1171,32 @@ export default function WarehouseReportModal({
             {/* TAB 4: KARDEX LOG */}
             {activeTab === "kardex" && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs text-slate-500 pb-1">
-                  <span className="font-bold">
+                <div className="flex items-center justify-between text-xs text-shop-muted pb-1">
+                  <span className="font-medium">
                     Libro Diario de Movimientos de Kardex Valorizado y Físico
                   </span>
-                  <span className="text-[11px] italic font-serif">
+                  <span className="text-[11px] font-shop">
                     Registro inmutable con saldos acumulados de existencias.
                   </span>
                 </div>
 
-                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider font-mono">
+                <div className="border border-shop-line rounded-[2px] overflow-x-auto max-w-full">
+                  <table className="w-full text-left border-collapse min-w-[680px] text-[13px]">
+                    <thead className="bg-shop-ink text-white text-[11px] font-semibold tabular-nums">
                       <tr>
-                        <th className="py-3 px-4">Fecha</th>
-                        <th className="py-3 px-4">ID Prenda</th>
-                        <th className="py-3 px-4">Tipo</th>
-                        <th className="py-3 px-4">Glosa / Motivo</th>
-                        <th className="py-3 px-4">Referencia</th>
-                        <th className="py-3 px-4 text-right">Cantidad</th>
-                        <th className="py-3 px-4 text-right">Saldo Final</th>
+                        <th className="py-3 px-4 whitespace-nowrap">Fecha</th>
+                        <th className="py-3 px-4 whitespace-nowrap">ID Prenda</th>
+                        <th className="py-3 px-4 whitespace-nowrap">Tipo</th>
+                        <th className="py-3 px-4 whitespace-nowrap">Glosa / Motivo</th>
+                        <th className="py-3 px-4 whitespace-nowrap">Referencia</th>
+                        <th className="py-3 px-4 text-right whitespace-nowrap">Cantidad</th>
+                        <th className="py-3 px-4 text-right whitespace-nowrap">Saldo Final</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
+                    <tbody className="divide-y divide-shop-line text-xs">
                       {filteredKardex.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="py-12 text-center text-slate-400 italic">
+                          <td colSpan={7} className="py-12 text-center text-shop-muted">
                             No hay registros de Kardex en el sistema.
                           </td>
                         </tr>
@@ -1203,16 +1204,16 @@ export default function WarehouseReportModal({
                         filteredKardex.slice(-50).reverse().map((entry, idx) => {
                           const prod = products.find((p) => String(p.id) === String(entry.productId));
                           return (
-                            <tr key={entry._id || entry.id || `k-${idx}`} className="hover:bg-slate-50/80 transition-colors">
-                              <td className="py-3 px-4 font-mono font-bold text-slate-500 text-[11px]">
+                            <tr key={entry._id || entry.id || `k-${idx}`} className="hover:bg-shop-light/80 transition-colors">
+                              <td className="py-3 px-4 tabular-nums font-medium text-shop-muted text-[11px]">
                                 {entry.date}
                               </td>
                               <td className="py-3 px-4">
-                                <span className="font-bold text-slate-800">{prod ? prod.name : `Producto ${entry.productId}`}</span>
+                                <span className="font-medium text-shop-ink">{prod ? prod.name : `Producto ${entry.productId}`}</span>
                               </td>
                               <td className="py-3 px-4">
                                 <span
-                                  className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border font-mono ${
+                                  className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold border tabular-nums ${
                                     entry.type === "Ingreso"
                                       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                       : "bg-rose-50 text-rose-700 border-rose-200"
@@ -1221,20 +1222,20 @@ export default function WarehouseReportModal({
                                   {entry.type}
                                 </span>
                               </td>
-                              <td className="py-3 px-4 text-slate-700 font-medium">
+                              <td className="py-3 px-4 text-shop-muted font-medium">
                                 {entry.reason || "Ajuste de inventario"}
                               </td>
-                              <td className="py-3 px-4 font-mono text-[10px] text-slate-500">
+                              <td className="py-3 px-4 tabular-nums text-[11px] text-shop-muted">
                                 {entry.documentRef || "-"}
                               </td>
                               <td
-                                className={`py-3 px-4 text-right font-black font-mono text-sm ${
+                                className={`py-3 px-4 text-right font-semibold tabular-nums text-sm ${
                                   entry.type === "Ingreso" ? "text-emerald-600" : "text-rose-600"
                                 }`}
                               >
                                 {entry.type === "Ingreso" ? "+" : "-"}{entry.quantity} uds
                               </td>
-                              <td className="py-3 px-4 text-right font-black font-mono text-sm text-slate-900">
+                              <td className="py-3 px-4 text-right font-semibold tabular-nums text-sm text-shop-ink">
                                 {entry.balance} uds
                               </td>
                             </tr>
@@ -1249,9 +1250,9 @@ export default function WarehouseReportModal({
           </div>
 
           {/* Modal Footer */}
-          <div className="bg-slate-50 border-t border-slate-200 px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shrink-0">
-            <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
-              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+          <div className="bg-shop-light border-t border-shop-line px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shrink-0">
+            <div className="flex items-center gap-2 text-shop-muted tabular-nums text-[11px]">
+              <Sparkles className="w-3.5 h-3.5 text-shop-blue" />
               <span>Reporte sincronizado con MongoDB Atlas • Control de Órdenes ORD & Kardex</span>
             </div>
 
@@ -1259,21 +1260,21 @@ export default function WarehouseReportModal({
               <button
                 type="button"
                 onClick={handlePrint}
-                className="px-3.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 uppercase font-mono tracking-wider text-[11px]"
+                className="px-3.5 py-1.5 bg-white border border-shop-line hover:bg-shop-light text-shop-muted font-medium rounded-[2px] transition-all flex items-center gap-1.5 tabular-nums text-[11px] min-h-9"
               >
-                <Printer className="w-3.5 h-3.5 text-slate-500" /> Imprimir
+                <Printer className="w-3.5 h-3.5 text-shop-muted" /> Imprimir
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-sm uppercase font-mono tracking-wider text-[11px]"
+                className="px-4 py-1.5 bg-shop-ink hover:bg-shop-ink text-white font-medium rounded-[2px] transition-all tabular-nums text-[11px] min-h-9"
               >
                 Cerrar
               </button>
             </div>
           </div>
         </motion.div>
-      </div>
+      </AdminDialog>
     </AnimatePresence>
   );
 }

@@ -1,34 +1,15 @@
-import React from 'react';
-
-function StatCard({ label, value, icon: Icon, trend, color }) {
-  const borderColors = {
-    blue: "border-t-blue-500",
-    indigo: "border-t-indigo-500",
-    rose: "border-t-rose-500",
-    emerald: "border-t-emerald-500",
-    teal: "border-t-teal-500"
-  };
-  const iconColors = {
-    blue: "text-blue-600",
-    indigo: "text-indigo-600",
-    rose: "text-rose-600",
-    emerald: "text-emerald-600",
-    teal: "text-teal-600"
-  };
+export default function StatCard({ label, value, icon: Icon, trend, color }) {
+  const needsAttention = color === 'rose';
   return (
-    <div className={`bg-white p-4 border border-slate-200 rounded-xl shadow-sm border-t-4 ${borderColors[color] || 'border-t-slate-500'}`}>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
-        <Icon className={`w-4 h-4 ${iconColors[color] || 'text-slate-600'}`} />
+    <article className="flex min-w-0 flex-col justify-between gap-5 border border-shop-line bg-white p-5 sm:p-6">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-xs leading-5 text-shop-muted">{label}</p>
+        {Icon && <Icon size={18} strokeWidth={1.5} className={needsAttention ? 'shrink-0 text-rose-700' : 'shrink-0 text-shop-blue'} />}
       </div>
-      <div className="flex items-baseline gap-2">
-        <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
-        <span className={`text-[10px] font-bold ${trend && trend.includes("+") ? "text-emerald-500" : "text-slate-400"}`}>
-          {trend}
-        </span>
+      <div>
+        <p className="break-words text-[clamp(23px,2.3vw,30px)] leading-tight font-medium tracking-tight tabular-nums">{value}</p>
+        {trend && <p className={`mt-2 text-[11px] leading-5 ${needsAttention ? 'text-rose-700' : 'text-shop-muted'}`}>{trend}</p>}
       </div>
-    </div>
+    </article>
   );
 }
-
-export default StatCard;

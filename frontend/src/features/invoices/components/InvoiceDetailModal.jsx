@@ -1,3 +1,4 @@
+import AdminDialog from "@/components/admin/AdminDialog";
 import React from "react";
 import { ClipboardList, X, Printer } from "lucide-react";
 import { motion } from "motion/react";
@@ -168,39 +169,39 @@ export default function InvoiceDetailModal({ invoice, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+    <AdminDialog label="Detalle del comprobante" onClose={onClose} className="fixed inset-0 z-[150] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs"
+        className="absolute inset-0 bg-shop-ink/60 backdrop-blur-xs"
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden z-[160] flex flex-col max-h-[90vh]"
+        className="bg-white rounded-[2px] border border-shop-line w-full max-w-lg overflow-y-auto z-[160] flex flex-col max-h-[90vh] max-h-[90dvh]"
       >
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+        <div className="bg-shop-ink text-white p-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-white/10 p-1.5 rounded-lg text-indigo-400">
+            <div className="bg-white/10 p-1.5 rounded-[2px] text-indigo-400">
               <ClipboardList className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-base tracking-tight">
+              <h3 className="font-medium text-base tracking-tight">
                 Comprobante Electrónico
               </h3>
-              <p className="text-[10px] text-slate-400 font-mono tracking-wider">
+              <p className="text-[11px] text-slate-300 tabular-nums">
                 {invoice.series}-{invoice.number}
               </p>
             </div>
           </div>
-          <button
+          <button aria-label="Cerrar ventana"
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 rounded-[2px] text-slate-300 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -387,23 +388,23 @@ export default function InvoiceDetailModal({ invoice, onClose }) {
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-50 border-t border-slate-200 p-4 flex gap-3">
+        <div className="bg-shop-light border-t border-shop-line p-4 flex gap-3">
           <button
             type="button"
             onClick={handlePrintOrPdf}
-            className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl border border-indigo-700/20 shadow-sm active:scale-95 transition-all cursor-pointer font-mono"
+            className="flex-1 flex items-center justify-center gap-1.5 bg-shop-ink hover:bg-shop-ink text-white font-medium text-xs px-4 py-2.5 rounded-[2px] border border-shop-line/20 transition-all cursor-pointer tabular-nums min-h-9"
           >
             <Printer className="w-4 h-4" /> Imprimir / PDF
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-xs active:scale-95 transition-transform cursor-pointer font-mono text-center"
+            className="flex-1 bg-white hover:bg-shop-light text-shop-muted border border-slate-300 font-medium text-xs px-4 py-2.5 rounded-[2px] transition-transform cursor-pointer tabular-nums text-center min-h-9"
           >
             Cerrar
           </button>
         </div>
       </motion.div>
-    </div>
+    </AdminDialog>
   );
 }
