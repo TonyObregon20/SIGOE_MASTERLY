@@ -107,12 +107,12 @@ function ProductionView({
   return (
     <div className="space-y-6">
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      <div className="flex flex-col sm:flex-col sm:items-start justify-between gap-4 border-b border-shop-line pb-4 xl:flex-row xl:items-center">
         <div className="space-y-1">
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            <Scissors className="w-6 h-6 text-blue-600" /> Control de Producción en Taller
-          </h2>
-          <p className="text-xs font-medium text-slate-500 italic font-serif">
+          <h1 className="text-shop-ink tracking-tight flex items-center gap-2 font-medium text-[28px]">
+            <Scissors className="w-6 h-6 text-shop-blue" /> Control de Producción en Taller
+          </h1>
+          <p className="text-xs font-medium text-shop-muted font-shop">
             Seguimiento de etapas: tendido, corte, costura, limpieza, planchado y empaquetado
           </p>
         </div>
@@ -121,23 +121,23 @@ function ProductionView({
           <button
             type="button"
             onClick={() => setShowAdvancedFilters((prev) => !prev)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-[2px] text-xs font-medium transition-all border ${
               showAdvancedFilters || hasActiveFilters
-                ? "bg-blue-50 border-blue-200 text-blue-700 shadow-xs"
-                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                ? "bg-shop-light border-shop-line text-shop-blue"
+                : "bg-white border-shop-line text-shop-muted hover:bg-shop-light"
             }`}
           >
             <Filter className="w-3.5 h-3.5" />
             <span>Filtros</span>
             {hasActiveFilters && (
-              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-shop-ink" />
             )}
           </button>
 
           <button
             type="button"
             onClick={() => setShowNewOPModal((prev) => !prev)}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-600/20"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-shop-ink text-white rounded-[2px] text-xs font-semibold hover:bg-shop-ink transition-all min-h-9"
           >
             <Plus className="w-4 h-4" /> Nueva OP Manual
           </button>
@@ -179,12 +179,12 @@ function ProductionView({
 
       {/* Production Orders list */}
       {filteredOPs.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center space-y-3 shadow-xs">
+        <div className="bg-white border border-shop-line rounded-[2px] p-12 text-center flex flex-col items-center justify-center space-y-3">
           <Package className="w-10 h-10 text-slate-300 stroke-1" />
-          <h3 className="text-sm font-black uppercase tracking-wider text-slate-700">
+          <h3 className="text-sm font-semibold text-shop-muted">
             No se encontraron Órdenes de Producción
           </h3>
-          <p className="text-xs text-slate-400 max-w-sm italic">
+          <p className="text-xs text-shop-muted max-w-sm">
             {hasActiveFilters
               ? "Prueba a cambiar tus criterios de búsqueda o limpia los filtros activos."
               : "No hay órdenes de confección activas en este momento. Crea una nueva OP con el botón superior."}
@@ -192,7 +192,7 @@ function ProductionView({
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
-              className="mt-2 text-xs font-bold text-blue-600 hover:underline uppercase font-mono tracking-wider"
+              className="mt-2 text-xs font-medium text-shop-blue hover:underline tabular-nums"
             >
               Restablecer Filtros
             </button>

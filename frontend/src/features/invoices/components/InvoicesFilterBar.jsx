@@ -13,21 +13,21 @@ export default function InvoicesFilterBar({
   return (
     <div className="flex flex-col md:flex-row gap-4">
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-shop-muted" />
         <input
           type="text"
           placeholder="Buscar por cliente, DNI/RUC o número..."
-          className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+          className="w-full pl-10 pr-4 py-3 bg-white border border-shop-line rounded-[2px] focus:ring-2 focus:ring-shop-blue/20 outline-none transition-all min-h-10 min-w-0 text-base sm:text-[13px]"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
-      <div className="flex gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-sm font-mono">
+      <div className="flex gap-2 bg-white p-1 rounded-[2px] border border-shop-line tabular-nums">
         <button
           type="button"
           onClick={() => setFilterType("all")}
-          className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-            filterType === "all" ? "bg-indigo-600 text-white" : "text-slate-500"
+          className={`px-4 py-1.5 rounded-[2px] text-[11px] font-semibold transition-all cursor-pointer ${
+            filterType === "all" ? "bg-shop-ink text-white" : "text-shop-muted"
           }`}
         >
           Todos
@@ -35,8 +35,8 @@ export default function InvoicesFilterBar({
         <button
           type="button"
           onClick={() => setFilterType("Boleta")}
-          className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-            filterType === "Boleta" ? "bg-indigo-600 text-white" : "text-slate-500"
+          className={`px-4 py-1.5 rounded-[2px] text-[11px] font-semibold transition-all cursor-pointer ${
+            filterType === "Boleta" ? "bg-shop-ink text-white" : "text-shop-muted"
           }`}
         >
           Boletas
@@ -44,8 +44,8 @@ export default function InvoicesFilterBar({
         <button
           type="button"
           onClick={() => setFilterType("Factura")}
-          className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-            filterType === "Factura" ? "bg-indigo-600 text-white" : "text-slate-500"
+          className={`px-4 py-1.5 rounded-[2px] text-[11px] font-semibold transition-all cursor-pointer ${
+            filterType === "Factura" ? "bg-shop-ink text-white" : "text-shop-muted"
           }`}
         >
           Facturas

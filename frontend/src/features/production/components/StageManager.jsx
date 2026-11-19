@@ -53,17 +53,17 @@ function getMatchingSuppliers(stageName, suppliers = []) {
 function getStageIcon(stageName) {
   switch (stageName) {
     case "Tendido":
-      return <Layers className="w-4 h-4 text-indigo-500" />;
+      return <Layers className="w-4 h-4 text-shop-blue" />;
     case "Corte":
-      return <Scissors className="w-4 h-4 text-blue-500" />;
+      return <Scissors className="w-4 h-4 text-shop-blue" />;
     case "Costura":
       return <Layers className="w-4 h-4 text-amber-500" />;
     case "Limpieza":
       return <Sparkles className="w-4 h-4 text-emerald-500" />;
     case "Planchado y Empaquetado":
-      return <Package className="w-4 h-4 text-violet-500" />;
+      return <Package className="w-4 h-4 text-shop-blue" />;
     default:
-      return <UserIcon className="w-4 h-4 text-slate-400" />;
+      return <UserIcon className="w-4 h-4 text-shop-muted" />;
   }
 }
 
@@ -214,28 +214,28 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
   };
 
   return (
-    <div className={isModal ? "p-3 md:p-4 bg-transparent border-0" : "p-6 md:p-8 bg-slate-50 border-t border-slate-200"}>
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+    <div className={isModal ? "p-3 md:p-4 bg-transparent border-0" : "p-6 md:p-8 bg-shop-light border-t border-shop-line"}>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-shop-line/80 pb-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-800 font-mono">
+            <span className="text-xs font-semibold text-shop-ink tabular-nums">
               Flujo de Fases y Asignación de Tercerizados / Operarios
             </span>
-            <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+            <span className="text-[11px] font-medium bg-shop-light text-shop-blue px-2 py-0.5 rounded-full">
               Lote {op.id}
             </span>
           </div>
-          <p className="text-xs text-slate-500 italic">
+          <p className="text-xs text-shop-muted">
             Configura el operario interno (Tendido y Limpieza) o selecciona el proveedor/tercerizado responsable de cada etapa del proceso.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 text-[11px] font-bold text-slate-500">
+        <div className="flex items-center gap-3 text-[11px] font-medium text-shop-muted">
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Completado
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" /> En Proceso
+            <span className="w-2.5 h-2.5 rounded-full bg-shop-ink" /> En Proceso
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-slate-300" /> Pendiente
@@ -277,32 +277,32 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
           return (
             <div
               key={stage.name}
-              className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
+              className={`p-4 rounded-[2px] border transition-all flex flex-col justify-between ${
                 stage.status === "completed"
-                  ? "bg-white border-emerald-200/80 shadow-xs"
+                  ? "bg-white border-emerald-200/80"
                   : stage.status === "in-progress"
-                  ? "bg-white border-blue-300 shadow-lg shadow-blue-500/10 ring-2 ring-blue-500/20"
+                  ? "bg-white border-blue-300 ring-2 ring-shop-blue/20"
                   : isWaiting
-                  ? "bg-slate-100/70 border-slate-200 opacity-80"
-                  : "bg-white border-slate-250 shadow-xs"
+                  ? "bg-shop-light/70 border-shop-line opacity-80"
+                  : "bg-white border-slate-250"
               }`}
             >
               {/* Card Header */}
               <div>
-                <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+                <div className="flex items-center justify-between mb-3 border-b border-shop-line pb-2">
                   <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-600 font-mono">
+                    <span className="w-5 h-5 rounded-full bg-shop-light flex items-center justify-center text-[11px] font-semibold text-shop-muted tabular-nums">
                       {idx + 1}
                     </span>
                     <span
-                      className={`text-[11px] uppercase font-black tracking-wider flex items-center gap-1.5 ${
+                      className={`text-[11px] font-semibold flex items-center gap-1.5 ${
                         stage.status === "completed"
                           ? "text-emerald-700"
                           : stage.status === "in-progress"
-                          ? "text-blue-700"
+                          ? "text-shop-blue"
                           : isWaiting
-                          ? "text-slate-400"
-                          : "text-slate-700"
+                          ? "text-shop-muted"
+                          : "text-shop-muted"
                       }`}
                     >
                       {getStageIcon(stage.name)}
@@ -311,22 +311,22 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                   </div>
 
                   {stage.status === "completed" && (
-                    <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-mono">
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-[2px] border border-emerald-200 tabular-nums">
                       <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Fin
                     </span>
                   )}
                   {stage.status === "in-progress" && (
-                    <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 animate-pulse font-mono">
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-shop-blue bg-shop-light px-1.5 py-0.5 rounded-[2px] border border-shop-line tabular-nums">
                       En Curso
                     </span>
                   )}
                   {isWaiting && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                    <span className="text-[11px] font-medium text-shop-muted tabular-nums">
                       Espera
                     </span>
                   )}
                   {canStart && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-mono">
+                    <span className="text-[11px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-[2px] border border-amber-200 tabular-nums">
                       Listo
                     </span>
                   )}
@@ -336,16 +336,16 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                 <div className="space-y-3 mb-4">
                   {/* Tendido & Limpieza: Internal Operators */}
                   {isInternalStage ? (
-                    <div className="space-y-1.5 bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/80">
-                      <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    <div className="space-y-1.5 bg-shop-light/80 p-2.5 rounded-[2px] border border-shop-line/80">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-shop-muted">
                         <span className="flex items-center gap-1">
-                          <UserIcon className="w-3 h-3 text-indigo-500" /> Operario Interno
+                          <UserIcon className="w-3 h-3 text-shop-blue" /> Operario Interno
                         </span>
                         {(stage.status === "in-progress" || stage.status === "completed" || isEditing) && (
                           <button
                             type="button"
                             onClick={() => setEditingStage(isEditing ? null : stage.name)}
-                            className="text-[9px] text-blue-600 hover:underline uppercase font-bold flex items-center gap-0.5"
+                            className="text-[11px] text-shop-blue hover:underline font-medium flex items-center gap-0.5"
                           >
                             <Edit2 className="w-2.5 h-2.5" /> {isEditing ? "Cerrar" : "Editar"}
                           </button>
@@ -359,22 +359,22 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                             value={sel.responsible || defaultOpName}
                             onChange={(e) => handleCustomTextChange(stage.name, e.target.value)}
                             placeholder={defaultOpName}
-                            className="w-full px-2 py-1 bg-white border border-blue-300 rounded text-xs font-semibold focus:ring-2 focus:ring-blue-500/20 outline-none"
+                            className="w-full px-2 py-1 bg-white border border-blue-300 rounded-[2px] font-semibold focus:ring-2 focus:ring-shop-blue/20 outline-none min-h-10 min-w-0 text-base sm:text-[13px]"
                           />
                           <button
                             type="button"
                             onClick={() => handleSaveResponsibleEdit(stage.name, stage.status)}
-                            className="w-full py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1"
+                            className="w-full py-1 bg-shop-ink hover:bg-shop-ink text-white rounded-[2px] text-[11px] font-medium flex items-center justify-center gap-1"
                           >
                             <Check className="w-3 h-3" /> Guardar
                           </button>
                         </div>
                       ) : (
-                        <div className="text-xs font-bold text-slate-800">
+                        <div className="text-xs font-medium text-shop-ink">
                           {stage.responsible || sel.responsible || defaultOpName}
                         </div>
                       )}
-                      <p className="text-[9px] text-slate-400 italic">
+                      <p className="text-[11px] text-shop-muted">
                         {stageAreaDesc}
                       </p>
                     </div>
@@ -383,41 +383,41 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                     <div className="space-y-2">
                       {/* View mode when not editing and (completed or in-progress) */}
                       {!isEditing && (stage.status === "in-progress" || stage.status === "completed") ? (
-                        <div className="space-y-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200/80">
-                          <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                            <span className="flex items-center gap-1 font-mono">
+                        <div className="space-y-2 bg-shop-light p-2.5 rounded-[2px] border border-shop-line/80">
+                          <div className="flex items-center justify-between text-[11px] font-medium text-shop-muted">
+                            <span className="flex items-center gap-1 tabular-nums">
                               {stage.supplierId || currentSupplierObj ? (
                                 <>
-                                  <Building2 className="w-3 h-3 text-blue-500" /> Tercerizado
+                                  <Building2 className="w-3 h-3 text-shop-blue" /> Tercerizado
                                 </>
                               ) : (
                                 <>
-                                  <UserIcon className="w-3 h-3 text-slate-400" /> Operario Interno
+                                  <UserIcon className="w-3 h-3 text-shop-muted" /> Operario Interno
                                 </>
                               )}
                             </span>
                             <button
                               type="button"
                               onClick={() => setEditingStage(stage.name)}
-                              className="text-[9px] text-blue-600 hover:underline uppercase font-bold flex items-center gap-0.5"
+                              className="text-[11px] text-shop-blue hover:underline font-medium flex items-center gap-0.5"
                             >
                               <Edit2 className="w-2.5 h-2.5" /> Cambiar
                             </button>
                           </div>
 
                           <div className="space-y-1">
-                            <p className="text-xs font-black text-slate-800 leading-tight">
+                            <p className="text-xs font-semibold text-shop-ink leading-tight">
                               {stage.responsible || sel.responsible || "No asignado"}
                             </p>
                             {currentSupplierObj && (
-                              <div className="text-[9px] text-slate-500 font-mono space-y-0.5">
+                              <div className="text-[11px] text-shop-muted tabular-nums space-y-0.5">
                                 {currentSupplierObj.phone && (
                                   <p className="flex items-center gap-1">
-                                    <Phone className="w-2.5 h-2.5 text-slate-400" /> {currentSupplierObj.phone}
+                                    <Phone className="w-2.5 h-2.5 text-shop-muted" /> {currentSupplierObj.phone}
                                   </p>
                                 )}
                                 {currentSupplierObj.unitCostRate > 0 && (
-                                  <p className="text-emerald-700 font-bold">
+                                  <p className="text-emerald-700 font-medium">
                                     Tarifa: S/ {currentSupplierObj.unitCostRate} por prenda
                                   </p>
                                 )}
@@ -427,15 +427,15 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                         </div>
                       ) : (
                         /* Selector mode: when pending or user clicked 'Cambiar' */
-                        <div className="space-y-2 bg-blue-50/40 p-2.5 rounded-lg border border-blue-150">
-                          <label className="text-[10px] font-black uppercase tracking-wider text-slate-600 block">
+                        <div className="space-y-2 bg-shop-light/40 p-2.5 rounded-[2px] border border-blue-150">
+                          <label className="text-[11px] font-semibold text-shop-muted block">
                             A cargo de {stage.name}:
                           </label>
 
                           <select
                             value={sel.isCustom ? "__custom__" : sel.supplierId || ""}
                             onChange={(e) => handleSelectionChange(stage.name, e.target.value)}
-                            className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none truncate"
+                            className="w-full px-2 py-1.5 bg-white border border-shop-line rounded-[2px] font-semibold text-shop-ink focus:ring-2 focus:ring-shop-blue/20 outline-none truncate min-h-10 min-w-0 text-base sm:text-[13px]"
                           >
                             <option value="" disabled>
                               -- Selecciona Proveedor o Encargado --
@@ -473,19 +473,19 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                               value={sel.customText || ""}
                               onChange={(e) => handleCustomTextChange(stage.name, e.target.value)}
                               placeholder={`ej: Operario de ${stage.name}`}
-                              className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500/20"
+                              className="w-full px-2 py-1 bg-white border border-shop-line rounded-[2px] font-semibold outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]"
                             />
                           )}
 
                           {/* Matching supplier info preview */}
                           {currentSupplierObj && !sel.isCustom && (
-                            <div className="text-[9px] text-slate-600 bg-white/80 p-1.5 rounded border border-slate-200/60 font-mono space-y-0.5">
-                              <p className="font-bold text-blue-700 truncate">{currentSupplierObj.name}</p>
+                            <div className="text-[11px] text-shop-muted bg-white/80 p-1.5 rounded-[2px] border border-shop-line/60 tabular-nums space-y-0.5">
+                              <p className="font-medium text-shop-blue truncate">{currentSupplierObj.name}</p>
                               {currentSupplierObj.phone && (
-                                <p className="text-slate-500">Tel: {currentSupplierObj.phone}</p>
+                                <p className="text-shop-muted">Tel: {currentSupplierObj.phone}</p>
                               )}
                               {currentSupplierObj.documentNumber && (
-                                <p className="text-slate-400">
+                                <p className="text-shop-muted">
                                   {currentSupplierObj.documentType || "RUC"}: {currentSupplierObj.documentNumber}
                                 </p>
                               )}
@@ -493,7 +493,7 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                           )}
 
                           {matchingSuppliers.length === 0 && (
-                            <p className="text-[9px] text-amber-700 italic flex items-center gap-1">
+                            <p className="text-[11px] text-amber-700 flex items-center gap-1">
                               <AlertCircle className="w-2.5 h-2.5" /> No hay proveedores de {stage.name} registrados.
                             </p>
                           )}
@@ -503,14 +503,14 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                               <button
                                 type="button"
                                 onClick={() => handleSaveResponsibleEdit(stage.name, stage.status)}
-                                className="flex-1 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[10px] font-bold uppercase tracking-wider"
+                                className="flex-1 py-1 bg-shop-ink hover:bg-shop-ink text-white rounded-[2px] text-[11px] font-medium"
                               >
                                 Guardar
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setEditingStage(null)}
-                                className="px-2 py-1 bg-slate-200 text-slate-700 rounded text-[10px] font-bold uppercase tracking-wider"
+                                className="px-2 py-1 bg-slate-200 text-shop-muted rounded-[2px] text-[11px] font-medium"
                               >
                                 Cancelar
                               </button>
@@ -523,10 +523,10 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
 
                   {/* Timestamps */}
                   {(stage.startTime || stage.endTime) && (
-                    <div className="text-[9px] text-slate-400 font-bold uppercase tracking-tight font-mono space-y-0.5 pt-1 border-t border-slate-100">
+                    <div className="text-[11px] text-shop-muted font-medium tracking-tight tabular-nums space-y-0.5 pt-1 border-t border-shop-line">
                       {stage.startTime && (
                         <div className="flex items-center gap-1">
-                          <Clock className="w-2.5 h-2.5 text-slate-400" />
+                          <Clock className="w-2.5 h-2.5 text-shop-muted" />
                           <span>Ent: {stage.startTime.split(" ")[1] || stage.startTime}</span>
                         </div>
                       )}
@@ -542,13 +542,13 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-2 border-t border-slate-100">
+              <div className="pt-2 border-t border-shop-line">
                 {stage.status === "pending" ? (
                   canStart ? (
                     <button
                       type="button"
                       onClick={() => handleStartStage(stage.name)}
-                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1 font-mono"
+                      className="w-full py-2 bg-shop-ink hover:bg-shop-ink text-white rounded-[2px] text-[11px] font-semibold transition-all flex items-center justify-center gap-1 tabular-nums"
                     >
                       <span>Iniciar {stage.name}</span>
                       <ArrowRight className="w-3 h-3" />
@@ -558,7 +558,7 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                       type="button"
                       disabled
                       title={`Debe completarse la etapa anterior (${prevStage?.name || "previa"})`}
-                      className="w-full py-2 bg-slate-100 border border-slate-200 text-slate-400 rounded-lg text-[9px] font-bold uppercase tracking-wider cursor-not-allowed text-center truncate font-mono"
+                      className="w-full py-2 bg-shop-light border border-shop-line text-shop-muted rounded-[2px] text-[11px] font-medium cursor-not-allowed text-center truncate tabular-nums"
                     >
                       Espera: {prevStage?.name || "Anterior"}
                     </button>
@@ -567,13 +567,13 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                   <button
                     type="button"
                     onClick={() => handleFinishStage(stage)}
-                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-emerald-600/20 active:scale-95 flex items-center justify-center gap-1 font-mono"
+                    className="w-full py-2 bg-shop-ink hover:bg-shop-blue text-white rounded-[2px] text-[11px] font-semibold transition-all flex items-center justify-center gap-1 tabular-nums"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Terminar Etapa</span>
                   </button>
                 ) : (
-                  <div className="w-full py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-[10px] font-bold text-emerald-700 text-center uppercase tracking-wider font-mono flex items-center justify-center gap-1">
+                  <div className="w-full py-1.5 bg-emerald-50 border border-emerald-200 rounded-[2px] text-[11px] font-medium text-emerald-700 text-center tabular-nums flex items-center justify-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Etapa Finalizada</span>
                   </div>

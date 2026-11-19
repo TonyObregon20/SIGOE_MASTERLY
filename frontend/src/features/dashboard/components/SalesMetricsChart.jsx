@@ -14,20 +14,20 @@ export default function SalesMetricsChart({
   const [hoveredPoint, setHoveredPoint] = useState(null);
 
   return (
-    <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
+    <div className="lg:col-span-2 bg-white rounded-[2px] border border-shop-line flex flex-col p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-shop-line">
         <div className="space-y-1">
-          <h3 className="font-bold text-slate-855 text-base flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-emerald-500 animate-pulse" /> Histórico y Tendencia de Ventas
+          <h3 className="font-medium text-shop-ink text-base flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-emerald-500" /> Histórico y Tendencia de Ventas
           </h3>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">
-            Total Vendido: <span className="text-slate-700 font-extrabold text-xs">S/ {totalSales.toLocaleString()}</span> | {totalShirtsSold} camisas
+          <p className="text-[11px] text-shop-muted font-medium tabular-nums">
+            Total Vendido: <span className="text-shop-muted font-semibold text-xs">S/ {totalSales.toLocaleString()}</span> | {totalShirtsSold} camisas
           </p>
         </div>
         {onOpenReport && (
           <button
             onClick={onOpenReport}
-            className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 px-3.5 py-2 rounded-xl border border-emerald-100 transition-colors cursor-pointer self-start sm:self-auto"
+            className="text-xs font-medium text-emerald-600 hover:underline flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 px-3.5 py-2 rounded-[2px] border border-emerald-100 transition-colors cursor-pointer self-start sm:self-auto min-h-9"
           >
             <BarChart3 className="w-4 h-4" /> Reporte y Descargas
           </button>
@@ -36,11 +36,12 @@ export default function SalesMetricsChart({
 
       {/* SVG Chart Container */}
       <div className="flex-1 relative min-h-[220px]">
-        <svg viewBox="0 0 500 200" className="w-full h-full overflow-visible">
+        {!dailySales.length && <p className="flex min-h-[220px] items-center justify-center text-sm text-shop-muted">Aún no hay ventas para mostrar.</p>}
+        {dailySales.length > 0 && <svg viewBox="0 0 500 200" className="w-full h-full overflow-visible">
           <defs>
             <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+              <stop offset="5%" stopColor="#0e6ba8" stopOpacity={0.25} />
+              <stop offset="95%" stopColor="#0e6ba8" stopOpacity={0} />
             </linearGradient>
           </defs>
 
@@ -49,9 +50,9 @@ export default function SalesMetricsChart({
             const y = 30 + ratio * 120;
             const val = Math.round(maxAmount - ratio * maxAmount);
             return (
-              <g key={i} className="opacity-30">
+              <g key={i} className="opacity-100">
                 <line x1="50" y1={y} x2="470" y2={y} stroke="#e2e8f0" strokeDasharray="3 3" />
-                <text x="12" y={y + 3} className="text-[9px] font-mono font-bold text-slate-400 fill-current">
+                <text x="12" y={y + 3} className="text-[10px] tabular-nums font-medium text-shop-muted fill-current">
                   S/ {val}
                 </text>
               </g>
@@ -83,7 +84,7 @@ export default function SalesMetricsChart({
                 <path
                   d={linePath}
                   fill="none"
-                  stroke="#10b981"
+                  stroke="#0e6ba8"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -104,7 +105,7 @@ export default function SalesMetricsChart({
                 <text
                   x={x}
                   y="168"
-                  className="text-[9px] font-mono font-bold text-slate-400 fill-current text-center"
+                  className="text-[10px] tabular-nums font-medium text-shop-muted fill-current text-center"
                   textAnchor="middle"
                 >
                   {d.displayDate || d.date}
@@ -112,7 +113,7 @@ export default function SalesMetricsChart({
 
                 {/* Outer glowing point */}
                 {isHovered && (
-                  <circle cx={x} cy={y} r="8" className="fill-emerald-500/25 animate-ping animate-duration-1000" />
+                  <circle cx={x} cy={y} r="8" className="fill-shop-sky/50" />
                 )}
 
                 {/* Main point */}
@@ -121,7 +122,7 @@ export default function SalesMetricsChart({
                   cy={y}
                   r={isHovered ? "5" : "3"}
                   className={`fill-white stroke-2 transition-all ${
-                    isHovered ? "stroke-emerald-600 cursor-pointer" : "stroke-emerald-500"
+                    isHovered ? "stroke-shop-ink cursor-pointer" : "stroke-shop-blue"
                   }`}
                   onMouseEnter={() => setHoveredPoint(idx)}
                   onMouseLeave={() => setHoveredPoint(null)}
@@ -140,12 +141,12 @@ export default function SalesMetricsChart({
               </g>
             );
           })}
-        </svg>
+        </svg>}
 
         {/* Custom Interactive Tooltip */}
         {hoveredPoint !== null && dailySales[hoveredPoint] && (
           <div
-            className="absolute bg-slate-900 text-white rounded-xl p-3 shadow-xl text-xs font-mono space-y-0.5 border border-slate-800 z-10 transition-all pointer-events-none"
+            className="absolute bg-shop-ink text-white rounded-[2px] p-3 text-xs tabular-nums space-y-0.5 border border-slate-800 z-10 transition-all pointer-events-none"
             style={{
               left: `${Math.min(
                 Math.max(
@@ -157,13 +158,13 @@ export default function SalesMetricsChart({
               top: "2%"
             }}
           >
-            <div className="font-bold text-[9px] text-emerald-400 uppercase tracking-widest">
+            <div className="font-medium text-[11px] text-emerald-400">
               {dailySales[hoveredPoint].date}
             </div>
-            <div className="text-xs font-black text-white">
+            <div className="text-xs font-semibold text-white">
               Monto: S/ {dailySales[hoveredPoint].amount.toLocaleString()}
             </div>
-            <div className="text-[9px] text-slate-400 font-bold uppercase">
+            <div className="text-[11px] text-slate-300 font-medium">
               {dailySales[hoveredPoint].count} transacciones
             </div>
           </div>

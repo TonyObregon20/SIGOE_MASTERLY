@@ -81,10 +81,10 @@ function InventoryView({
   return (
     <div className="space-y-6">
       {/* View Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      <div className="flex flex-col sm:flex-col sm:items-start justify-between gap-4 border-b border-shop-line pb-4 xl:flex-row xl:items-center">
         <div className="space-y-1">
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Control de Almacén</h2>
-          <p className="text-xs font-medium text-slate-500 italic font-serif">
+          <h1 className="text-shop-ink tracking-tight font-medium text-[28px]">Control de Almacén</h1>
+          <p className="text-xs font-medium text-shop-muted font-shop">
             Gestión de existencias producidas, salidas de pedidos/OPs y movimientos de inventario terminado.
           </p>
         </div>
@@ -92,7 +92,7 @@ function InventoryView({
         <button
           type="button"
           onClick={() => setIsReportModalOpen(true)}
-          className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-slate-900/10 active:scale-95 flex items-center gap-2 font-mono shrink-0"
+          className="px-4 py-2.5 bg-shop-ink hover:bg-shop-ink text-white rounded-[2px] text-xs font-semibold transition-all flex items-center gap-2 tabular-nums shrink-0 min-h-9"
         >
           <FileSpreadsheet className="w-4 h-4 text-blue-400" />
           <span>Generar Reporte de Almacén</span>

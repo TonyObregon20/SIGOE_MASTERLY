@@ -316,18 +316,18 @@ function App() {
   };
 
   return (
-    <div className={view === 'admin' ? 'min-h-screen bg-[#F9FAFB] text-slate-900 font-sans' : 'min-h-screen bg-white font-shop text-[15px] leading-relaxed text-shop-ink'}>
+    <div className={view === 'admin' ? 'min-h-screen bg-[#f6f8fb] font-shop text-shop-ink' : 'min-h-screen bg-white font-shop text-[15px] leading-relaxed text-shop-ink'}>
       {/* Navigation Bar Header */}
-      <Navbar
+      {view !== "admin" && <Navbar
         view={view}
         setView={setView}
         setIsLoginOpen={setIsLoginOpen}
         onOpenCustomerDrawer={openCustomerDrawer}
         onSearch={query => browseProducts("Todos", query)}
-      />
+      />}
 
       {/* Main Content View routing with motion transitions */}
-      <main id="main-content" tabIndex={-1} className={view === 'admin' ? 'mx-auto max-w-7xl px-4 py-8' : 'outline-none'}>
+      <main id="main-content" tabIndex={-1} className={'outline-none'}>
         <AnimatePresence mode="wait">
           <motion.div
             key={view}

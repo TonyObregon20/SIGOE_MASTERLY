@@ -1,19 +1,13 @@
-import React from "react";
-
-function SidebarItem({ active, onClick, icon: Icon, label }) {
+export default function SidebarItem({ active, onClick, icon: Icon, label }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-        active 
-          ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20" 
-          : "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
-      }`}
+      aria-current={active ? 'page' : undefined}
+      className={`flex min-h-10 w-full items-center gap-3 border-l-2 px-3 py-2 text-left text-[13px] transition-colors motion-reduce:transition-none ${active ? 'border-shop-sky bg-white/10 font-medium text-white' : 'border-transparent text-slate-300 hover:bg-white/5 hover:text-white'}`}
     >
-      <Icon className={`w-4 h-4 ${active ? "text-white" : "text-slate-500"}`} />
+      <Icon size={17} strokeWidth={1.6} className={active ? 'shrink-0 text-shop-sky' : 'shrink-0 text-slate-400'} />
       {label}
     </button>
   );
 }
-
-export default SidebarItem;
