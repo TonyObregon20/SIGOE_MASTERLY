@@ -344,7 +344,7 @@ export default function ProductionOrderCard({
               {/* Footer */}
               <div className="px-6 py-3 bg-white border-t border-shop-line flex items-center justify-between text-xs text-shop-muted shrink-0">
                 <span className="text-[11px] tabular-nums text-shop-muted hidden sm:inline">
-                  ⚡ Las etapas y los estados se actualizan en vivo de forma instantánea.
+                  Las etapas y los estados se actualizan en vivo de forma instantánea.
                 </span>
                 <button
                   type="button"

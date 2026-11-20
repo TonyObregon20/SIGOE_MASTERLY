@@ -25,7 +25,7 @@ export default function InventoryProductRow({
     <div className="bg-white border border-shop-line rounded-[2px] overflow-hidden transition-shadow">
       <div className="p-5 flex items-center justify-between flex-wrap gap-4">
         {/* Product image & ID/Category info */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 2xl:w-[312px] 2xl:shrink-0">
           <div className="w-16 h-16 bg-shop-light rounded-[2px] overflow-hidden border border-shop-line p-1 flex-shrink-0">
             <img
               src={p.image}
@@ -34,7 +34,7 @@ export default function InventoryProductRow({
               referrerPolicy="no-referrer"
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <h4 className="font-semibold text-shop-ink text-base tracking-tight leading-tight">
               {p.name}
             </h4>

@@ -61,12 +61,12 @@ export default function DeleteSupplierModal({ isOpen, onClose, onConfirm, suppli
           </p>
           {supplier.servicesCount > 0 && (
             <p className="text-amber-600 font-medium text-[11px]">
-              ⚠️ Este proveedor tiene {supplier.servicesCount} servicio(s) registrados.
+              Este proveedor tiene {supplier.servicesCount} servicio(s) registrados.
             </p>
           )}
           {supplier.purchasesCount > 0 && (
             <p className="text-amber-600 font-medium text-[11px]">
-              ⚠️ Este proveedor tiene {supplier.purchasesCount} compra(s) registradas.
+              Este proveedor tiene {supplier.purchasesCount} compra(s) registradas.
             </p>
           )}
         </div>
