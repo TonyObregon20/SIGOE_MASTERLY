@@ -222,7 +222,7 @@ export default function ProductionReportModal({
                   ))}
                 </div>
                 <div className="p-4 bg-shop-light/50 rounded-[2px] border border-shop-light text-xs text-shop-muted leading-relaxed">
-                  ℹ️ <strong>Nota de Distribución:</strong> Las cantidades por tallas representan tanto las órdenes solicitadas por clientes a pedido de venta directa, como los lotes generados automáticamente para autostockeo en base al algoritmo de demanda estimada.
+                  <strong>Nota de Distribución:</strong> Las cantidades por tallas representan tanto las órdenes solicitadas por clientes a pedido de venta directa, como los lotes generados automáticamente para autostockeo en base al algoritmo de demanda estimada.
                 </div>
               </div>
             )}
@@ -288,7 +288,7 @@ export default function ProductionReportModal({
                 </div>
                 {lowStock.length === 0 ? (
                   <div className="text-center py-8 bg-shop-light rounded-[2px] border border-shop-line text-xs text-shop-muted">
-                    ✨ ¡Excelente! No hay productos con stock por debajo del mínimo de seguridad.
+                    No hay productos con stock por debajo del mínimo de seguridad.
                   </div>
                 ) : (
                   <div className="space-y-3">

@@ -1,175 +1,145 @@
-import React, { useState } from "react";
-import { TrendingUp, BarChart3 } from "lucide-react";
+import { useEffect, useId, useRef, useState } from 'react';
+import { BarChart3, TrendingUp } from 'lucide-react';
 
-/**
- * Interactive SVG Sales trend chart with tooltips and report button
- */
+const CHART_HEIGHT = 208;
+const MARGIN = { top: 18, right: 20, bottom: 32, left: 70 };
+const axisNumber = new Intl.NumberFormat('es-PE', {
+  maximumFractionDigits: 0,
+});
+const compactNumber = new Intl.NumberFormat('es-PE', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
 export default function SalesMetricsChart({
   totalSales = 0,
   totalShirtsSold = 0,
   dailySales = [],
   maxAmount = 1000,
-  onOpenReport
+  onOpenReport,
 }) {
+  const container = useRef(null);
+  const gradientId = useId();
+  const [width, setWidth] = useState(600);
   const [hoveredPoint, setHoveredPoint] = useState(null);
 
+  useEffect(() => {
+    const observer = new ResizeObserver(([entry]) => {
+      setWidth(Math.max(1, Math.round(entry.contentRect.width)));
+    });
+    observer.observe(container.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const plotWidth = Math.max(1, width - MARGIN.left - MARGIN.right);
+  const plotHeight = CHART_HEIGHT - MARGIN.top - MARGIN.bottom;
+  const baseline = CHART_HEIGHT - MARGIN.bottom;
+  const scaleMax = Math.max(1, Number(maxAmount) || 0, ...dailySales.map(day => Number(day.amount) || 0));
+  const points = dailySales.map((day, index) => ({
+    ...day,
+    x: MARGIN.left + (dailySales.length === 1 ? plotWidth / 2 : index * plotWidth / (dailySales.length - 1)),
+    y: baseline - ((Number(day.amount) || 0) / scaleMax) * plotHeight,
+  }));
+  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+  const areaPath = points.length ? `${linePath} L ${points.at(-1).x} ${baseline} L ${points[0].x} ${baseline} Z` : '';
+  const labelCount = Math.max(2, Math.floor(plotWidth / 76) + 1);
+  const labelInterval = Math.max(1, Math.ceil((points.length - 1) / (labelCount - 1)));
+  const activePoint = points[hoveredPoint];
+
   return (
-    <div className="lg:col-span-2 bg-white rounded-[2px] border border-shop-line flex flex-col p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-shop-line">
+    <section className="min-w-0 rounded-[2px] border border-shop-line bg-white p-4 sm:p-5 lg:col-span-2" aria-label="Histórico de ventas">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-shop-line pb-4">
         <div className="space-y-1">
-          <h3 className="font-medium text-shop-ink text-base flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-emerald-500" /> Histórico y Tendencia de Ventas
+          <h3 className="flex items-center gap-2 text-sm font-medium text-shop-ink">
+            <TrendingUp size={17} strokeWidth={1.6} className="shrink-0 text-shop-blue" />
+            Histórico y Tendencia de Ventas
           </h3>
-          <p className="text-[11px] text-shop-muted font-medium tabular-nums">
-            Total Vendido: <span className="text-shop-muted font-semibold text-xs">S/ {totalSales.toLocaleString()}</span> | {totalShirtsSold} camisas
+          <p className="text-[11px] text-shop-muted tabular-nums">
+            Total vendido <span className="font-medium text-shop-ink">S/ {totalSales.toLocaleString('es-PE')}</span>
+            <span className="mx-2 text-slate-300" aria-hidden="true">·</span>
+            {totalShirtsSold} camisas
           </p>
         </div>
         {onOpenReport && (
-          <button
-            onClick={onOpenReport}
-            className="text-xs font-medium text-emerald-600 hover:underline flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 px-3.5 py-2 rounded-[2px] border border-emerald-100 transition-colors cursor-pointer self-start sm:self-auto min-h-9"
-          >
-            <BarChart3 className="w-4 h-4" /> Reporte y Descargas
+          <button type="button" onClick={onOpenReport} className="inline-flex min-h-9 items-center gap-2 rounded-[2px] border border-shop-line px-3 text-[11px] font-medium text-shop-ink transition-colors hover:bg-shop-light">
+            <BarChart3 size={14} /> Reporte y Descargas
           </button>
         )}
       </div>
 
-      {/* SVG Chart Container */}
-      <div className="flex-1 relative min-h-[220px]">
-        {!dailySales.length && <p className="flex min-h-[220px] items-center justify-center text-sm text-shop-muted">Aún no hay ventas para mostrar.</p>}
-        {dailySales.length > 0 && <svg viewBox="0 0 500 200" className="w-full h-full overflow-visible">
-          <defs>
-            <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#0e6ba8" stopOpacity={0.25} />
-              <stop offset="95%" stopColor="#0e6ba8" stopOpacity={0} />
-            </linearGradient>
-          </defs>
+      <div ref={container} className="relative h-[208px] min-w-0">
+        {!points.length ? (
+          <p className="flex h-full items-center justify-center text-sm text-shop-muted">Aún no hay ventas para mostrar.</p>
+        ) : (
+          <svg viewBox={`0 0 ${width} ${CHART_HEIGHT}`} className="block h-full w-full overflow-visible" role="group" aria-label="Ventas diarias en soles">
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#0e6ba8" stopOpacity={0.13} />
+                <stop offset="100%" stopColor="#0e6ba8" stopOpacity={0.01} />
+              </linearGradient>
+            </defs>
 
-          {/* Grid Lines */}
-          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
-            const y = 30 + ratio * 120;
-            const val = Math.round(maxAmount - ratio * maxAmount);
-            return (
-              <g key={i} className="opacity-100">
-                <line x1="50" y1={y} x2="470" y2={y} stroke="#e2e8f0" strokeDasharray="3 3" />
-                <text x="12" y={y + 3} className="text-[10px] tabular-nums font-medium text-shop-muted fill-current">
-                  S/ {val}
-                </text>
-              </g>
-            );
-          })}
+            {[0, 0.25, 0.5, 0.75, 1].map(ratio => {
+              const y = MARGIN.top + ratio * plotHeight;
+              const amount = Math.round(scaleMax * (1 - ratio));
+              return (
+                <g key={ratio}>
+                  <line x1={MARGIN.left} y1={y} x2={width - MARGIN.right} y2={y} stroke="#e2e8f0" strokeDasharray={ratio === 1 ? undefined : '3 5'} />
+                  <text x={MARGIN.left - 12} y={y} dy=".35em" textAnchor="end" className="fill-shop-muted text-[11px] tabular-nums">
+                    S/ {amount >= 10000 ? compactNumber.format(amount) : axisNumber.format(amount)}
+                  </text>
+                </g>
+              );
+            })}
 
-          {/* X Axis Line */}
-          <line x1="50" y1="150" x2="470" y2="150" stroke="#cbd5e1" strokeWidth="1.5" />
+            <path d={areaPath} fill={`url(#${gradientId})`} />
+            {activePoint && <line x1={activePoint.x} y1={MARGIN.top} x2={activePoint.x} y2={baseline} stroke="#0e6ba8" strokeOpacity={0.25} strokeDasharray="3 4" />}
+            <path d={linePath} fill="none" stroke="#0e6ba8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
 
-          {/* Chart Paths */}
-          {(() => {
-            const points = dailySales.map((d, idx) => {
-              const x = (idx / (dailySales.length - 1 || 1)) * 420 + 50;
-              const y = 150 - (d.amount / maxAmount) * 120;
-              return { x, y };
-            });
+            {points.map((point, index) => {
+              const active = hoveredPoint === index;
+              const showLabel = index % labelInterval === 0 || index === points.length - 1;
+              return (
+                <g key={`${point.date}-${index}`}>
+                  {showLabel && <text x={point.x} y={baseline + 22} textAnchor="middle" className="fill-shop-muted text-[10px] tabular-nums">{point.displayDate || point.date}</text>}
+                  {active && <circle cx={point.x} cy={point.y} r="7" fill="#a6e1fa" fillOpacity={0.55} />}
+                  <circle cx={point.x} cy={point.y} r={active ? 3.5 : 2.5} fill="white" stroke={active ? '#001c55' : '#0e6ba8'} strokeWidth="1.75" />
+                  <circle
+                    cx={point.x}
+                    cy={point.y}
+                    r="14"
+                    fill="transparent"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`${point.displayDate || point.date}, S/ ${point.amount}, ${point.count} ${point.count === 1 ? 'venta' : 'ventas'}`}
+                    aria-pressed={active}
+                    className="cursor-pointer outline-none"
+                    onMouseEnter={() => setHoveredPoint(index)}
+                    onMouseLeave={() => setHoveredPoint(null)}
+                    onFocus={() => setHoveredPoint(index)}
+                    onBlur={() => setHoveredPoint(null)}
+                    onClick={() => setHoveredPoint(index)}
+                    onKeyDown={event => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setHoveredPoint(index);
+                      }
+                    }}
+                  />
+                </g>
+              );
+            })}
+          </svg>
+        )}
 
-            if (points.length === 0) return null;
-
-            const linePath = points.reduce((path, p, idx) => {
-              return path + `${idx === 0 ? "M" : "L"} ${p.x} ${p.y}`;
-            }, "");
-
-            const areaPath = `${linePath} L ${points[points.length - 1].x} 150 L ${points[0].x} 150 Z`;
-
-            return (
-              <>
-                <path d={areaPath} fill="url(#chartGrad)" />
-                <path
-                  d={linePath}
-                  fill="none"
-                  stroke="#0e6ba8"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </>
-            );
-          })()}
-
-          {/* Interactive Circles & labels */}
-          {dailySales.map((d, idx) => {
-            const x = (idx / (dailySales.length - 1 || 1)) * 420 + 50;
-            const y = 150 - (d.amount / maxAmount) * 120;
-            const isHovered = hoveredPoint === idx;
-
-            return (
-              <g key={idx}>
-                {/* X Axis Labels */}
-                <text
-                  x={x}
-                  y="168"
-                  className="text-[10px] tabular-nums font-medium text-shop-muted fill-current text-center"
-                  textAnchor="middle"
-                >
-                  {d.displayDate || d.date}
-                </text>
-
-                {/* Outer glowing point */}
-                {isHovered && (
-                  <circle cx={x} cy={y} r="8" className="fill-shop-sky/50" />
-                )}
-
-                {/* Main point */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={isHovered ? "5" : "3"}
-                  className={`fill-white stroke-2 transition-all ${
-                    isHovered ? "stroke-shop-ink cursor-pointer" : "stroke-shop-blue"
-                  }`}
-                  onMouseEnter={() => setHoveredPoint(idx)}
-                  onMouseLeave={() => setHoveredPoint(null)}
-                />
-
-                {/* Large invisible catch circle for better mouse hit-testing */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="16"
-                  fill="transparent"
-                  className="cursor-pointer"
-                  onMouseEnter={() => setHoveredPoint(idx)}
-                  onMouseLeave={() => setHoveredPoint(null)}
-                />
-              </g>
-            );
-          })}
-        </svg>}
-
-        {/* Custom Interactive Tooltip */}
-        {hoveredPoint !== null && dailySales[hoveredPoint] && (
-          <div
-            className="absolute bg-shop-ink text-white rounded-[2px] p-3 text-xs tabular-nums space-y-0.5 border border-slate-800 z-10 transition-all pointer-events-none"
-            style={{
-              left: `${Math.min(
-                Math.max(
-                  (hoveredPoint / (dailySales.length - 1 || 1)) * 100 - 15,
-                  2
-                ),
-                78
-              )}%`,
-              top: "2%"
-            }}
-          >
-            <div className="font-medium text-[11px] text-emerald-400">
-              {dailySales[hoveredPoint].date}
-            </div>
-            <div className="text-xs font-semibold text-white">
-              Monto: S/ {dailySales[hoveredPoint].amount.toLocaleString()}
-            </div>
-            <div className="text-[11px] text-slate-300 font-medium">
-              {dailySales[hoveredPoint].count} transacciones
-            </div>
+        {activePoint && (
+          <div className="pointer-events-none absolute top-0 z-10 w-[148px] rounded-[2px] bg-shop-ink px-3 py-2.5 text-white shadow-sm" role="status" style={{ left: Math.max(0, Math.min(activePoint.x - 74, width - 148)) }}>
+            <p className="text-[10px] text-shop-sky">{activePoint.displayDate || activePoint.date}</p>
+            <p className="mt-1 text-xs font-medium tabular-nums">S/ {Number(activePoint.amount).toLocaleString('es-PE')}</p>
+            <p className="mt-0.5 text-[10px] text-slate-300">{activePoint.count} {activePoint.count === 1 ? 'venta' : 'ventas'}</p>
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }

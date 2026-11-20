@@ -13,7 +13,7 @@ export default function KardexHistoryTable({ product, kardex = [] }) {
     <div className="bg-shop-light/55 border-t border-shop-line p-6 overflow-hidden">
       <div className="flex items-center justify-between mb-4">
         <h5 className="font-semibold text-shop-ink text-[11px] flex items-center gap-2">
-          🚀 Movimientos Recientes de Kardex
+          <FileText size={14} strokeWidth={1.6} className="text-shop-blue" /> Movimientos Recientes de Kardex
         </h5>
         <button
           type="button"
