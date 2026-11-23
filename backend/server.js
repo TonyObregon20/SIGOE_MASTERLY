@@ -17,6 +17,9 @@ export async function startServer() {
   const PORT = 3000;
 
   // Middlewares
+  // The evidence endpoints accept one bounded 1 MB photograph (base64 adds
+  // overhead). Ship also supports several historical partial movements.
+  app.use(["/api/warehouse-movements/create-salida", "/api/orders/ship"], express.json({ limit: "8mb" }));
   app.use(express.json());
   app.use(requestLogger);
 

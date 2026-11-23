@@ -2,7 +2,9 @@ import OrderModel from "../models/Order.js";
 import ProductModel from "../models/Product.js";
 import WarehouseMovementModel from "../models/WarehouseMovement.js";
 import InvoiceModel from "../models/Invoice.js";
-import KardexModel from "../models/Kardex.js";
+import { randomUUID } from "node:crypto";
+import { salidaService } from "../services/salidaService.js";
+import { flowError } from "../utils/guideValidation.js";
 import ProductionOrderModel from "../models/ProductionOrder.js";
 import UserModel from "../models/User.js";
 
@@ -38,6 +40,7 @@ export const createOrder = async (req, res, next) => {
   let creditUserId = null;
   try {
     const { order, docType, docNumber, invoiceSeriesNumber, productionOrder } = req.body;
+    if (order?.status === "Enviado") throw flowError("Un pedido nuevo no puede crearse como despachado.");
 
     if (!order || !Array.isArray(order.items) || !Number.isFinite(Number(order.total)) || Number(order.total) <= 0) {
       return res.status(400).json({ success: false, message: "La orden no tiene un total o artículos válidos." });
@@ -88,6 +91,7 @@ export const createOrder = async (req, res, next) => {
     }
     computedTotal = Number(computedTotal.toFixed(2));
     const safeOrder = {
+      warehouseGuideVersion: 1,
       id: order.id,
       userId: req.currentUser.id,
       customerName: req.currentUser.name,
@@ -207,11 +211,13 @@ export const createOrder = async (req, res, next) => {
       }
 
       // Generate automatic pending Salida (S-XXX) for Venta Directa
-      const movementId = `S-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+      const movementId = `S-${randomUUID()}`;
       await WarehouseMovementModel.create({
         id: movementId,
         type: "Salida",
         originType: "Venta Directa",
+        guideVersion: 1,
+        automaticDraft: true,
         status: "Pendiente",
         orderId: order.id,
         items: validatedItems.map((i) => ({
@@ -312,77 +318,8 @@ export const createOrder = async (req, res, next) => {
 
 export const shipOrder = async (req, res, next) => {
   try {
-    const { orderId } = req.body;
-    const order = await OrderModel.findOne({ id: orderId });
-    if (!order) {
-      return res.status(404).json({ success: false, message: "Orden no encontrada" });
-    }
-
-    // Mark order as shipped
-    const updatedOrder = await OrderModel.findOneAndUpdate(
-      { id: orderId },
-      { 
-        $set: { 
-          status: "Enviado",
-          shippedAt: new Date().toISOString()
-        } 
-      },
-      { new: true }
-    );
-
-    // Check if a Salida movement was already accepted by Warehouse
-    const existingAcceptedSalida = await WarehouseMovementModel.findOne({ 
-      orderId: orderId, 
-      type: "Salida", 
-      status: "Aceptado" 
-    });
-
-    // If warehouse has NOT already deducted stock via an accepted Salida movement, perform fallback deduction
-    if (!existingAcceptedSalida) {
-      for (const item of safeOrder.items || []) {
-        const prod = await ProductModel.findOne({ id: item.productId });
-        if (prod) {
-          const qty = item.quantity || 1;
-          const newPhysical = Math.max(0, (prod.stockPhysical || 0) - qty);
-          const newCommitted = Math.max(0, (prod.stockCommitted || 0) - qty);
-          await ProductModel.findOneAndUpdate(
-            { id: item.productId },
-            { $set: { stockPhysical: newPhysical, stockCommitted: newCommitted } }
-          );
-
-          // Kardex entry
-          await KardexModel.create({
-            productId: item.productId,
-            date: new Date().toISOString().split("T")[0],
-            type: "Salida",
-            quantity: qty,
-            reason: `Despacho Directo Orden ${orderId}`,
-            documentRef: orderId,
-            balance: newPhysical
-          });
-        }
-      }
-
-      const movementId = `S-${(Math.floor(Math.random() * 900) + 100).toString()}`;
-      await WarehouseMovementModel.create({
-        id: movementId,
-        type: "Salida",
-        originType: safeOrder.type === "pedido" ? "A Pedido" : "Venta Directa",
-        status: "Aceptado",
-        orderId: order.id,
-        items: (safeOrder.items || []).map((i) => ({
-          productId: i.productId,
-          productName: i.productName || "Prenda",
-          quantity: i.quantity || 1,
-          selectedSize: i.selectedSize
-        })),
-        date: new Date().toISOString().split("T")[0],
-        createdAt: new Date().toISOString(),
-        processedAt: new Date().toISOString()
-      });
-    }
-
-    res.json({ success: true, order: updatedOrder });
+    const order = await salidaService.ship(req.body);
+    res.json({ success: true, order });
   } catch (err) {
     next(err);
   }

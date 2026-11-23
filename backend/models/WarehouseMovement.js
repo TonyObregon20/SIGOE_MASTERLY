@@ -14,7 +14,18 @@ const WarehouseMovementSchema = new mongoose.Schema({
   items: [mongoose.Schema.Types.Mixed],
   date: { type: String, default: () => new Date().toISOString().split("T")[0] },
   createdAt: { type: String, default: () => new Date().toISOString() },
-  processedAt: { type: String }
+  processedAt: { type: String },
+  // No defaults: missing policy fields identify genuine historical records.
+  guideVersion: { type: Number },
+  guideMode: { type: String, enum: ["CON_GUIA", "SIN_GUIA"] },
+  guideNumber: { type: String },
+  guidePhoto: { type: String, select: false },
+  dispatchGuideNumber: { type: String },
+  dispatchGuidePhoto: { type: String, select: false },
+  creationRequestId: { type: String },
+  automaticDraft: { type: Boolean },
+  stockApplied: { type: Boolean },
+  dispatchedAt: { type: String }
 }, { strict: false });
 
 export const WarehouseMovementModel = mongoose.models.WarehouseMovement || mongoose.model("WarehouseMovement", WarehouseMovementSchema);

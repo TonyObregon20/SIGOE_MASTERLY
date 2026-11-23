@@ -22,10 +22,10 @@ export async function createOrderApi({ order, docType = "Boleta", docNumber = "0
   });
 }
 
-export async function shipOrderApi(orderId) {
+export async function shipOrderApi(orderId, evidence = {}) {
   return apiClient("/api/orders/ship", {
     method: "POST",
-    body: JSON.stringify({ orderId })
+    body: JSON.stringify({ ...evidence, orderId })
   });
 }
 

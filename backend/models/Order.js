@@ -11,7 +11,9 @@ const OrderSchema = new mongoose.Schema({
   date: { type: String },
   initialPayment: { type: Number },
   estimatedDelivery: { type: String },
-  installments: [mongoose.Schema.Types.Mixed]
+  installments: [mongoose.Schema.Types.Mixed],
+  warehouseGuideVersion: { type: Number },
+  warehouseRevision: { type: Number }
 }, { strict: false });
 
 export const OrderModel = mongoose.models.Order || mongoose.model("Order", OrderSchema);

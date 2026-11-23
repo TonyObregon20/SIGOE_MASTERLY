@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckCircle2, Truck, Plus, Package, FileSpreadsheet } from "lucide-react";
+import { CheckCircle2, Truck, Package, FileSpreadsheet } from "lucide-react";
 import WarehouseMovementCard from "./WarehouseMovementCard";
 
 /**
@@ -12,6 +12,7 @@ export default function WarehouseMovementsSection({
   pendingCount = 0,
   onAcceptMovement,
   onOpenCreateSalida,
+  onConfigureSalida,
   onOpenCreateIngreso,
   onOpenIncomeStock,
   onOpenReport
@@ -19,15 +20,15 @@ export default function WarehouseMovementsSection({
   const handleOpenIngreso = onOpenCreateIngreso || onOpenIncomeStock;
 
   return (
-    <div className="bg-white border border-shop-line rounded-[2px] p-6 space-y-4">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-shop-line pb-4">
+    <div className="bg-white border border-shop-line rounded-[2px] p-4 sm:p-5 space-y-4 min-w-0">
+      <div className="space-y-3 border-b border-shop-line pb-3">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-base font-semibold text-shop-ink tracking-tight">
               Movimientos de Almacén (Ingresos y Salidas)
             </h3>
             {pendingCount > 0 && (
-              <span className="px-2 py-0.5 bg-amber-500 text-white text-[11px] font-semibold rounded-full">
+              <span className="px-2 py-0.5 bg-amber-500 text-white text-[11px] font-semibold rounded-full shrink-0">
                 {pendingCount} Pendiente{pendingCount > 1 ? "s" : ""}
               </span>
             )}
@@ -37,24 +38,14 @@ export default function WarehouseMovementsSection({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {onOpenReport && (
-            <button
-              type="button"
-              onClick={onOpenReport}
-              className="px-3.5 py-1.5 bg-shop-ink hover:bg-shop-ink text-white text-[11px] font-semibold rounded-[2px] transition-all flex items-center gap-1.5 tabular-nums min-h-9"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-blue-400" /> Generar Reporte
-            </button>
-          )}
-
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {handleOpenIngreso && (
             <button
               type="button"
               onClick={handleOpenIngreso}
-              className="px-3.5 py-1.5 bg-shop-ink hover:bg-shop-blue text-white text-[11px] font-semibold rounded-[2px] transition-all flex items-center gap-1.5 min-h-9"
+              className="min-h-10 w-full px-3 py-2 bg-shop-ink hover:bg-shop-blue text-white text-xs font-semibold rounded-[2px] transition-colors flex items-center justify-center gap-2"
             >
-              <Package className="w-3.5 h-3.5" /> Generar Ingreso (OP / Manual)
+              <Package className="w-4 h-4 shrink-0" /> Generar Ingreso (OP / Manual)
             </button>
           )}
 
@@ -62,28 +53,41 @@ export default function WarehouseMovementsSection({
             <button
               type="button"
               onClick={onOpenCreateSalida}
-              className="px-3.5 py-1.5 bg-shop-ink hover:bg-shop-ink text-white text-[11px] font-semibold rounded-[2px] transition-all flex items-center gap-1.5 min-h-9"
+              className="min-h-10 w-full px-3 py-2 bg-shop-ink hover:bg-shop-blue text-white text-xs font-semibold rounded-[2px] transition-colors flex items-center justify-center gap-2"
             >
-              <Truck className="w-3.5 h-3.5" /> Generar Salida (OP / Pedido)
+              <Truck className="w-4 h-4 shrink-0" /> Generar Salida (OP / Pedido)
             </button>
           )}
 
-          <div className="flex items-center gap-1 bg-shop-light p-1 rounded-[2px]">
-            {["Pendientes", "Todos", "Aceptados"].map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => onFilterChange(tab)}
-                className={`px-3 py-1 text-[11px] font-semibold rounded-[2px] transition-all ${
-                  filter === tab
-                    ? "bg-white text-shop-ink font-medium"
-                    : "text-shop-muted hover:text-shop-ink"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+          {onOpenReport && (
+            <button
+              type="button"
+              onClick={onOpenReport}
+              className="min-h-10 w-full px-3 py-2 bg-shop-ink hover:bg-shop-blue text-white text-xs font-semibold rounded-[2px] transition-colors flex items-center justify-center gap-2"
+            >
+              <FileSpreadsheet className="w-4 h-4 shrink-0" /> Generar Reporte
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div aria-label="Filtrar movimientos" className="flex">
+        <div className="grid grid-cols-3 w-full sm:w-auto items-center gap-1 bg-shop-light p-1 rounded-[2px] border border-shop-line">
+          {["Pendientes", "Todos", "Aceptados"].map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => onFilterChange(tab)}
+              aria-pressed={filter === tab}
+              className={`min-h-9 px-3 sm:px-4 py-2 text-xs font-semibold rounded-[2px] transition-all ${
+                filter === tab
+                  ? "bg-white text-shop-ink font-medium"
+                  : "text-shop-muted hover:text-shop-ink"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -95,12 +99,13 @@ export default function WarehouseMovementsSection({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
           {movements.map((wm) => (
             <WarehouseMovementCard
               key={wm.id}
               movement={wm}
               onAcceptMovement={onAcceptMovement}
+              onConfigureSalida={onConfigureSalida}
             />
           ))}
         </div>

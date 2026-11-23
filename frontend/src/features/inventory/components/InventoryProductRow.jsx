@@ -23,9 +23,9 @@ export default function InventoryProductRow({
 
   return (
     <div className="bg-white border border-shop-line rounded-[2px] overflow-hidden transition-shadow">
-      <div className="p-5 flex items-center justify-between flex-wrap gap-4">
+      <div className="p-4 grid grid-cols-1 md:grid-cols-2 2xl:flex 2xl:items-center 2xl:justify-between gap-4">
         {/* Product image & ID/Category info */}
-        <div className="flex items-center gap-4 2xl:w-[312px] 2xl:shrink-0">
+        <div className="flex min-w-0 items-center gap-3 2xl:w-[312px] 2xl:shrink-0">
           <div className="w-16 h-16 bg-shop-light rounded-[2px] overflow-hidden border border-shop-line p-1 flex-shrink-0">
             <img
               src={p.image}
@@ -35,10 +35,10 @@ export default function InventoryProductRow({
             />
           </div>
           <div className="min-w-0">
-            <h4 className="font-semibold text-shop-ink text-base tracking-tight leading-tight">
+            <h4 className="font-semibold text-shop-ink text-base tracking-tight leading-tight break-words">
               {p.name}
             </h4>
-            <div className="flex items-center gap-3 mt-1">
+            <div className="flex flex-wrap items-center gap-2 mt-1">
               <span className="text-[11px] font-semibold text-shop-blue bg-shop-light px-2 py-0.5 rounded-[2px] border border-shop-light">
                 ID: {formattedId}
               </span>
@@ -50,7 +50,7 @@ export default function InventoryProductRow({
         </div>
 
         {/* Stock Breakdown by Sizes */}
-        <div className="bg-shop-light p-2.5 rounded-[2px] border border-shop-line/80 min-w-[220px]">
+        <div className="bg-shop-light p-2.5 rounded-[2px] border border-shop-line/80 min-w-0 w-full 2xl:w-auto 2xl:min-w-[220px]">
           <div className="flex items-center justify-between text-[11px] font-semibold text-shop-muted tabular-nums mb-1">
             <span className="flex items-center gap-1">
               <Layers className="w-3 h-3 text-shop-blue" /> Tallas Disponibles
@@ -72,7 +72,7 @@ export default function InventoryProductRow({
         </div>
 
         {/* Stock Metrics and Action Buttons */}
-        <div className="flex items-center gap-8 flex-wrap sm:flex-nowrap">
+        <div className="grid grid-cols-3 items-center gap-3 md:col-span-2 2xl:flex 2xl:gap-4">
           {/* Physical stock */}
           <div className="text-center">
             <div className="text-[11px] text-shop-muted font-semibold mb-0.5 tabular-nums">
@@ -100,7 +100,7 @@ export default function InventoryProductRow({
           </div>
 
           {/* Web / Available stock */}
-          <div className="text-center bg-shop-light px-4 py-2 rounded-[2px] border border-shop-light min-w-[110px]">
+          <div className="text-center bg-shop-light px-4 py-2 rounded-[2px] border border-shop-light min-w-0">
             <div className="text-[11px] text-shop-blue font-semibold mb-0.5 tabular-nums">
               Web (Disponible)
             </div>
@@ -117,11 +117,11 @@ export default function InventoryProductRow({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2">
+          <div className="col-span-3 flex justify-end gap-2 border-t border-shop-line pt-3 2xl:border-t-0 2xl:pt-0">
             <button
               type="button"
               onClick={() => onOpenAddStock(p.id)}
-              className="p-3 bg-white text-shop-blue rounded-[2px] hover:bg-shop-light transition-all border border-shop-line group"
+              className="p-2.5 min-h-10 bg-white text-shop-blue rounded-[2px] hover:bg-shop-light transition-all border border-shop-line group"
               title="Añadir Stock"
             >
               <Plus className="w-5 h-5 transition-transform" />
@@ -129,7 +129,7 @@ export default function InventoryProductRow({
             <button
               type="button"
               onClick={() => onNewProduction([{ product: p, quantity: 10 }])}
-              className="p-3 bg-white text-shop-muted rounded-[2px] hover:bg-shop-light transition-all border border-shop-line"
+              className="p-2.5 min-h-10 bg-white text-shop-muted rounded-[2px] hover:bg-shop-light transition-all border border-shop-line"
               title="Producir más"
             >
               <ClipboardList className="w-5 h-5" />
@@ -137,7 +137,7 @@ export default function InventoryProductRow({
             <button
               type="button"
               onClick={onToggleSelect}
-              className={`p-3 rounded-[2px] transition-all border ${
+              className={`p-2.5 min-h-10 rounded-[2px] transition-all border ${
                 isSelected
                   ? "bg-shop-ink text-white border-slate-950"
                   : "bg-white text-shop-muted hover:bg-shop-light border-shop-line"

@@ -225,33 +225,24 @@ function App() {
   const handleAcceptWarehouseMovement = async (movementId) => {
     try {
       const data = await handleAcceptWarehouseMovementAction(movementId);
-      if (data && data.success) {
-        loadProducts();
-        loadOrders();
-        loadProductionOrders();
-        loadKardex();
-      } else {
-        alert(data?.message || "Error al aceptar el movimiento.");
+      if (data?.success) {
+        await Promise.all([loadProducts(), loadOrders(), loadProductionOrders(), loadKardex()]);
       }
+      return data;
     } catch (err) {
-      console.error("Error accepting movement:", err);
+      return { success: false, message: err.message || "No se pudo aprobar el movimiento." };
     }
   };
 
   const handleCreateSalida = async (payload) => {
     try {
       const data = await handleCreateWarehouseSalidaAction(payload);
-      if (data && data.success) {
-        loadProducts();
-        loadOrders();
-        loadProductionOrders();
-        loadKardex();
-      } else {
-        alert(data?.message || "Error al crear salida.");
+      if (data?.success) {
+        await Promise.all([loadProducts(), loadOrders(), loadProductionOrders(), loadKardex()]);
       }
       return data;
     } catch (err) {
-      console.error("Error creating salida:", err);
+      return { success: false, message: err.message || "No se pudo crear la salida." };
     }
   };
 
@@ -289,18 +280,15 @@ function App() {
     return processCheckoutAction(type, docType, docNumber);
   };
 
-  const handleShipOrder = async (orderId) => {
+  const handleShipOrder = async (orderId, evidence) => {
     try {
-      const data = await shipOrder(orderId);
-      if (data && data.success) {
-        loadProducts();
-        loadOrders();
-        loadKardex();
-        loadWarehouseMovements();
-        alert(`¡Orden ${orderId} despachada exitosamente!`);
+      const data = await shipOrder(orderId, evidence);
+      if (data?.success) {
+        await Promise.all([loadProducts(), loadOrders(), loadKardex(), loadWarehouseMovements()]);
       }
+      return data;
     } catch (err) {
-      console.error(err);
+      return { success: false, message: err.message || "No se pudo despachar el pedido." };
     }
   };
 

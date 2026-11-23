@@ -1,5 +1,5 @@
 import AdminDialog from "@/components/admin/AdminDialog";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { motion } from "motion/react";
 import {
   X,
@@ -15,6 +15,10 @@ import {
   Trash2
 } from "lucide-react";
 
+import GuideModeModal from "@/features/warehouse/components/GuideModeModal";
+import GuideEvidenceFields from "@/features/warehouse/components/GuideEvidenceFields";
+import { validateGuideFields } from "@/features/warehouse/guideUtils";
+
 export default function CreateSalidaModal({
   isOpen,
   onClose,
@@ -22,10 +26,11 @@ export default function CreateSalidaModal({
   productionOrders = [],
   products = [],
   warehouseMovements = [],
-  onCreateSalida
+  onCreateSalida,
+  initialOrderId = ""
 }) {
   const [sourceType, setSourceType] = useState("order"); // "order", "op", "manual"
-  const [selectedOrderId, setSelectedOrderId] = useState("");
+  const [selectedOrderId, setSelectedOrderId] = useState(initialOrderId);
   const [selectedOpId, setSelectedOpId] = useState("");
   const [manualItems, setManualItems] = useState([]);
   const [manualProductId, setManualProductId] = useState("");
@@ -35,6 +40,14 @@ export default function CreateSalidaModal({
   const [notes, setNotes] = useState("");
   const [autoAccept, setAutoAccept] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [guideMode, setGuideMode] = useState(null);
+  const [guideNumber, setGuideNumber] = useState("");
+  const [guidePhoto, setGuidePhoto] = useState("");
+  const [photoReading, setPhotoReading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const sending = useRef(false);
+  const requestId = useRef(crypto.randomUUID());
+  const close = () => { if (!sending.current && !photoReading) onClose(); };
 
   // Detailed analysis of each order in relation to production & warehouse lifecycle
   const analyzedOrders = useMemo(() => {
@@ -162,7 +175,9 @@ export default function CreateSalidaModal({
       const isSalidaAccepted = Boolean(salidaMovement && salidaMovement.status === "Aceptado");
       const isSalidaPending = Boolean(salidaMovement && salidaMovement.status === "Pendiente");
 
-      const canGenerateSalida = isFinished && isIngresoAccepted && !isSalidaAccepted;
+      const linked = warehouseMovements.filter((wm) => wm.opId === op.id && wm.status === "Aceptado");
+      const total = (type) => linked.filter((wm) => wm.type === type).reduce((sum, wm) => sum + (wm.items || []).reduce((n, i) => n + (Number(i.quantity) || 0), 0), 0);
+      const canGenerateSalida = isFinished && isIngresoAccepted && !isSalidaPending && (op.orderId ? !isSalidaAccepted : total("Ingreso") > total("Salida"));
 
       return {
         ...op,
@@ -252,7 +267,8 @@ export default function CreateSalidaModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (sending.current || photoReading) return;
+    setSubmitError("");
 
     if (sourceType === "order") {
       if (!selectedOrderId) {
@@ -275,6 +291,10 @@ export default function CreateSalidaModal({
       }
     }
 
+    try {
+      if (guideMode === "CON_GUIA") validateGuideFields(guideNumber, guidePhoto);
+    } catch (err) { setSubmitError(err.message); return; }
+    sending.current = true;
     setIsSubmitting(true);
     try {
       const payload = {
@@ -286,27 +306,33 @@ export default function CreateSalidaModal({
           : (sourceType === "op" ? "Producción OP" : "Ajuste / Merma"),
         reason: reason || (sourceType === "order" ? `Salida Almacén para Despacho Orden ${selectedOrderId}` : `Salida OP ${selectedOpId}`),
         notes: notes,
-        autoAccept: autoAccept
+        autoAccept: autoAccept,
+        requestId: requestId.current,
+        guideMode,
+        ...(guideMode === "CON_GUIA" ? { guideNumber, guidePhoto } : {})
       };
 
-      await onCreateSalida(payload);
+      const result = await onCreateSalida(payload);
+      if (!result?.success) throw new Error(result?.message || "No se pudo registrar la salida.");
       onClose();
     } catch (err) {
-      console.error("Error al registrar salida:", err);
+      setSubmitError(err.message || "No se pudo registrar la salida.");
     } finally {
+      sending.current = false;
       setIsSubmitting(false);
     }
   };
 
   if (!isOpen) return null;
+  if (!guideMode) return <GuideModeModal onSelect={setGuideMode} onClose={close} />;
 
   return (
-    <AdminDialog label="Registrar salida" onClose={onClose} className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+    <AdminDialog label="Registrar salida" onClose={close} className="fixed inset-0 z-[120] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={onClose}
+        onClick={close}
         className="absolute inset-0 bg-shop-ink/60 backdrop-blur-sm"
       />
 
@@ -334,7 +360,7 @@ export default function CreateSalidaModal({
             </div>
             <button aria-label="Cerrar ventana"
               type="button"
-              onClick={onClose}
+              onClick={close}
               className="p-2 bg-shop-light text-shop-muted rounded-[2px] hover:bg-red-50 hover:text-red-500 transition-colors"
             >
               <X className="w-5 h-5" />
@@ -379,6 +405,10 @@ export default function CreateSalidaModal({
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="flex items-center justify-between gap-3 p-3 bg-blue-50 rounded-xl"><strong className="text-sm">{guideMode === "CON_GUIA" ? "CON GUÍA" : "SIN GUÍA"}</strong><button type="button" disabled={isSubmitting || photoReading} onClick={() => setGuideMode(null)} className="text-sm text-blue-700 underline">Cambiar modalidad</button></div>
+            {guideMode === "CON_GUIA" && <GuideEvidenceFields number={guideNumber} photo={guidePhoto} onNumberChange={setGuideNumber} onPhotoChange={setGuidePhoto} disabled={isSubmitting || photoReading} onBusyChange={setPhotoReading} onError={setSubmitError} />}
+            {submitError && <p role="alert" className="text-sm text-red-800 bg-red-50 border border-red-200 p-3 rounded-xl">{submitError}</p>}
+            <fieldset disabled={isSubmitting || photoReading} className="space-y-5 min-w-0 border-0 p-0">
             {/* SOURCE: ORDER */}
             {sourceType === "order" && (
               <div className="space-y-4">
@@ -708,7 +738,7 @@ export default function CreateSalidaModal({
 
               <div className="space-y-1">
                 <label className="text-[11px] font-semibold text-shop-muted pl-1">
-                  N° Guía / Transportista / Responsable (Opcional)
+                  Transportista / Responsable (Opcional)
                 </label>
                 <div className="relative">
                   <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-shop-muted" />
@@ -716,7 +746,7 @@ export default function CreateSalidaModal({
                     type="text"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Ejem: Guía GR-0012, Courier Olva / Carlos Almacenero"
+                    placeholder="Ejem: Courier Olva / Carlos Almacenero"
                     className="w-full pl-10 pr-4 py-2.5 bg-white border border-shop-line rounded-[2px] tabular-nums outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]"
                   />
                 </div>
@@ -743,18 +773,19 @@ export default function CreateSalidaModal({
               </div>
             </div>
 
+            </fieldset>
             {/* Action Buttons */}
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={close}
                 className="flex-1 py-3 px-4 border border-shop-line rounded-[2px] text-xs font-medium text-shop-muted hover:bg-shop-light transition-colors min-h-9"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || (sourceType === "order" && !selectedOrderId) || (sourceType === "op" && !selectedOpId) || (sourceType === "manual" && manualItems.length === 0)}
+                disabled={isSubmitting || photoReading || (sourceType === "order" && !selectedOrderId) || (sourceType === "op" && !selectedOpId) || (sourceType === "manual" && manualItems.length === 0)}
                 className="flex-1 py-3 px-4 bg-shop-ink hover:bg-shop-ink text-white rounded-[2px] text-xs font-semibold transition-all disabled:bg-slate-200 disabled:text-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-9"
               >
                 <Truck className="w-4 h-4" />

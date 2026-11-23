@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   ShoppingBag,
   Package,
@@ -38,6 +38,9 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import StatCard from "@/components/ui/StatCard";
 
+import GuideDispatchModal from "@/features/warehouse/components/GuideDispatchModal";
+import { orderSalidas } from "@/features/warehouse/guideUtils";
+
 function SalesManagementView({
   orders = [],
   products = [],
@@ -48,13 +51,30 @@ function SalesManagementView({
   onUpdateOrder,
   onShipOrder
 }) {
+  const [dispatchTarget, setDispatchTarget] = useState(null);
+  const [dispatchError, setDispatchError] = useState("");
+  const [shipping, setShipping] = useState(false);
+  const shippingRef = useRef(false);
+  const startDispatch = async (order) => {
+    if (shippingRef.current || dispatchTarget) return;
+    setDispatchError("");
+    const guided = orderSalidas(warehouseMovements, order.id).filter((m) => m.guideMode === "CON_GUIA");
+    if (guided.length) { setDispatchTarget({ order, movements: guided }); return; }
+    shippingRef.current = true;
+    setShipping(true);
+    try {
+      const result = await onShipOrder(order.id);
+      if (!result?.success) setDispatchError(result?.message || "No se pudo despachar el pedido.");
+    } catch (err) { setDispatchError(err.message); }
+    finally { shippingRef.current = false; setShipping(false); }
+  };
   const [filter, setFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   const filteredOrders = orders.filter((o) => filter === "all" || o.type === filter);
 
   const handleStatusChange = (orderId, newStatus) => {
-    onUpdateOrder(orderId, { status: newStatus });
+    if (newStatus !== "Enviado") onUpdateOrder(orderId, { status: newStatus });
   };
 
   return (
@@ -88,9 +108,9 @@ function SalesManagementView({
           </thead>
           <tbody className="divide-y divide-shop-line">
             {filteredOrders.map((order, idx) => {
-              const salidaMovement = (warehouseMovements || []).find(
-                (wm) => wm.orderId === order.id && wm.type === "Salida"
-              );
+              const salidas = orderSalidas(warehouseMovements, order.id);
+              const salidaMovement = salidas.find((m) => m.id === order.warehouseSalidaId)
+                || salidas.find((m) => m.status === "Aceptado") || salidas[0];
               const isSalidaAccepted = Boolean(
                 order.salidaApproved ||
                 order.warehouseApproved ||
@@ -150,6 +170,7 @@ function SalesManagementView({
                       </span>
                       <select
                         value={order.status}
+                        disabled={order.status === "Enviado"}
                         onChange={(e) => handleStatusChange(order.id, e.target.value)}
                         className={`text-[11px] font-medium border-none bg-transparent focus:ring-0 p-0 cursor-pointer tabular-nums ${
                           order.status === "Pagado Total"
@@ -165,7 +186,7 @@ function SalesManagementView({
                         <option value="Pagado Parcial">Pagado Parcial</option>
                         <option value="Pagado Total">Pagado Total</option>
                         <option value="En Producción">En Producción</option>
-                        <option value="Enviado">Enviado</option>
+                        <option value="Enviado" disabled>Enviado (mediante Despachar)</option>
                       </select>
                     </div>
                   </td>
@@ -196,10 +217,11 @@ function SalesManagementView({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              onShipOrder(order.id);
+                              startDispatch(order);
                             }}
                             className="px-3.5 py-1.5 bg-shop-ink hover:bg-shop-blue text-white text-[11px] font-semibold rounded-[2px] transition-all flex items-center gap-1.5 min-h-9"
-                            title="Salida aprobada en almacén. Clic para marcar como despachado al cliente."
+                            disabled={shipping || Boolean(dispatchTarget)}
+                            title="Confirmar despacho; CON GUÍA requiere una nueva captura."
                           >
                             <Truck className="w-3.5 h-3.5" /> Despachar
                           </button>
@@ -221,7 +243,7 @@ function SalesManagementView({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onNavigateToWarehouse();
+                                onNavigateToWarehouse(salidaMovement?.guideVersion != null && !salidaMovement?.guideMode ? order.id : undefined);
                               }}
                               className="text-[11px] text-amber-700 hover:underline font-medium tabular-nums"
                             >
@@ -291,7 +313,7 @@ function SalesManagementView({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onNavigateToWarehouse();
+                                onNavigateToWarehouse(order.id);
                               }}
                               className="text-[11px] text-shop-blue hover:underline font-medium tabular-nums"
                             >
@@ -321,6 +343,8 @@ function SalesManagementView({
         </table>
       </div>
 
+      {dispatchError && <p role="alert" className="text-sm text-red-800 bg-red-50 border border-red-200 p-3 rounded-xl">{dispatchError}</p>}
+      {dispatchTarget && <GuideDispatchModal order={dispatchTarget.order} movements={dispatchTarget.movements} onSubmit={onShipOrder} onClose={() => setDispatchTarget(null)} />}
       <AnimatePresence>
         {selectedOrder && (
           <motion.div

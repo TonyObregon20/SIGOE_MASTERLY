@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { AnimatePresence } from "motion/react";
-import { FileSpreadsheet } from "lucide-react";
 import { useWarehouseMovementsFilter } from "./hooks/useWarehouseMovementsFilter";
 import { useIncomeDraft } from "./hooks/useIncomeDraft";
 import WarehouseMovementsSection from "./components/WarehouseMovementsSection";
@@ -20,6 +19,8 @@ function InventoryView({
   warehouseMovements = [],
   onAcceptWarehouseMovement,
   onCreateSalida,
+  initialSalidaOrderId = "",
+  onSalidaRequestConsumed,
   onCreateIngreso,
   orders = [],
   productionOrders = [],
@@ -29,7 +30,10 @@ function InventoryView({
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isIngresoModalOpen, setIsIngresoModalOpen] = useState(false);
-  const [isSalidaModalOpen, setIsSalidaModalOpen] = useState(false);
+  const [isSalidaModalOpen, setIsSalidaModalOpen] = useState(Boolean(initialSalidaOrderId));
+  const [salidaOrderId, setSalidaOrderId] = useState(initialSalidaOrderId);
+  const openSalida = (orderId = "") => { setSalidaOrderId(orderId); setIsSalidaModalOpen(true); };
+  const closeSalida = () => { setIsSalidaModalOpen(false); setSalidaOrderId(""); onSalidaRequestConsumed?.(); };
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // Warehouse movements filter and count logic
@@ -79,24 +83,15 @@ function InventoryView({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 min-w-0">
       {/* View Header */}
-      <div className="flex flex-col sm:flex-col sm:items-start justify-between gap-4 border-b border-shop-line pb-4 xl:flex-row xl:items-center">
+      <div className="border-b border-shop-line pb-3">
         <div className="space-y-1">
           <h1 className="text-shop-ink tracking-tight font-medium text-[28px]">Control de Almacén</h1>
           <p className="text-xs font-medium text-shop-muted font-shop">
             Gestión de existencias producidas, salidas de pedidos/OPs y movimientos de inventario terminado.
           </p>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setIsReportModalOpen(true)}
-          className="px-4 py-2.5 bg-shop-ink hover:bg-shop-ink text-white rounded-[2px] text-xs font-semibold transition-all flex items-center gap-2 tabular-nums shrink-0 min-h-9"
-        >
-          <FileSpreadsheet className="w-4 h-4 text-blue-400" />
-          <span>Generar Reporte de Almacén</span>
-        </button>
       </div>
 
       {/* Warehouse Movements Section (Inputs and Outputs) */}
@@ -107,7 +102,8 @@ function InventoryView({
         pendingCount={pendingMovementsCount}
         onAcceptMovement={onAcceptWarehouseMovement}
         onOpenCreateIngreso={() => setIsIngresoModalOpen(true)}
-        onOpenCreateSalida={() => setIsSalidaModalOpen(true)}
+        onOpenCreateSalida={() => openSalida()}
+        onConfigureSalida={(movement) => openSalida(movement.orderId)}
         onOpenIncomeStock={() => setIsIngresoModalOpen(true)}
         onOpenReport={() => setIsReportModalOpen(true)}
       />
@@ -169,7 +165,8 @@ function InventoryView({
         {isSalidaModalOpen && (
           <CreateSalidaModal
             isOpen={isSalidaModalOpen}
-            onClose={() => setIsSalidaModalOpen(false)}
+            onClose={closeSalida}
+            initialOrderId={salidaOrderId}
             orders={orders}
             productionOrders={productionOrders}
             products={products}

@@ -49,11 +49,11 @@ export function useOrders(autoLoad = true) {
     }
   }, [loadOrders]);
 
-  const shipOrder = useCallback(async (orderId) => {
+  const shipOrder = useCallback(async (orderId, evidence) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await ordersService.shipOrder(orderId);
+      const result = await ordersService.shipOrder(orderId, evidence);
       if (result && result.success) {
         if (result.order) {
           setOrders((prev) => prev.map((o) => (o.id === orderId ? result.order : o)));

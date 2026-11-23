@@ -29,8 +29,8 @@ export const ordersService = {
   /**
    * Dispatches / ships an order
    */
-  async shipOrder(orderId) {
-    return shipOrderApi(orderId);
+  async shipOrder(orderId, evidence) {
+    return shipOrderApi(orderId, evidence);
   },
 
   /**

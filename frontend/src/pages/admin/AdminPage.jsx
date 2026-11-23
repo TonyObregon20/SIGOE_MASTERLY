@@ -57,6 +57,7 @@ function AdminPage({
   const { currentUser: authCurrentUser, logout } = useAuth();
   const currentUser = propCurrentUser || authCurrentUser;
   const [adminTab, setAdminTab] = useState("dashboard");
+  const [salidaOrderId, setSalidaOrderId] = useState("");
 
   return (
     <>
@@ -105,6 +106,8 @@ function AdminPage({
                     warehouseMovements={warehouseMovements}
                     onAcceptWarehouseMovement={onAcceptWarehouseMovement}
                     onCreateSalida={onCreateSalida}
+                    initialSalidaOrderId={salidaOrderId}
+                    onSalidaRequestConsumed={() => setSalidaOrderId("")}
                     onCreateIngreso={onCreateIngreso}
                     orders={orders}
                     productionOrders={productionOrders}
@@ -171,7 +174,7 @@ function AdminPage({
                     products={products}
                     warehouseMovements={warehouseMovements}
                     productionOrders={productionOrders}
-                    onNavigateToWarehouse={() => setAdminTab("inventory")}
+                    onNavigateToWarehouse={(orderId) => { setSalidaOrderId(orderId || ""); setAdminTab("inventory"); }}
                     onNavigateToProduction={() => setAdminTab("production")}
                     onShipOrder={handleShipOrder}
                     onUpdateOrder={(id, updates) => {

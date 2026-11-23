@@ -3,45 +3,16 @@ import OrderModel from "../models/Order.js";
 import ProductModel from "../models/Product.js";
 import ProductionOrderModel from "../models/ProductionOrder.js";
 import KardexModel from "../models/Kardex.js";
+import { salidaService } from "../services/salidaService.js";
+import { ingressStock } from "../utils/inventoryStock.js";
+import { warehouseReadModel } from "../utils/warehouseReadModel.js";
 
 export const getWarehouseMovements = async (req, res, next) => {
   try {
-    let list = await WarehouseMovementModel.find().sort({ createdAt: -1 });
-    
-    // Auto-sync any historically shipped orders that don't have a Salida record
-    const shippedOrders = await OrderModel.find({ status: "Enviado" });
-    const productsList = await ProductModel.find();
-    
-    for (const order of shippedOrders) {
-      const hasSalida = list.some((wm) => wm.orderId === order.id && wm.type === "Salida");
-      if (!hasSalida) {
-        const movementId = `S-${(Math.floor(Math.random() * 900) + 100).toString()}`;
-        const itemsMapped = (order.items || []).map((i) => {
-          const p = productsList.find((p) => p.id === i.productId);
-          return {
-            productId: i.productId,
-            productName: p ? p.name : (i.productName || "Prenda"),
-            quantity: i.quantity || 1,
-            selectedSize: i.selectedSize
-          };
-        });
-
-        const newSalida = await WarehouseMovementModel.create({
-          id: movementId,
-          type: "Salida",
-          originType: order.type === "pedido" ? "A Pedido" : "Venta Directa",
-          status: "Aceptado",
-          orderId: order.id,
-          items: itemsMapped,
-          date: order.date || new Date().toISOString().split("T")[0],
-          createdAt: new Date().toISOString(),
-          processedAt: new Date().toISOString()
-        });
-        list.unshift(newSalida);
-      }
-    }
-
-    res.json(list);
+    const list = await WarehouseMovementModel.find().sort({ createdAt: -1 });
+    const shipped = await OrderModel.find({ status: "Enviado" });
+    const products = await ProductModel.find();
+    res.json(warehouseReadModel(list, shipped, products));
   } catch (err) {
     next(err);
   }
@@ -54,6 +25,10 @@ export const acceptWarehouseMovement = async (req, res, next) => {
     if (!movement) {
       return res.status(404).json({ success: false, message: "Movimiento de almacén no encontrado" });
     }
+    if (movement.type === "Salida") {
+      const approved = await salidaService.accept(movementId);
+      return res.json({ success: true, movement: approved });
+    }
     if (movement.status === "Aceptado") {
       return res.status(400).json({ success: false, message: "El movimiento ya fue aceptado anteriormente" });
     }
@@ -65,15 +40,13 @@ export const acceptWarehouseMovement = async (req, res, next) => {
       for (const item of movement.items) {
         const prod = await ProductModel.findOne({ id: item.productId });
         if (prod) {
-          const qty = item.quantity || 0;
-          const newPhysical = (prod.stockPhysical || 0) + qty;
-          const newCommitted = movement.originType === "A Pedido"
-            ? (prod.stockCommitted || 0) + qty
-            : (prod.stockCommitted || 0);
+          const qty = Number(item.quantity);
+          const stock = ingressStock(prod, item, movement.originType === "A Pedido");
+          const newPhysical = stock.stockPhysical;
 
           await ProductModel.findOneAndUpdate(
             { id: item.productId },
-            { $set: { stockPhysical: newPhysical, stockCommitted: newCommitted } }
+            { $set: stock }
           );
 
           await KardexModel.create({
@@ -86,65 +59,6 @@ export const acceptWarehouseMovement = async (req, res, next) => {
             balance: newPhysical
           });
         }
-      }
-    } else if (movement.type === "Salida") {
-      // Salida: descuenta Stock Físico y Stock Comprometido (global y por tallas)
-      for (const item of movement.items) {
-        const prod = await ProductModel.findOne({ id: item.productId });
-        if (prod) {
-          const qty = item.quantity || 0;
-          const newPhysical = Math.max(0, (prod.stockPhysical || 0) - qty);
-          const newCommitted = Math.max(0, (prod.stockCommitted || 0) - qty);
-
-          const updatedSizes = prod.sizes ? { ...prod.sizes } : {};
-          const size = item.selectedSize || "M";
-          if (updatedSizes[size]) {
-            const szPhys = Number(updatedSizes[size].stockPhysical) || 0;
-            const szComm = Number(updatedSizes[size].stockCommitted) || 0;
-            updatedSizes[size] = {
-              ...updatedSizes[size],
-              stockPhysical: Math.max(0, szPhys - qty),
-              stockCommitted: Math.max(0, szComm - qty)
-            };
-          }
-
-          await ProductModel.findOneAndUpdate(
-            { id: item.productId },
-            { 
-              $set: { 
-                stockPhysical: newPhysical, 
-                stockCommitted: newCommitted,
-                sizes: updatedSizes
-              } 
-            }
-          );
-
-          await KardexModel.create({
-            productId: item.productId,
-            date: new Date().toISOString().split("T")[0],
-            type: "Salida",
-            quantity: qty,
-            reason: `Salida Aceptada ${movement.id} (${movement.originType}) - ${movement.orderId ? `Orden ${movement.orderId}` : movement.opId ? `OP ${movement.opId}` : "Almacén"} [Talla: ${size}]`,
-            documentRef: movement.orderId || movement.opId || movement.id,
-            balance: newPhysical
-          });
-        }
-      }
-
-      // Mark order as warehouse approved so Sales can activate the "Despachar" button
-      if (movement.orderId) {
-        await OrderModel.findOneAndUpdate(
-          { id: movement.orderId },
-          { 
-            $set: { 
-              salidaApproved: true, 
-              warehouseApproved: true,
-              warehouseStatus: "Salida Aprobada",
-              warehouseSalidaId: movement.id,
-              warehouseApprovedAt: new Date().toISOString()
-            } 
-          }
-        );
       }
     }
 
@@ -162,163 +76,8 @@ export const acceptWarehouseMovement = async (req, res, next) => {
 
 export const createSalidaMovement = async (req, res, next) => {
   try {
-    const { orderId, opId, items, originType: customOriginType, reason, notes, autoAccept } = req.body;
-    
-    let targetOrder = null;
-    let targetOp = null;
-
-    if (orderId) {
-      targetOrder = await OrderModel.findOne({ id: orderId });
-    }
-    if (opId) {
-      targetOp = await ProductionOrderModel.findOne({ id: opId });
-      if (!targetOrder && targetOp?.orderId) {
-        targetOrder = await OrderModel.findOne({ id: targetOp.orderId });
-      }
-    }
-
-    // VALIDATION: If linked to an OP or custom order, verify warehouse stock received
-    let relatedOp = targetOp;
-    if (!relatedOp && targetOrder) {
-      relatedOp = await ProductionOrderModel.findOne({ orderId: targetOrder.id });
-    }
-
-    if (relatedOp || (targetOrder && targetOrder.type === "pedido")) {
-      const orderIdentifier = targetOrder?.id;
-      const opIdentifier = relatedOp?.id;
-
-      // Find all accepted ingress movements for this order or OP
-      const acceptedIngresos = await WarehouseMovementModel.find({
-        type: "Ingreso",
-        status: "Aceptado",
-        $or: [
-          ...(opIdentifier ? [{ opId: opIdentifier }] : []),
-          ...(orderIdentifier ? [{ orderId: orderIdentifier }] : [])
-        ]
-      });
-
-      const totalIngressedUnits = acceptedIngresos.reduce((sum, wm) => {
-        const itemSum = (wm.items || []).reduce((s, it) => s + (Number(it.quantity) || 0), 0);
-        return sum + (itemSum || Number(wm.quantity) || 0);
-      }, 0);
-
-      // Find all accepted salida movements for this order or OP
-      const existingSalidas = await WarehouseMovementModel.find({
-        type: "Salida",
-        status: "Aceptado",
-        $or: [
-          ...(opIdentifier ? [{ opId: opIdentifier }] : []),
-          ...(orderIdentifier ? [{ orderId: orderIdentifier }] : [])
-        ]
-      });
-
-      const totalDispatchedUnits = existingSalidas.reduce((sum, wm) => {
-        const itemSum = (wm.items || []).reduce((s, it) => s + (Number(it.quantity) || 0), 0);
-        return sum + (itemSum || Number(wm.quantity) || 0);
-      }, 0);
-
-      const availableInWarehouse = Math.max(0, totalIngressedUnits - totalDispatchedUnits);
-
-      if (totalIngressedUnits === 0) {
-        return res.status(400).json({
-          success: false,
-          message: `No se puede generar la salida: Aún no se ha recibido ningún ingreso aceptado en almacén para la orden ${targetOrder?.id || relatedOp?.id}.`
-        });
-      }
-
-      if (availableInWarehouse <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: `No hay saldo físico en almacén para la orden ${targetOrder?.id || relatedOp?.id}. Todo lo ingresado (${totalIngressedUnits} uds) ya fue despachado previamente.`
-        });
-      }
-    }
-
-    let itemsToProcess = [];
-    if (items && Array.isArray(items) && items.length > 0) {
-      itemsToProcess = items;
-    } else if (targetOrder && targetOrder.items) {
-      itemsToProcess = targetOrder.items.map((i) => ({
-        productId: i.productId,
-        productName: i.productName || "Prenda",
-        quantity: i.quantity || 1,
-        selectedSize: i.selectedSize
-      }));
-    } else if (targetOp && targetOp.items) {
-      itemsToProcess = targetOp.items.map((i) => ({
-        productId: i.productId,
-        productName: i.productName || "Prenda",
-        quantity: (i.quantityOrdered || 0) + (i.quantityExtras || 0) || 1,
-        selectedSize: i.selectedSize
-      }));
-    }
-
-    if (itemsToProcess.length === 0) {
-      return res.status(400).json({ success: false, message: "No se especificaron prendas para la salida." });
-    }
-
-    const movementId = `S-${(Math.floor(Math.random() * 900) + 100).toString()}`;
-    const isPedido = (targetOrder && targetOrder.type === "pedido") || (targetOp && targetOp.orderId);
-    const resolvedOriginType = customOriginType || (isPedido ? "A Pedido" : (targetOrder ? "Venta Directa" : (targetOp ? "Producción OP" : "Ajuste / Merma")));
-
-    const newSalida = await WarehouseMovementModel.create({
-      id: movementId,
-      type: "Salida",
-      originType: resolvedOriginType,
-      status: autoAccept ? "Aceptado" : "Pendiente",
-      orderId: targetOrder?.id || orderId || null,
-      opId: targetOp?.id || opId || null,
-      items: itemsToProcess,
-      reason: reason || `Salida por ${resolvedOriginType}`,
-      notes: notes || "",
-      date: new Date().toISOString().split("T")[0],
-      createdAt: new Date().toISOString(),
-      processedAt: autoAccept ? new Date().toISOString() : null
-    });
-
-    if (autoAccept) {
-      // Deduct stock and register Kardex
-      for (const item of itemsToProcess) {
-        const prod = await ProductModel.findOne({ id: item.productId });
-        if (prod) {
-          const qty = item.quantity || 0;
-          const newPhysical = Math.max(0, (prod.stockPhysical || 0) - qty);
-          const newCommitted = Math.max(0, (prod.stockCommitted || 0) - qty);
-
-          await ProductModel.findOneAndUpdate(
-            { id: item.productId },
-            { $set: { stockPhysical: newPhysical, stockCommitted: newCommitted } }
-          );
-
-          await KardexModel.create({
-            productId: item.productId,
-            date: new Date().toISOString().split("T")[0],
-            type: "Salida",
-            quantity: qty,
-            reason: `Salida Aceptada ${movementId} (${resolvedOriginType}) - ${targetOrder?.id ? `Orden ${targetOrder.id}` : targetOp?.id ? `OP ${targetOp.id}` : "Almacén"}`,
-            documentRef: targetOrder?.id || targetOp?.id || movementId,
-            balance: newPhysical
-          });
-        }
-      }
-
-      if (targetOrder) {
-        await OrderModel.findOneAndUpdate(
-          { id: targetOrder.id },
-          { 
-            $set: { 
-              salidaApproved: true, 
-              warehouseApproved: true,
-              warehouseStatus: "Salida Aprobada",
-              warehouseSalidaId: movementId,
-              warehouseApprovedAt: new Date().toISOString()
-            } 
-          }
-        );
-      }
-    }
-
-    res.json({ success: true, movement: newSalida });
+    const movement = await salidaService.create(req.body);
+    res.json({ success: true, movement });
   } catch (err) {
     next(err);
   }
@@ -444,15 +203,13 @@ export const createIngresoMovement = async (req, res, next) => {
       for (const item of itemsToProcess) {
         const prod = await ProductModel.findOne({ id: item.productId });
         if (prod) {
-          const qty = item.quantity || 0;
-          const newPhysical = (prod.stockPhysical || 0) + qty;
-          const newCommitted = resolvedOriginType === "A Pedido"
-            ? (prod.stockCommitted || 0) + qty
-            : (prod.stockCommitted || 0);
+          const qty = Number(item.quantity);
+          const stock = ingressStock(prod, item, resolvedOriginType === "A Pedido");
+          const newPhysical = stock.stockPhysical;
 
           await ProductModel.findOneAndUpdate(
             { id: item.productId },
-            { $set: { stockPhysical: newPhysical, stockCommitted: newCommitted } }
+            { $set: stock }
           );
 
           await KardexModel.create({
