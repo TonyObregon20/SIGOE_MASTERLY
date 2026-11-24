@@ -82,7 +82,7 @@ export function AdminDashboardView({
     <div className="space-y-8">
       <h1 className="text-[30px] leading-tight font-medium tracking-tight">Resumen</h1>
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:gap-4">
         <StatCard label="Ventas Totales" value={`S/ ${totalSales.toLocaleString()}`} icon={TrendingUp} color="emerald" />
         <StatCard label="Cartera Clientes" value={totalCustomers.toString()} icon={UsersIcon} color="blue" />
         <StatCard label="Órdenes Activas" value={activeOPs.length.toString()} icon={ClipboardList} color="indigo" />

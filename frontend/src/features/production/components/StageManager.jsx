@@ -15,6 +15,8 @@ import {
   ArrowRight
 } from "lucide-react";
 import { getSuppliersApi } from "@/features/suppliers/suppliersApi";
+import { getWorkersApi } from "@/features/users/usersApi";
+import { formatProductionOrderId } from "../productionUtils";
 
 /**
  * Helper to match suppliers relevant for a specific stage
@@ -75,6 +77,7 @@ function getStageIcon(stageName) {
  */
 export default function StageManager({ op, updateStage, suppliers: propSuppliers = [], isModal = false }) {
   const [suppliersList, setSuppliersList] = useState(propSuppliers);
+  const [workersList, setWorkersList] = useState([]);
   const [editingStage, setEditingStage] = useState(null);
   const [stageSelections, setStageSelections] = useState({});
 
@@ -91,6 +94,14 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
     }
   }, [propSuppliers]);
 
+  useEffect(() => {
+    getWorkersApi()
+      .then((data) => {
+        if (Array.isArray(data)) setWorkersList(data);
+      })
+      .catch((err) => console.error("Error loading workers in StageManager:", err));
+  }, []);
+
   // Initialize selections for each stage from existing OP data
   useEffect(() => {
     if (!op || !Array.isArray(op.stages)) return;
@@ -106,6 +117,8 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
       if (isInternal) {
         chosenResponsible = chosenResponsible || defaultOperator;
         isCustom = true;
+        const currentWorker = workersList.find((worker) => worker.name === chosenResponsible);
+        if (currentWorker) chosenResponsible = currentWorker.name;
       } else {
         // If no responsible set yet, try to default to first matching supplier
         if (!chosenResponsible && !chosenSupplierId) {
@@ -134,6 +147,7 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
 
       initialSelections[stg.name] = {
         supplierId: chosenSupplierId,
+        workerId: workersList.find((worker) => worker.name === chosenResponsible)?.id || "",
         responsible: chosenResponsible,
         isCustom,
         customText: isCustom ? chosenResponsible : ""
@@ -141,7 +155,7 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
     });
 
     setStageSelections((prev) => ({ ...initialSelections, ...prev }));
-  }, [op, suppliersList]);
+  }, [op, suppliersList, workersList]);
 
   const handleSelectionChange = (stageName, value) => {
     if (value === "__custom__") {
@@ -169,6 +183,21 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
         }));
       }
     }
+  };
+
+  const handleWorkerChange = (stageName, workerId) => {
+    const worker = workersList.find((item) => item.id === workerId);
+    setStageSelections((previous) => ({
+      ...previous,
+      [stageName]: {
+        ...previous[stageName],
+        workerId,
+        supplierId: "",
+        responsible: worker?.name || "",
+        isCustom: true,
+        customText: worker?.name || ""
+      }
+    }));
   };
 
   const handleCustomTextChange = (stageName, text) => {
@@ -222,7 +251,7 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
               Flujo de Fases y Asignación de Tercerizados / Operarios
             </span>
             <span className="text-[11px] font-medium bg-shop-light text-shop-blue px-2 py-0.5 rounded-full">
-              Lote {op.id}
+              Lote {formatProductionOrderId(op.id)}
             </span>
           </div>
           <p className="text-xs text-shop-muted">
@@ -354,13 +383,28 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
 
                       {isEditing ? (
                         <div className="space-y-2 pt-1">
-                          <input
-                            type="text"
-                            value={sel.responsible || defaultOpName}
-                            onChange={(e) => handleCustomTextChange(stage.name, e.target.value)}
-                            placeholder={defaultOpName}
-                            className="w-full px-2 py-1 bg-white border border-blue-300 rounded-[2px] font-semibold focus:ring-2 focus:ring-shop-blue/20 outline-none min-h-10 min-w-0 text-base sm:text-[13px]"
-                          />
+                          {workersList.length > 0 ? (
+                            <select
+                              value={sel.workerId || ""}
+                              onChange={(event) => handleWorkerChange(stage.name, event.target.value)}
+                              className="w-full px-2 py-1 bg-white border border-blue-300 rounded-[2px] font-semibold focus:ring-2 focus:ring-shop-blue/20 outline-none min-h-10 min-w-0 text-base sm:text-[13px]"
+                            >
+                              <option value="">Seleccionar operario</option>
+                              {workersList.map((worker) => (
+                                <option key={worker.id} value={worker.id}>
+                                  {worker.name}{worker.workerPosition ? ` — ${worker.workerPosition}` : ""}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type="text"
+                              value={sel.responsible || defaultOpName}
+                              onChange={(event) => handleCustomTextChange(stage.name, event.target.value)}
+                              placeholder={defaultOpName}
+                              className="w-full px-2 py-1 bg-white border border-blue-300 rounded-[2px] font-semibold focus:ring-2 focus:ring-shop-blue/20 outline-none min-h-10 min-w-0 text-base sm:text-[13px]"
+                            />
+                          )}
                           <button
                             type="button"
                             onClick={() => handleSaveResponsibleEdit(stage.name, stage.status)}
@@ -370,9 +414,25 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                           </button>
                         </div>
                       ) : (
-                        <div className="text-xs font-medium text-shop-ink">
-                          {stage.responsible || sel.responsible || defaultOpName}
-                        </div>
+                        workersList.length > 0 ? (
+                          <select
+                            value={sel.workerId || ""}
+                            onChange={(event) => handleWorkerChange(stage.name, event.target.value)}
+                            className="w-full px-2 py-1 bg-white border border-shop-line rounded-[2px] text-xs font-medium outline-none min-h-10"
+                            aria-label={`Operario para ${stage.name}`}
+                          >
+                            <option value="">Seleccionar operario</option>
+                            {workersList.map((worker) => (
+                              <option key={worker.id} value={worker.id}>
+                                {worker.name}{worker.workerPosition ? ` — ${worker.workerPosition}` : ""}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="text-xs font-medium text-shop-ink">
+                            {stage.responsible || sel.responsible || defaultOpName}
+                          </div>
+                        )
                       )}
                       <p className="text-[11px] text-shop-muted">
                         {stageAreaDesc}

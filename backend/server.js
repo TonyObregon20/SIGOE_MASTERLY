@@ -1,3 +1,4 @@
+import "./config/env.js";
 import express from "express";
 import { connectDB } from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -8,6 +9,7 @@ import productionRoutes from "./routes/productionRoutes.js";
 import warehouseRoutes from "./routes/warehouseRoutes.js";
 import kardexRoutes from "./routes/kardexRoutes.js";
 import invoiceRoutes from "./routes/invoiceRoutes.js";
+import attendanceRoutes from "./routes/attendanceRoutes.js";
 import { requestLogger } from "./middlewares/requestLogger.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { setupViteMiddleware } from "./middlewares/viteMiddleware.js";
@@ -34,6 +36,7 @@ export async function startServer() {
   app.use("/api", warehouseRoutes);
   app.use("/api", kardexRoutes);
   app.use("/api", invoiceRoutes);
+  app.use("/api", attendanceRoutes);
 
   // 404 handler for unmatched API routes (prevents falling through to Vite SPA fallback)
   app.all("/api/*", (req, res) => {

@@ -395,6 +395,7 @@ function App() {
                 users={users}
                 setUsers={setUsers}
                 onUpdateUser={handleUpdateUserAction}
+                onCreateUser={handleCreateUserAction}
                 orders={orders}
                 setOrders={setOrders}
                 handleShipOrder={handleShipOrder}
@@ -494,6 +495,8 @@ function App() {
         invoices={invoices}
         productionOrders={productionOrders}
         onSetView={setView}
+        onRefreshOrders={loadOrders}
+        onRefreshInvoices={loadInvoices}
         onLogout={() => {
           closeCustomerDrawer();
           setView("store");

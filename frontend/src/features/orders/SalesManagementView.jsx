@@ -37,6 +37,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import StatCard from "@/components/ui/StatCard";
+import { Pagination } from "@/components/shop/ShopUI";
+import { formatOrderId } from "@/features/orders/ordersUtils";
 
 function SalesManagementView({
   orders = [],
@@ -50,8 +52,20 @@ function SalesManagementView({
 }) {
   const [filter, setFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const filteredOrders = orders.filter((o) => filter === "all" || o.type === filter);
+  const pagedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [filteredOrders.length, pageSize, currentPage]);
 
   const handleStatusChange = (orderId, newStatus) => {
     onUpdateOrder(orderId, { status: newStatus });
@@ -68,7 +82,7 @@ function SalesManagementView({
             Control de ingresos, pedidos personalizados y despacho coordinado con Almacén.
           </p>
         </div>
-        <div className="flex gap-2 bg-white p-1 rounded-[2px] border border-shop-line tabular-nums">
+        <div className="grid w-full grid-cols-3 gap-1 bg-white p-1 rounded-[2px] border border-shop-line tabular-nums sm:w-auto">
           <button onClick={() => setFilter("all")} className={`px-4 py-1.5 rounded-[2px] text-[11px] font-semibold transition-all ${filter === "all" ? "bg-shop-ink text-white" : "text-shop-muted hover:bg-shop-light"}`}>Todos</button>
           <button onClick={() => setFilter("direct")} className={`px-4 py-1.5 rounded-[2px] text-[11px] font-semibold transition-all ${filter === "direct" ? "bg-shop-ink text-white" : "text-shop-muted hover:bg-shop-light"}`}>Venta Directa</button>
           <button onClick={() => setFilter("pedido")} className={`px-4 py-1.5 rounded-[2px] text-[11px] font-semibold transition-all ${filter === "pedido" ? "bg-shop-ink text-white" : "text-shop-muted hover:bg-shop-light"}`}>A Pedido</button>
@@ -87,7 +101,7 @@ function SalesManagementView({
             </tr>
           </thead>
           <tbody className="divide-y divide-shop-line">
-            {filteredOrders.map((order, idx) => {
+            {pagedOrders.map((order, idx) => {
               const salidaMovement = (warehouseMovements || []).find(
                 (wm) => wm.orderId === order.id && wm.type === "Salida"
               );
@@ -125,7 +139,12 @@ function SalesManagementView({
               return (
                 <tr key={order._id || order.id || `o-${idx}`} className="hover:bg-shop-light/50 transition-colors group">
                   <td className="px-6 py-4">
-                    <div className="tabular-nums text-xs font-semibold text-shop-ink">{order.id}</div>
+                    <div
+                      className="max-w-[180px] truncate tabular-nums text-xs font-semibold text-shop-ink"
+                      title={order.id}
+                    >
+                      {formatOrderId(order.id)}
+                    </div>
                     <div className="text-[11px] font-medium text-shop-muted tracking-tight tabular-nums">{order.date}</div>
                   </td>
                   <td className="px-6 py-4">
@@ -320,6 +339,19 @@ function SalesManagementView({
           </tbody>
         </table>
       </div>
+      {filteredOrders.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalItems={filteredOrders.length}
+          itemLabel="ventas"
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
+        />
+      )}
 
       <AnimatePresence>
         {selectedOrder && (

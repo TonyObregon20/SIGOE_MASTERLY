@@ -16,7 +16,7 @@ export default function EcommerceProductRow({ product: p, onUpdateProduct, onOpe
     <div className="bg-white border border-shop-line rounded-[2px] overflow-hidden transition-shadow">
       <div className="p-5 flex items-center gap-6 flex-wrap lg:flex-nowrap">
         {/* Thumbnail & Basic Info */}
-        <div className="flex items-center gap-4 min-w-[240px] w-full lg:w-auto">
+        <div className="flex min-w-0 items-center gap-4 w-full lg:w-auto lg:min-w-[240px]">
           <div className="relative w-16 h-20 bg-shop-light rounded-[2px] overflow-hidden border border-shop-line flex-shrink-0">
             <img
               src={p.image}

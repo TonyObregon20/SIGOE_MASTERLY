@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "../config/env.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
@@ -54,6 +54,23 @@ export function generateToken(user) {
 export function verifyJwtToken(token) {
   try {
     return jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return null;
+  }
+}
+
+export function generatePasswordResetToken(userId, email) {
+  return jwt.sign(
+    { purpose: "password-reset", id: userId, email },
+    JWT_SECRET,
+    { expiresIn: `${Number(process.env.PASSWORD_RESET_MINUTES) || 10}m` }
+  );
+}
+
+export function verifyPasswordResetToken(token) {
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    return payload?.purpose === "password-reset" ? payload : null;
   } catch (err) {
     return null;
   }

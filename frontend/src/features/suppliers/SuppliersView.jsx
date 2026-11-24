@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Users,
   Building2,
@@ -35,6 +35,7 @@ import {
 import SupplierFormModal from "./components/SupplierFormModal";
 import SupplierHistoryModal from "./components/SupplierHistoryModal";
 import DeleteSupplierModal from "./components/DeleteSupplierModal";
+import { Pagination } from "@/components/shop/ShopUI";
 
 const SPECIALTY_ICONS = {
   Corte: Scissors,
@@ -58,6 +59,8 @@ export default function SuppliersView({
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'servicios' | 'insumos'
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Modals
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -148,6 +151,17 @@ export default function SuppliersView({
       return true;
     });
   }, [suppliers, activeTab, selectedSpecialty, searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, selectedSpecialty, searchQuery]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredSuppliers.length / pageSize));
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [filteredSuppliers.length, pageSize, currentPage]);
+
+  const pagedSuppliers = filteredSuppliers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   // Keep history modal in sync when suppliers update
   const currentHistorySupplier = useMemo(() => {
@@ -312,7 +326,7 @@ export default function SuppliersView({
       <div className="bg-white border border-shop-line rounded-[2px] p-4 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* Main Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-shop-light rounded-[2px] w-fit">
+          <div className="flex w-full flex-wrap items-center gap-1.5 rounded-[2px] bg-shop-light p-1 sm:w-fit">
             <button
               type="button"
               onClick={() => {
@@ -460,7 +474,7 @@ export default function SuppliersView({
                 </tr>
               </thead>
               <tbody className="divide-y divide-shop-line">
-                {filteredSuppliers.map((supplier) => {
+                {pagedSuppliers.map((supplier) => {
                   const isService =
                     supplier.specialty !== "Insumos" && supplier.type !== "Insumos";
                   const Icon = SPECIALTY_ICONS[supplier.specialty] || Tags;
@@ -663,6 +677,19 @@ export default function SuppliersView({
           </div>
         )}
       </div>
+      {filteredSuppliers.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalItems={filteredSuppliers.length}
+          itemLabel="proveedores"
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
+        />
+      )}
 
       {/* Modal: Crear / Editar Proveedor */}
       <SupplierFormModal

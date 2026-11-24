@@ -5,14 +5,21 @@ import InvoiceModel from "../models/Invoice.js";
 import KardexModel from "../models/Kardex.js";
 import ProductionOrderModel from "../models/ProductionOrder.js";
 import UserModel from "../models/User.js";
+import { sendInvoiceEmail } from "../services/emailService.js";
 
 const CREDIT_LIMIT_EXCEEDED_MESSAGE = "Excede su linea de credito";
 
 export const getOrders = async (req, res, next) => {
   try {
-    const filter = req.user?.role === "admin"
+    const filter = ["admin", "worker"].includes(req.user?.role)
       ? {}
-      : { userId: req.currentUser.id };
+      : {
+          $or: [
+            { userId: req.currentUser.id },
+            { customerName: req.currentUser.name },
+            ...(req.currentUser.email ? [{ customerEmail: req.currentUser.email }] : [])
+          ]
+        };
     const list = await OrderModel.find(filter).sort({ _id: -1 }).lean();
     const orderIds = list.map((order) => order.id).filter(Boolean);
     const productionOrders = orderIds.length
@@ -91,6 +98,7 @@ export const createOrder = async (req, res, next) => {
       id: order.id,
       userId: req.currentUser.id,
       customerName: req.currentUser.name,
+      customerEmail: req.currentUser.email,
       items: validatedItems,
       total: computedTotal,
       type: order.type,
@@ -243,6 +251,7 @@ export const createOrder = async (req, res, next) => {
       series: docType === "Boleta" ? "B001" : "F001",
       number: invoiceNum,
       customerName: safeOrder.customerName,
+      customerEmail: safeOrder.customerEmail,
       customerDocument: docNumber || "00000000",
       date: new Date().toISOString().split("T")[0],
       items: validatedItems,
@@ -253,13 +262,25 @@ export const createOrder = async (req, res, next) => {
     };
 
     const createdInvoice = await InvoiceModel.create(newInvoice);
+    setImmediate(async () => {
+      try {
+        if (req.currentUser?.invoiceEmailNotifications === false) return;
+        await sendInvoiceEmail({
+          recipient: req.currentUser?.email,
+          invoice: createdInvoice,
+          order: safeOrder
+        });
+      } catch (emailErr) {
+        console.error("Error sending automatic invoice email:", emailErr.message);
+      }
+    });
 
     // If on-demand order ("pedido"), create production order automatically in the same request
     let createdOP = null;
     if (safeOrder.type !== "direct") {
       try {
         const defaultOpPayload = {
-            id: `OP-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
+            id: `OP-${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}`,
             orderId: safeOrder.id,
             items: validatedItems.map((i) => ({
               productId: i.productId,

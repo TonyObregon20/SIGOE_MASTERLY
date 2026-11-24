@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ClipboardList } from "lucide-react";
 import { AnimatePresence } from "motion/react";
+import { Pagination } from "@/components/shop/ShopUI";
 import { useInvoiceFilters } from "./hooks/useInvoiceFilters";
 import InvoicesFilterBar from "./components/InvoicesFilterBar";
 import InvoicesTable from "./components/InvoicesTable";
@@ -12,6 +13,8 @@ import InvoiceDetailModal from "./components/InvoiceDetailModal";
  */
 function InvoicesView({ invoices = [], products, onCancelInvoice }) {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const {
     searchTerm,
@@ -20,6 +23,17 @@ function InvoicesView({ invoices = [], products, onCancelInvoice }) {
     setFilterType,
     filteredInvoices
   } = useInvoiceFilters(invoices);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredInvoices.length / pageSize));
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [filteredInvoices.length, pageSize, currentPage]);
+
+  const pagedInvoices = filteredInvoices.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="space-y-6">
@@ -45,10 +59,23 @@ function InvoicesView({ invoices = [], products, onCancelInvoice }) {
 
       {/* Invoices List Table */}
       <InvoicesTable
-        invoices={filteredInvoices}
+        invoices={pagedInvoices}
         onSelectInvoice={setSelectedInvoice}
         onCancelInvoice={onCancelInvoice}
       />
+      {filteredInvoices.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalItems={filteredInvoices.length}
+          itemLabel="comprobantes"
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
+        />
+      )}
 
       {/* Receipt Preview & Printing Modal */}
       <AnimatePresence>

@@ -1,11 +1,12 @@
 import InvoiceEmailModal from "@/features/invoices/components/InvoiceEmailModal";
 import { ShopModal } from "@/components/shop/ShopUI";
-import React, { useMemo, useState } from "react";
-import { ArrowRight, BarChart3, Check, CreditCard, Download, FileText, LogOut, Mail, Package, ShoppingBag, Store, X } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { ArrowRight, BarChart3, Check, CreditCard, Download, FileText, LogOut, Mail, Package, Settings, ShoppingBag, Store, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { generateInvoicePDF, generateInvoicePDFBase64 } from "@/utils/pdfGenerator";
 import { sendInvoiceEmailApi } from "@/features/invoices/invoicesApi";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { formatOrderId } from "@/features/orders/ordersUtils";
 const STAGES = ["Tendido", "Corte", "Costura", "Limpieza", "Planchado y Empaquetado"];
 function CustomerDrawer({
   isOpen,
@@ -15,15 +16,40 @@ function CustomerDrawer({
   invoices = [],
   productionOrders = [],
   onSetView,
-  onLogout
+  onLogout,
+  onRefreshOrders,
+  onRefreshInvoices
 }) {
   const [activeTab, setActiveTab] = useState("summary");
   const [sentInvoices, setSentInvoices] = useState({});
   const [emailInvoice, setEmailInvoice] = useState(null);
+  const [profileName, setProfileName] = useState(currentUser?.name || "");
+  const [avatarColor, setAvatarColor] = useState(currentUser?.avatarColor || "blue");
+  const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatarUrl || "");
+  const [invoiceNotifications, setInvoiceNotifications] = useState(currentUser?.invoiceEmailNotifications !== false);
+  const [stageNotifications, setStageNotifications] = useState(currentUser?.orderStageEmailNotifications !== false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  useEffect(() => {
+    setProfileName(currentUser?.name || "");
+    setAvatarColor(currentUser?.avatarColor || "blue");
+    setAvatarUrl(currentUser?.avatarUrl || "");
+    setInvoiceNotifications(currentUser?.invoiceEmailNotifications !== false);
+    setStageNotifications(currentUser?.orderStageEmailNotifications !== false);
+  }, [currentUser]);
+  useEffect(() => {
+    if (!isOpen) return;
+    onRefreshOrders?.();
+    onRefreshInvoices?.();
+  }, [isOpen, onRefreshOrders, onRefreshInvoices]);
   const {
-    logout
+    logout,
+    updateProfile
   } = useAuth();
-  const userOrders = useMemo(() => orders.filter(order => order.userId === currentUser?.id || order.customerName === currentUser?.name), [orders, currentUser]);
+  const userOrders = useMemo(() => orders.filter((order) =>
+    order.userId === currentUser?.id ||
+    order.customerName === currentUser?.name ||
+    order.customerEmail === currentUser?.email
+  ), [orders, currentUser]);
   const userInvoices = useMemo(() => invoices.filter(invoice => userOrders.some(order => order.id === invoice.orderId)), [invoices, userOrders]);
   const totalInvested = userOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
   const creditLimit = Number(currentUser?.creditLimit || 0);
@@ -32,6 +58,13 @@ function CustomerDrawer({
   const creditPercent = creditLimit ? Math.min(creditUsed / creditLimit * 100, 100) : 0;
   const displayName = currentUser?.name || "Cliente";
   const initials = displayName.split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
+  const avatarColors = {
+    blue: "bg-shop-blue text-white",
+    navy: "bg-shop-ink text-white",
+    emerald: "bg-emerald-600 text-white",
+    indigo: "bg-indigo-600 text-white",
+    slate: "bg-slate-600 text-white"
+  };
   const isVip = Boolean(currentUser?.creditEnabled);
   const downloadInvoice = (order, invoice) => {
     generateInvoicePDF({
@@ -77,6 +110,31 @@ function CustomerDrawer({
     }
     setSentInvoices((previous) => ({ ...previous, [order.id]: true }));
   };
+  const handleAvatarUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 1_500_000) {
+      alert("La imagen debe pesar menos de 1.5 MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setAvatarUrl(String(reader.result || ""));
+    reader.readAsDataURL(file);
+  };
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    const result = await updateProfile({
+      name: profileName,
+      avatarColor,
+      avatarUrl,
+      invoiceEmailNotifications: invoiceNotifications,
+      orderStageEmailNotifications: stageNotifications
+    });
+    setSavingProfile(false);
+    if (!result?.success) {
+      alert(result?.message || "No se pudo guardar la configuración.");
+    }
+  };
   const handleLogout = () => {
     logout();
     onLogout();
@@ -89,8 +147,8 @@ function CustomerDrawer({
     onSend={email => sendInvoice(emailInvoice.order, emailInvoice.invoice, email)}
   />;
 
-  return isOpen ? <ShopModal drawer title={displayName} eyebrow={currentUser?.email || "Tu cuenta Masterly"} onClose={onClose}><div className="mx-6 mt-5 grid shrink-0 grid-cols-3 gap-1 border-b border-shop-line pb-3">
-                {[["summary", "Resumen", BarChart3], ["orders", "Pedidos", Package], ["invoices", "Comprobantes", FileText]].map(([tab, label, Icon]) => <button type="button" key={tab} onClick={() => setActiveTab(tab)} className="flex items-center justify-center gap-1 border-b border-transparent px-1 py-3 text-[11px] text-shop-muted hover:text-shop-ink aria-pressed:border-shop-ink aria-pressed:text-shop-ink" aria-pressed={activeTab === tab}>
+  return isOpen ? <ShopModal drawer title={displayName} eyebrow={currentUser?.email || "Tu cuenta Masterly"} onClose={onClose}><div className="mx-4 mt-5 grid shrink-0 grid-cols-4 gap-1 border-b border-shop-line pb-3 sm:mx-6">
+                {[["summary", "Resumen", BarChart3], ["orders", "Pedidos", Package], ["invoices", "Comprobantes", FileText], ["settings", "Cuenta", Settings]].map(([tab, label, Icon]) => <button type="button" key={tab} onClick={() => setActiveTab(tab)} className="flex min-w-0 items-center justify-center gap-1 border-b border-transparent px-1 py-3 text-[10px] text-shop-muted hover:text-shop-ink aria-pressed:border-shop-ink aria-pressed:text-shop-ink sm:text-[11px]" aria-pressed={activeTab === tab}>
                     <Icon className="w-4 h-4" /> {label}
                   </button>)}
               </div><div className="flex-1 overflow-y-auto p-5 sm:p-8">
@@ -137,7 +195,7 @@ function CustomerDrawer({
                   {userOrders.length === 0 ? <EmptyState icon={ShoppingBag} text="Aún no tienes pedidos registrados." /> : userOrders.map(order => {
           const production = productionOrders.find(op => op.orderId === order.id) || order.production;
           return <section key={order._id || order.id} className="rounded-none border border-shop-line bg-white p-5">
-                        <div className="flex items-center justify-between gap-3"><div><p className="font-medium text-shop-ink">{order.id}</p><p className="text-xs text-shop-muted">{order.type === "pedido" ? "A Pedido" : "Venta Directa"} · {order.date}</p></div><strong className="text-shop-blue">S/ {Number(order.total || 0).toFixed(2)}</strong></div>
+                        <div className="flex items-center justify-between gap-3"><div><p className="truncate font-medium text-shop-ink" title={order.id}>{formatOrderId(order.id)}</p><p className="text-xs text-shop-muted">{order.type === "pedido" ? "A Pedido" : "Venta Directa"} · {order.date}</p></div><strong className="shrink-0 text-shop-blue">S/ {Number(order.total || 0).toFixed(2)}</strong></div>
                         {production ? <div className="mt-5"><p className="mb-3 text-[11px] font-medium tracking-wider text-shop-muted">Seguimiento de confección · {production.currentStage}</p><div className="flex items-start">{STAGES.map((stage, index) => {
                   const stageData = production.stages?.find(item => item.name === stage);
                   const done = stageData?.status === "completed";
@@ -151,8 +209,70 @@ function CustomerDrawer({
               {activeTab === "invoices" && <div className="space-y-4">
                   {userOrders.length === 0 ? <EmptyState icon={FileText} text="Todavía no tienes comprobantes emitidos." /> : userOrders.map(order => {
           const invoice = userInvoices.find(item => item.orderId === order.id);
-          return <section key={order._id || order.id} className="flex items-center justify-between gap-3 rounded-none border border-shop-line bg-white p-4"><div><p className="font-medium text-shop-ink">{invoice ? `${invoice.type} ${invoice.series}-${invoice.number}` : "Comprobante de compra"}</p><p className="text-xs text-shop-muted">{order.id} · S/ {Number(order.total || 0).toFixed(2)}</p></div><div className="flex gap-2"><button type="button" title="Enviar al correo" onClick={() => setEmailInvoice({ order, invoice })} className="rounded-none border border-shop-line p-2 text-shop-muted hover:text-shop-blue">{sentInvoices[order.id] ? <Check className="w-4 h-4 text-emerald-500" /> : <Mail className="w-4 h-4" />}</button><button type="button" title="Descargar PDF" onClick={() => downloadInvoice(order, invoice)} className="rounded-none bg-shop-blue p-2 text-white hover:bg-shop-blue"><Download className="w-4 h-4" /></button></div></section>;
+          return <section key={order._id || order.id} className="flex items-center justify-between gap-3 rounded-none border border-shop-line bg-white p-4"><div className="min-w-0"><p className="font-medium text-shop-ink">{invoice ? `${invoice.type} ${invoice.series}-${invoice.number}` : "Comprobante de compra"}</p><p className="truncate text-xs text-shop-muted" title={order.id}>{formatOrderId(order.id)} · S/ {Number(order.total || 0).toFixed(2)}</p></div><div className="flex shrink-0 gap-2"><button type="button" title="Enviar al correo" onClick={() => setEmailInvoice({ order, invoice })} className="rounded-none border border-shop-line p-2 text-shop-muted hover:text-shop-blue">{sentInvoices[order.id] ? <Check className="w-4 h-4 text-emerald-500" /> : <Mail className="w-4 h-4" />}</button><button type="button" title="Descargar PDF" onClick={() => downloadInvoice(order, invoice)} className="rounded-none bg-shop-blue p-2 text-white hover:bg-shop-blue"><Download className="w-4 h-4" /></button></div></section>;
         })}
+                </div>}
+
+              {activeTab === "settings" && <div className="space-y-6">
+                  <section className="border border-shop-line bg-white p-5">
+                    <h3 className="text-sm font-medium text-shop-ink">Personalización de cuenta</h3>
+                    <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-center">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="Foto de perfil" className="size-20 rounded-full object-cover" />
+                      ) : (
+                        <div className={`grid size-20 place-items-center rounded-full text-xl font-medium ${avatarColors[avatarColor] || avatarColors.blue}`}>{initials}</div>
+                      )}
+                      <div className="space-y-3">
+                        <label className="block text-xs text-shop-muted">
+                          Nombre visible
+                          <input value={profileName} onChange={(event) => setProfileName(event.target.value)} className="mt-2 min-h-10 w-full border border-shop-line px-3 text-sm text-shop-ink sm:w-64" />
+                        </label>
+                        <label className="block text-xs text-shop-muted">
+                          Foto o logo
+                          <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleAvatarUpload} className="mt-2 block w-full text-xs" />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="mt-5">
+                      <p className="mb-3 text-xs text-shop-muted">Color del avatar</p>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(avatarColors).map(([color, classes]) => (
+                          <button
+                            type="button"
+                            key={color}
+                            onClick={() => { setAvatarColor(color); setAvatarUrl(""); }}
+                            aria-label={`Usar avatar ${color}`}
+                            aria-pressed={avatarColor === color}
+                            className={`size-9 rounded-full border-4 border-white ring-1 ring-shop-line ${classes} ${avatarColor === color ? "ring-2 ring-shop-ink" : ""}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="border border-shop-line bg-white p-5">
+                    <h3 className="text-sm font-medium text-shop-ink">Preferencias de correo</h3>
+                    <div className="mt-4 space-y-4">
+                      <label className="flex items-center justify-between gap-4 border-b border-shop-line pb-4 text-xs">
+                        <span>
+                          <strong className="block font-medium text-shop-ink">Comprobantes en PDF</strong>
+                          <span className="mt-1 block text-shop-muted">Recibir automáticamente el comprobante al comprar.</span>
+                        </span>
+                        <input type="checkbox" checked={invoiceNotifications} onChange={(event) => setInvoiceNotifications(event.target.checked)} className="size-5 accent-shop-ink" />
+                      </label>
+                      <label className="flex items-center justify-between gap-4 text-xs">
+                        <span>
+                          <strong className="block font-medium text-shop-ink">Avances del pedido</strong>
+                          <span className="mt-1 block text-shop-muted">Avisos al cambiar las etapas de taller.</span>
+                        </span>
+                        <input type="checkbox" checked={stageNotifications} onChange={(event) => setStageNotifications(event.target.checked)} className="size-5 accent-shop-ink" />
+                      </label>
+                    </div>
+                  </section>
+
+                  <button type="button" disabled={savingProfile} onClick={handleSaveProfile} className="min-h-11 w-full bg-shop-ink text-xs font-medium text-white disabled:opacity-50">
+                    {savingProfile ? "Guardando..." : "Guardar configuración"}
+                  </button>
                 </div>}
             </div><footer className="flex items-center justify-between border-t border-shop-line bg-white p-5">
               <button type="button" onClick={handleLogout} className="flex items-center gap-2 rounded-none bg-shop-light px-4 py-3 text-xs font-medium tracking-wider text-shop-muted hover:bg-red-50 hover:text-red-600"><LogOut className="w-4 h-4" /> Cerrar sesión</button>
