@@ -1,7 +1,5 @@
+import "./env.js";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 export let isMongoConnected = false;
 export let connectionErrorMsg = "";

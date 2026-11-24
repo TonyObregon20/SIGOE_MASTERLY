@@ -15,6 +15,7 @@
     "start": "node dist/server.cjs",
     "clean": "rm -rf dist",
     "lint": "echo 'Pure JavaScript Project - No Lint Required'",
+    "hash-passwords": "node scripts/hash-passwords.mjs",
     "security:check": "node scripts/security-check.mjs",
     "test:security": "node --test scripts/security-check.test.mjs"
   },
@@ -25,6 +26,7 @@
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "framer-motion": "^12.0.0",
+    "google-auth-library": "^11.3.4",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",

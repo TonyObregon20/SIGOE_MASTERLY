@@ -9,6 +9,10 @@ export async function getUsersApi() {
   return apiClient("/api/users");
 }
 
+export async function getWorkersApi() {
+  return apiClient("/api/workers");
+}
+
 export async function updateUserApi(id, updates) {
   return apiClient("/api/users/update", {
     method: "POST",

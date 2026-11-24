@@ -22,7 +22,7 @@ export default function InvoicesFilterBar({
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
-      <div className="flex gap-2 bg-white p-1 rounded-[2px] border border-shop-line tabular-nums">
+      <div className="grid w-full grid-cols-3 gap-1 rounded-[2px] border border-shop-line bg-white p-1 tabular-nums md:w-auto">
         <button
           type="button"
           onClick={() => setFilterType("all")}

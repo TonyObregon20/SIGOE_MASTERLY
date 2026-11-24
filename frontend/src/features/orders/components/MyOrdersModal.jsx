@@ -24,7 +24,11 @@ function MyOrdersModal({
   if (!isOpen) return null;
 
   // Filter orders for the current user
-  const userOrders = orders.filter(o => o.userId === currentUser?.id || o.customerName === currentUser?.name);
+  const userOrders = orders.filter((o) =>
+    o.userId === currentUser?.id ||
+    o.customerName === currentUser?.name ||
+    o.customerEmail === currentUser?.email
+  );
   const handleDownloadInvoice = order => {
     // Find matching invoice
     const inv = invoices.find(i => i.orderId === order.id) || {};

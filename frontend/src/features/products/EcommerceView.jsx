@@ -84,7 +84,7 @@ function EcommerceView({ products = [], orders = [], onUpdateProduct, onAddProdu
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:gap-4">
         <StatCard
           label="Total Catálogo"
           value={totalProductsCount.toString()}

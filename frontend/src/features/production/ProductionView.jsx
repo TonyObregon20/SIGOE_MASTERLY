@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Plus, Filter, Scissors, Package } from "lucide-react";
+import { Pagination } from "@/components/shop/ShopUI";
 import useProduction from "./hooks/useProduction";
 import { useProductionFilters } from "./hooks/useProductionFilters";
 import ProductionFilterToolbar from "./components/ProductionFilterToolbar";
@@ -34,6 +35,8 @@ function ProductionView({
   const [showNewOPModal, setShowNewOPModal] = useState(false);
   const [selectedOP, setSelectedOP] = useState(null);
   const [showProductSelector, setShowProductSelector] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Filters hook
   const {
@@ -60,6 +63,17 @@ function ProductionView({
     productionOrders,
     salesOrders
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedStage, selectedType, startDate, endDate, sortBy]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredOPs.length / pageSize));
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [filteredOPs.length, pageSize, currentPage]);
+
+  const pagedOPs = filteredOPs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleUpdateExtras = (opId, productId, extras) => {
     setProductionOrders((prev) =>
@@ -199,8 +213,8 @@ function ProductionView({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6">
-          {filteredOPs.map((op) => (
+        <div className="grid grid-cols-1 gap-3">
+          {pagedOPs.map((op) => (
             <ProductionOrderCard
               key={op.id}
               op={op}
@@ -219,6 +233,19 @@ function ProductionView({
             />
           ))}
         </div>
+      )}
+      {filteredOPs.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalItems={filteredOPs.length}
+          itemLabel="órdenes de producción"
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
+        />
       )}
     </div>
   );
