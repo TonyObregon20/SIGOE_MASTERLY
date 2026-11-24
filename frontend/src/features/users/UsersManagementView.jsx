@@ -42,10 +42,74 @@ import StatCard from "@/components/ui/StatCard";
 function UsersManagementView({
   users: usersList,
   onUpdateUser,
+  onUpdateUserStatus,
+  loadUserStatusHistory,
+  userStatusHistory,
   onAddUser
 }) {
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+const [historyModalOpen, setHistoryModalOpen] = useState(false);
+const [historyLoading, setHistoryLoading] = useState(false);
+const [selectedHistoryUser, setSelectedHistoryUser] = useState(null);
+const [historyError, setHistoryError] = useState("");
+  const [statusConfirmation, setStatusConfirmation] = useState(null);
+  const [authorizationModal, setAuthorizationModal] = useState(null);
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [actionReason, setActionReason] = useState("");
+  const [statusError, setStatusError] = useState("");
+  const [statusLoading, setStatusLoading] = useState(false);
+
+
+  const handleRequestStatusChange = (user, actionType, newValue) => {
+    setStatusConfirmation({ user, actionType, newValue });
+    setStatusError("");
+  };
+
+  const handleConfirmStatusChange = () => {
+    setAuthorizationModal(statusConfirmation);
+    setStatusConfirmation(null);
+    setAdminEmail("");
+    setAdminPassword("");
+    setActionReason("");
+    setStatusError("");
+  };
+
+  const handleSubmitStatusChange = async (e) => {
+    e.preventDefault();
+
+    if (!actionReason.trim()) {
+      setStatusError("El motivo es obligatorio.");
+      return;
+    }
+
+    setStatusLoading(true);
+    setStatusError("");
+
+    try {
+      const result = await onUpdateUserStatus({
+        id: authorizationModal.user.id,
+        actionType: authorizationModal.actionType,
+        newValue: authorizationModal.newValue,
+        adminEmail,
+        adminPassword,
+        reason: actionReason
+      });
+
+      if (!result?.success) {
+        throw new Error(result?.message || "No se pudo realizar la operación.");
+      }
+
+      setAuthorizationModal(null);
+    } catch (error) {
+      setStatusError(error.message || "Error al procesar la solicitud.");
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
   const [showInitialPassword, setShowInitialPassword] = useState(false);
 
   const handleOpenModal = (user) => {
@@ -58,15 +122,18 @@ function UsersManagementView({
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const userData = {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      role: editingUser ? editingUser.role : (formData.get("role") || "customer"),
-      creditEnabled: formData.get("creditEnabled") === "true",
-      creditLimit: Number(formData.get("creditLimit") || 0)
-    };
-    if (editingUser) {
-      onUpdateUser(editingUser.id, userData);
-    } else {
+  name: formData.get("name"),
+  email: formData.get("email"),
+  role: editingUser
+    ? editingUser.role
+    : (formData.get("role") || "customer"),
+  creditLimit: Number(formData.get("creditLimit") || 0)
+};
+
+if (!editingUser) {
+  userData.creditEnabled = formData.get("creditEnabled") === "true";
+}
+     else {
       const newUser = {
         ...userData,
         password: formData.get("password"),
@@ -117,7 +184,13 @@ function UsersManagementView({
             {user.role === "customer" && (
               <button
                 type="button"
-                onClick={() => onUpdateUser(user.id, { isActive: user.isActive === false })}
+                onClick={() =>
+                  handleRequestStatusChange(
+                     user,
+                          "account_status",
+                      user.isActive === false
+              )
+              }
                 className={`mt-4 flex w-full items-center justify-between rounded-[2px] border px-3 py-2 text-[11px] font-semibold transition-all ${
                   user.isActive === false
                     ? "border-red-200 bg-red-50 text-red-700"
@@ -142,7 +215,14 @@ function UsersManagementView({
                     <button
                       aria-label={`Acceso a crédito de ${user.name}`}
                       aria-pressed={Boolean(user.creditEnabled)}
-                      onClick={() => onUpdateUser(user.id, { creditEnabled: !user.creditEnabled })}
+                      
+                     onClick={() =>
+                        handleRequestStatusChange(
+                            user,
+                              "credit_status",
+                            !user.creditEnabled
+                          )
+                      }
                       className={`w-8 h-4 rounded-full transition-all relative ${user.creditEnabled ? "bg-emerald-500" : "bg-slate-300"}`}
                     >
                       <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${user.creditEnabled ? "left-4" : "left-0.5"}`} />
@@ -176,6 +256,29 @@ function UsersManagementView({
               )}
 
               <div className="flex items-center justify-between pt-2">
+
+                  <button
+                       type="button"
+                       onClick={async () => {
+  setSelectedHistoryUser(user);
+  setHistoryModalOpen(true);
+  setHistoryError("");
+  setHistoryLoading(true);
+
+  try {
+    await loadUserStatusHistory(user.id);
+  } catch (error) {
+    setHistoryError(error.message || "No se pudo cargar el historial.");
+  } finally {
+    setHistoryLoading(false);
+  }
+}}   
+
+className="w-[150px] shrink-0 mt-3 flex items-center justify-center gap-2 border border-shop-line py-2.5 text-xs font-semibold text-shop-blue hover:bg-shop-light transition-colors"                     >
+                    <History className="w-4 h-4" />
+                        Ver historial
+                    </button>
+
                 <div className="text-[11px] text-shop-muted font-medium tabular-nums">Miembro desde: {user.joinDate || "Sin fecha registrada"}</div>
                 <div className="flex items-center gap-2 tabular-nums">
                   <button
@@ -191,6 +294,227 @@ function UsersManagementView({
           </div>
         ))}
       </div>
+
+      <AnimatePresence>
+        {statusConfirmation && (
+          <AdminDialog
+            label="Confirmar cambio de estado"
+            onClose={() => setStatusConfirmation(null)}
+            className="fixed inset-0 z-[130] flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="relative w-full max-w-md bg-white rounded-[2px] p-8 border border-shop-line"
+            >
+              <h3 className="text-lg font-semibold text-shop-ink">
+                ¿Está seguro?
+              </h3>
+
+              <p className="mt-3 text-sm text-shop-muted">
+                ¿Desea {statusConfirmation.newValue ? "activar" : "desactivar"} 
+                {" "}
+                {statusConfirmation.actionType === "account_status"
+                  ? "la cuenta de"
+                  : "la línea de crédito de"}
+                {" "}
+                <strong>{statusConfirmation.user.name}</strong>?
+              </p>
+
+              <div className="flex gap-3 mt-7">
+                <button
+                  type="button"
+                  onClick={() => setStatusConfirmation(null)}
+                  className="flex-1 py-3 border border-shop-line text-shop-ink text-sm"
+                >
+                  No, cancelar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleConfirmStatusChange}
+                  className="flex-1 py-3 bg-shop-ink text-white text-sm"
+                >
+                  Sí, continuar
+                </button>
+              </div>
+            </motion.div>
+          </AdminDialog>
+        )}
+      </AnimatePresence>
+
+<AnimatePresence>
+  {authorizationModal && (
+    <AdminDialog
+      label="Autorización de administrador"
+      onClose={() => setAuthorizationModal(null)}
+      className="fixed inset-0 z-[140] flex items-center justify-center p-4"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0 }}
+        className="relative w-full max-w-md bg-white rounded-[2px] p-8 border border-shop-line"
+      >
+        <h3 className="text-lg font-semibold text-shop-ink">
+          Autorización requerida
+        </h3>
+
+        <p className="mt-2 text-sm text-shop-muted">
+          Ingresa tus credenciales de administrador para confirmar el cambio.
+        </p>
+
+        <form onSubmit={handleSubmitStatusChange} className="mt-6 space-y-4">
+          <div>
+            <label className="block text-sm mb-1">Correo del administrador</label>
+            <input
+              type="email"
+              value={adminEmail}
+              onChange={(e) => setAdminEmail(e.target.value)}
+              required
+              autoComplete="username"
+              className="w-full border border-shop-line p-3 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1">Contraseña</label>
+            <input
+              type="password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+              className="w-full border border-shop-line p-3 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1">Motivo</label>
+            <textarea
+              value={actionReason}
+              onChange={(e) => setActionReason(e.target.value)}
+              required
+              rows={3}
+              placeholder="Indica el motivo del cambio..."
+              className="w-full border border-shop-line p-3 text-sm"
+            />
+          </div>
+
+          {statusError && (
+            <p className="text-sm text-red-600">{statusError}</p>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setAuthorizationModal(null)}
+              disabled={statusLoading}
+              className="flex-1 border border-shop-line py-3 text-sm"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              disabled={statusLoading}
+              className="flex-1 bg-shop-ink text-white py-3 text-sm disabled:opacity-50"
+            >
+              {statusLoading ? "Procesando..." : "Autorizar cambio"}
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </AdminDialog>
+  )}
+</AnimatePresence>
+
+<AnimatePresence>
+  {historyModalOpen && (
+    <AdminDialog
+      label="Historial de cambios"
+      onClose={() => setHistoryModalOpen(false)}
+      className="fixed inset-0 z-[150] flex items-center justify-center p-4"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0 }}
+        className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-white border border-shop-line rounded-[2px] p-6"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-semibold text-shop-ink">
+              Historial de cambios
+            </h3>
+            <p className="text-xs text-shop-muted mt-1">
+              Cliente: {selectedHistoryUser?.name}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setHistoryModalOpen(false)}
+            className="text-sm text-shop-muted border border-shop-line px-3 py-2"
+          >
+            Cerrar
+          </button>
+        </div>
+
+   {historyLoading ? (
+  <p className="text-center py-4">Cargando historial...</p>
+) : historyError ? (
+  <p className="text-center py-4 text-red-600">{historyError}</p>
+) : userStatusHistory.length === 0 ? (
+
+  <p className="text-sm text-shop-muted text-center py-10">
+    No hay registros de cambios para este cliente.
+  </p>
+) : (
+  <div className="space-y-4">
+    {userStatusHistory.map((record) => (
+            
+              <div
+                key={record._id}
+                className="border border-shop-line p-4 rounded-[2px] space-y-2"
+              >
+                <p className="text-sm font-semibold text-shop-ink">
+                  {record.actionType === "account_status"
+                    ? "Estado de cuenta"
+                    : "Línea de crédito"}
+                </p>
+
+                <p className="text-xs text-shop-muted">
+                  {record.previousValue ? "Habilitado" : "Deshabilitado"}
+                  {" → "}
+                  {record.newValue ? "Habilitado" : "Deshabilitado"}
+                </p>
+
+                <p className="text-xs text-shop-muted">
+                  Motivo: {record.reason}
+                </p>
+
+                <p className="text-xs text-shop-muted">
+                  Responsable: {record.performedBy?.adminName}
+                  {" ("}
+                  {record.performedBy?.adminEmail}
+                  {")"}
+                </p>
+
+                <p className="text-xs text-shop-muted">
+                  Fecha: {record.createdAt
+                    ? new Date(record.createdAt).toLocaleString("es-PE")
+                    : "Sin fecha"}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </motion.div>
+    </AdminDialog>
+  )}
+</AnimatePresence>
 
       <AnimatePresence>
         {isModalOpen && (
@@ -286,10 +610,21 @@ function UsersManagementView({
                         <CreditCard className="w-4 h-4 text-shop-blue" />
                         <span className="text-xs font-medium text-blue-900">Configuración de Crédito</span>
                       </div>
-                      <select name="creditEnabled" defaultValue={editingUser?.creditEnabled ? "true" : "false"} className="font-medium bg-white border border-shop-line rounded-[2px] px-2 py-1 min-h-10 min-w-0 text-base sm:text-[13px]">
-                        <option value="false">Deshabilitado</option>
-                        <option value="true">Habilitado</option>
+                     {editingUser ? (
+                        <p className="text-sm text-shop-muted py-2">
+                           {editingUser.creditEnabled ? "Habilitado" : "Deshabilitado"}
+                             {" "} — Para cambiar este estado, utiliza el botón de autorización.
+                                </p>
+                          ) : (
+                    <select
+                 name="creditEnabled"
+                         defaultValue="false"
+                   className="font-medium bg-white w-full px-4 py-3 border border-shop-line"
+                       >
+                             <option value="false">Deshabilitado</option>
+                             <option value="true">Habilitado</option>
                       </select>
+                            )}
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[11px] font-semibold text-blue-400">Límite de Crédito (S/)</label>

@@ -7,6 +7,8 @@ import {
   getMe,
   getUsers,
   updateUser,
+  updateUserStatus,
+  getUserStatusHistory
   getGoogleConfig,
   googleLogin,
   requestPasswordReset,
@@ -38,5 +40,11 @@ router.get("/users", authenticate, requireAdmin, getUsers);
 router.get("/workers", authenticate, requireStaff, getWorkers);
 router.post("/users/create", authenticate, requireAdmin, createUser);
 router.post("/users/update", authenticate, requireAdmin, updateUser);
-
+router.post("/users/status-action", authenticate, requireAdmin, updateUserStatus);
+router.get(
+  "/users/:id/status-history",
+  authenticate,
+  requireAdmin,
+  getUserStatusHistory
+);
 export default router;
