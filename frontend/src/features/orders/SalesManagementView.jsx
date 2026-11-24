@@ -223,7 +223,7 @@ function SalesManagementView({
                             <Truck className="w-3.5 h-3.5" /> Despachar
                           </button>
                           <span className="text-[11px] font-medium text-emerald-600 tabular-nums">
-                            ✓ Salida Almacén OK ({salidaMovement?.id || order.warehouseSalidaId || "Aprobada"})
+                            Salida Almacén OK ({salidaMovement?.id || order.warehouseSalidaId || "Aprobada"})
                           </span>
                         </div>
                       ) : isSalidaPending ? (

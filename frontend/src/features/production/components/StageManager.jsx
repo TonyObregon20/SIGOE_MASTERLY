@@ -505,7 +505,7 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                               <optgroup label={`Proveedores de ${stage.name} (${matchingSuppliers.length})`}>
                                 {matchingSuppliers.map((s) => (
                                   <option key={s.id || s._id} value={s.id || s._id}>
-                                    🏢 {s.name} ({s.id || "PROV"})
+                                    {s.name} ({s.id || "PROV"})
                                   </option>
                                 ))}
                               </optgroup>
@@ -522,7 +522,7 @@ export default function StageManager({ op, updateStage, suppliers: propSuppliers
                             )}
 
                             <optgroup label="Interno / Manual">
-                              <option value="__custom__">👤 Operario Interno / Otro</option>
+                              <option value="__custom__">Operario Interno / Otro</option>
                             </optgroup>
                           </select>
 

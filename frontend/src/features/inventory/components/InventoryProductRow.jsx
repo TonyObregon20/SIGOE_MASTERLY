@@ -34,7 +34,7 @@ export default function InventoryProductRow({
               referrerPolicy="no-referrer"
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <h4 className="font-semibold text-shop-ink text-base tracking-tight leading-tight">
               {p.name}
             </h4>

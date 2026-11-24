@@ -109,14 +109,14 @@ export function AdminDashboardView({
         />
 
         {/* Top Clients Card */}
-        <div className="bg-white rounded-[2px] border border-shop-line p-6 flex flex-col justify-between">
+        <div className="bg-white rounded-[2px] border border-shop-line p-4 sm:p-5 flex flex-col justify-between">
           <div>
-            <div className="flex justify-between items-center mb-4 pb-2 border-b border-shop-line">
-              <div className="space-y-0.5">
-                <h3 className="font-medium text-shop-ink text-base flex items-center gap-2">
-                  <UserIcon className="w-5 h-5 text-shop-blue" /> Clientes Activos
+            <div className="flex justify-between items-center gap-3 mb-4 pb-4 border-b border-shop-line">
+              <div className="space-y-1">
+                <h3 className="flex items-center gap-2 text-sm font-medium text-shop-ink">
+                  <UserIcon size={17} strokeWidth={1.6} className="shrink-0 text-shop-blue" /> Clientes Activos
                 </h3>
-                <p className="text-[11px] text-shop-muted font-medium tabular-nums">
+                <p className="text-[11px] text-shop-muted">
                   Ranking de compras reales
                 </p>
               </div>
@@ -128,15 +128,15 @@ export function AdminDashboardView({
                 const pctOfMax = (client.spent / maxClientSpent) * 100;
                 return (
                   <div key={idx} className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <div className="min-w-0 pr-2">
-                        <span className="text-[11px] font-semibold text-shop-muted tabular-nums mr-1">{idx + 1}.</span>
-                        <span className="text-xs font-semibold text-shop-muted truncate inline-block max-w-[120px]">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <div className="flex min-w-0 flex-1 items-baseline gap-1.5">
+                        <span className="shrink-0 text-xs font-medium leading-5 text-shop-muted tabular-nums">{idx + 1}.</span>
+                        <span className="min-w-0 truncate text-xs font-medium leading-5 text-shop-ink">
                           {client.name}
                         </span>
                       </div>
-                      <div className="text-right">
-                        <span className="text-xs font-semibold text-shop-ink tabular-nums">
+                      <div className="shrink-0 text-right">
+                        <span className="block text-xs font-medium leading-5 text-shop-ink tabular-nums">
                           S/ {client.spent.toLocaleString()}
                         </span>
                         <span className="text-[11px] text-shop-muted font-medium block tabular-nums leading-none">
@@ -175,26 +175,29 @@ export function AdminDashboardView({
       {/* Section: Active Production & Stock Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Active Production Orders Summary */}
-        <div className="lg:col-span-2 bg-white rounded-[2px] border border-shop-line flex flex-col">
-          <div className="p-4 border-b border-shop-line flex items-center justify-between">
-            <h2 className="text-shop-muted font-medium tracking-tight text-lg">Resumen de Producción Activa</h2>
+        <div className="lg:col-span-2 bg-white rounded-[2px] border border-shop-line flex flex-col p-4 sm:p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-shop-line pb-4">
+            <h2 className="flex items-center gap-2 text-sm font-medium text-shop-ink">
+              <ClipboardList size={17} strokeWidth={1.6} className="shrink-0 text-shop-blue" />
+              Resumen de Producción Activa
+            </h2>
             <button
               onClick={() => setShowProductionReport(true)}
-              className="text-xs font-medium text-shop-blue hover:underline flex items-center gap-1 bg-shop-light px-2 py-1 rounded-[2px] hover:bg-shop-light transition-colors"
+              className="inline-flex min-h-9 items-center gap-2 rounded-[2px] border border-shop-line px-3 text-[11px] font-medium text-shop-ink transition-colors hover:bg-shop-light"
             >
-              <ClipboardList className="w-3.5 h-3.5" /> Ver reporte
+              <ClipboardList size={14} /> Ver reporte
             </button>
           </div>
-          <div className="p-4 space-y-4">
+          <div className="space-y-3">
             {productionOrders.slice(0, 3).map((op, idx) => {
               const firstItem = op.items?.[0];
               const product = products.find((p) => p.id === firstItem?.productId);
               const itemCount = op.items?.length || 0;
               return (
-                <div key={op._id || op.id || `op-dash-${idx}`} className="p-4 bg-shop-light rounded-[2px] border border-shop-line space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-12 bg-white rounded-[2px] border border-shop-line overflow-hidden group">
+                <div key={op._id || op.id || `op-dash-${idx}`} className="p-3 sm:p-4 bg-shop-light/40 rounded-[2px] border border-shop-line space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <div className="w-10 h-12 shrink-0 bg-white rounded-[2px] border border-shop-line overflow-hidden group">
                         {product ? (
                           <img
                             src={product.image}
@@ -215,7 +218,7 @@ export function AdminDashboardView({
                         <div className="text-[11px] font-medium text-shop-muted">Iniciado: {op.startDate}</div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="shrink-0 text-right">
                       <div className="text-sm font-medium text-shop-ink">{op.progress}%</div>
                       <div
                         className={`text-[11px] font-semibold px-2 py-0.5 rounded-[2px] ${
@@ -263,7 +266,10 @@ export function AdminDashboardView({
         {/* Dynamic Stock Alerts Kardex Sidebar */}
         <div className="bg-white rounded-[2px] border border-shop-line p-4 flex flex-col space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-shop-muted font-medium tracking-tight text-lg">Alertas Kardex</h2>
+            <h2 className="flex items-center gap-2 text-sm font-medium text-shop-ink">
+              <AlertCircle size={17} strokeWidth={1.6} className="shrink-0 text-shop-blue" />
+              Alertas Kardex
+            </h2>
             <span className="text-[11px] bg-red-100 text-red-700 font-medium px-2 py-0.5 rounded-full tabular-nums">
               autostock
             </span>

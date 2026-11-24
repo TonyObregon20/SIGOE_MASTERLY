@@ -87,7 +87,7 @@ export default function WarehouseMovementCard({ movement: wm, onAcceptMovement }
         </button>
       ) : (
         <div className="text-center py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-[2px] text-[11px] font-semibold tabular-nums">
-          ✓ Aceptado y registrado en Kardex ({wm.processedAt ? wm.processedAt.slice(0, 10) : wm.date})
+          Aceptado y registrado en Kardex ({wm.processedAt ? wm.processedAt.slice(0, 10) : wm.date})
         </div>
       )}
     </div>

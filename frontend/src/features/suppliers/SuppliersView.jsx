@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Users,
+  X,
   Building2,
   Plus,
   Search,
@@ -386,10 +387,11 @@ export default function SuppliersView({
             {searchQuery && (
               <button
                 type="button"
+                aria-label="Limpiar búsqueda"
                 onClick={() => setSearchQuery("")}
                 className="absolute right-3 top-2.5 text-xs text-shop-muted hover:text-shop-muted font-medium"
               >
-                ✕
+                <X size={14} />
               </button>
             )}
           </div>

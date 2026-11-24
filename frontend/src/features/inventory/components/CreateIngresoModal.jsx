@@ -465,7 +465,7 @@ export default function CreateIngresoModal({
                                   <span className="tabular-nums font-semibold text-xs text-purple-700">{sub.units} uds</span>
                                 </div>
                                 <p className="text-[11px] text-shop-muted mt-0.5">
-                                  {isFin ? "✓ Terminado en Empaque" : `En curso: ${sub.currentStage || "Taller"}`}
+                                  {isFin ? "Terminado en Empaque" : `En curso: ${sub.currentStage || "Taller"}`}
                                 </p>
                               </button>
                             );

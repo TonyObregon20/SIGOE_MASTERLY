@@ -218,7 +218,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSave, supplierToE
             <label className="text-[11px] font-medium text-shop-muted flex items-center justify-between">
               <span>Característica / Especialidad *</span>
               <span className="text-[11px] text-shop-blue font-medium">
-                {isServiceType ? "⚡ Proveedor de Servicio (Tercerizado)" : "📦 Proveedor de Insumos Físicos"}
+                {isServiceType ? "Proveedor de Servicio (Tercerizado)" : "Proveedor de Insumos Físicos"}
               </span>
             </label>
 
