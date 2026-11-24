@@ -6,7 +6,9 @@ import {
   createUser,
   getMe,
   getUsers,
-  updateUser
+  updateUser,
+  updateUserStatus,
+  getUserStatusHistory
 } from "../controllers/authController.js";
 import { authenticate, requireAdmin } from "../middlewares/authMiddleware.js";
 
@@ -24,5 +26,11 @@ router.get("/auth/me", authenticate, getMe);
 router.get("/users", authenticate, requireAdmin, getUsers);
 router.post("/users/create", authenticate, requireAdmin, createUser);
 router.post("/users/update", authenticate, requireAdmin, updateUser);
-
+router.post("/users/status-action", authenticate, requireAdmin, updateUserStatus);
+router.get(
+  "/users/:id/status-history",
+  authenticate,
+  requireAdmin,
+  getUserStatusHistory
+);
 export default router;

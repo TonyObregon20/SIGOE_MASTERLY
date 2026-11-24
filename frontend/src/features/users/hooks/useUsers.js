@@ -9,6 +9,8 @@ export function useUsers(autoLoad = true) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const [userStatusHistory, setUserStatusHistory] = useState([]);
+
   const loadUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -48,6 +50,58 @@ export function useUsers(autoLoad = true) {
       setLoading(false);
     }
   }, [loadUsers]);
+
+
+  const updateUserStatus = useCallback(async (actionData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await usersService.updateUserStatus(actionData);
+
+      if (result?.success) {
+        setUsersState((previousUsers) =>
+          previousUsers.map((user) =>
+            user.id === actionData.id
+              ? { ...user, ...result.user }
+              : user
+          )
+        );
+      }
+
+      return result;
+    } catch (err) {
+      console.error("Error updating user status:", err);
+      setError(err.message || "Error al cambiar el estado del usuario");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+
+const loadUserStatusHistory = useCallback(async (id) => {
+  setLoading(true);
+  setError(null);
+  setUserStatusHistory([]);
+
+  try {
+    const result = await usersService.getUserStatusHistory(id);
+
+    if (result?.success) {
+      setUserStatusHistory(result.history || []);
+    }
+
+    return result;
+  } catch (err) {
+    console.error("Error loading user status history:", err);
+    setError(err.message || "Error al cargar el historial");
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
 
   const createUser = useCallback(async (userData) => {
     setLoading(true);
@@ -104,15 +158,18 @@ export function useUsers(autoLoad = true) {
     }
   }, [autoLoad, loadUsers]);
 
-  return {
-    users,
-    setUsers,
-    loading,
-    error,
-    loadUsers,
-    updateUser,
-    createUser
-  };
+return {
+  users,
+  setUsers,
+  loading,
+  error,
+  loadUsers,
+  updateUser,
+  updateUserStatus,
+  loadUserStatusHistory,
+  userStatusHistory,
+  createUser
+};
 }
 
 export default useUsers;

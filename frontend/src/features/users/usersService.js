@@ -1,4 +1,10 @@
-import { getUsersApi, updateUserApi, createUserApi } from "./usersApi";
+import {
+  getUsersApi,
+  updateUserApi,
+  updateUserStatusApi,
+  getUserStatusHistoryApi,
+  createUserApi
+} from "./usersApi";
 import { filterUsers, normalizeUser, calculateUserMetrics } from "./usersUtils";
 
 /**
@@ -21,10 +27,16 @@ export const usersService = {
   /**
    * Updates an existing user's details or role
    */
-  async updateUser(id, updates) {
+    async updateUser(id, updates) {
     return updateUserApi(id, updates);
   },
 
+  async updateUserStatus(actionData) {
+    return updateUserStatusApi(actionData);
+  },
+async getUserStatusHistory(id) {
+  return getUserStatusHistoryApi(id);
+},
   /**
    * Registers/creates a new user
    */

@@ -48,8 +48,11 @@ function AdminPage({
   loadOrders,
   loadProductionOrders,
   loadWarehouseMovements,
-  currentUser: propCurrentUser,
+   currentUser: propCurrentUser,
   onUpdateUser,
+  onUpdateUserStatus,
+  loadUserStatusHistory,
+userStatusHistory,
   setIsLoggedIn,
   setCurrentUser,
   setView
@@ -183,11 +186,14 @@ function AdminPage({
                 )}
                 
                 {adminTab === "users" && (
-                 <UsersManagementView
-                   users={users}
-                   onUpdateUser={onUpdateUser}
-                    onAddUser={(user) => setUsers((prev) => [...prev, user])}
-                  />
+                <UsersManagementView
+                      users={users}
+                          onUpdateUser={onUpdateUser}
+                           onUpdateUserStatus={onUpdateUserStatus} 
+                           loadUserStatusHistory={loadUserStatusHistory}
+                            userStatusHistory={userStatusHistory}
+                           onAddUser={(user) => setUsers((prev) => [...prev, user])}
+                          />
                 )}
                 
                 {adminTab === "ecommerce" && (

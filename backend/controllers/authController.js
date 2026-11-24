@@ -1,4 +1,5 @@
 import UserModel from "../models/User.js";
+import UserStatusHistory from "../models/UserStatusHistory.js";
 import { isMongoConnected, connectionErrorMsg } from "../config/db.js";
 import {
   hashPassword,
@@ -194,43 +195,220 @@ export const getUsers = async (req, res, next) => {
   }
 };
 
+
 export const updateUser = async (req, res, next) => {
   try {
-    const { id, role, creditEnabled, creditLimit, creditUsed, name, email, isActive } = req.body;
-    
+    const {
+      id,
+      role,
+      creditEnabled,
+      creditLimit,
+      creditUsed,
+      name,
+      email,
+      isActive
+    } = req.body;
+
     const targetUser = await UserModel.findOne({ id });
+
     if (!targetUser) {
-      return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado"
+      });
     }
 
-    // Un cliente no puede ser cambiado a admin
+    // Los cambios de estado deben utilizar la ruta protegida
+    // /users/status-action
+    if (
+      (isActive !== undefined &&
+        (isActive === true || isActive === "true") !== (targetUser.isActive !== false)) ||
+      (creditEnabled !== undefined &&
+        (creditEnabled === true || creditEnabled === "true") !== (targetUser.creditEnabled === true))
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Para cambiar el estado de una cuenta o línea de crédito se requiere autorización y motivo."
+      });
+    }
+
+    // Mantener las restricciones de roles existentes
     let finalRole = targetUser.role;
+
     if (targetUser.role === "admin" && role === "customer") {
       finalRole = "customer";
     } else if (targetUser.role === "customer") {
-      // Bloqueado: ningún cliente puede ser promovido a admin por edición
       finalRole = "customer";
     }
 
     const updateFields = {
       role: finalRole,
-      creditEnabled: creditEnabled !== undefined ? (creditEnabled === true || creditEnabled === "true") : targetUser.creditEnabled,
-      creditLimit: creditLimit !== undefined ? Number(creditLimit) : targetUser.creditLimit,
-      creditUsed: creditUsed !== undefined ? Number(creditUsed) : targetUser.creditUsed
+      creditLimit: creditLimit !== undefined
+        ? Number(creditLimit)
+        : targetUser.creditLimit,
+      creditUsed: creditUsed !== undefined
+        ? Number(creditUsed)
+        : targetUser.creditUsed
     };
-    if (targetUser.role !== "admin" && isActive !== undefined) {
-      updateFields.isActive = isActive === true || isActive === "true";
-    }
 
     if (name) updateFields.name = name;
-    if (email) updateFields.email = (email || "").trim().toLowerCase();
+    if (email) updateFields.email = email.trim().toLowerCase();
 
     const updated = await UserModel.findOneAndUpdate(
       { id },
       { $set: updateFields },
       { new: true }
     );
-    res.json({ success: true, user: sanitizeUser(updated) });
+
+    res.json({
+      success: true,
+      user: sanitizeUser(updated)
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
+
+
+export const updateUserStatus = async (req, res, next) => {
+  try {
+    const {
+      id,
+      actionType,
+      newValue,
+      adminEmail,
+      adminPassword,
+      reason
+    } = req.body;
+
+    // Validar los datos obligatorios
+    if (
+      !id ||
+      !["account_status", "credit_status"].includes(actionType) ||
+      typeof newValue !== "boolean" ||
+      !adminEmail?.trim() ||
+      !adminPassword ||
+      !reason?.trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Todos los datos son obligatorios, incluido el motivo."
+      });
+    }
+
+    // Verificar las credenciales del administrador
+    const admin = await UserModel.findOne({
+      email: adminEmail.trim().toLowerCase(),
+      role: "admin",
+      isActive: { $ne: false }
+    });
+
+    if (!admin || !(await comparePassword(adminPassword, admin.password))) {
+      return res.status(401).json({
+        success: false,
+        message: "Credenciales de administrador incorrectas."
+      });
+    }
+
+    // Buscar al usuario que será modificado
+    const targetUser = await UserModel.findOne({ id });
+
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado."
+      });
+    }
+
+    // No permitir modificar el estado de otro administrador
+    if (targetUser.role === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "No se puede modificar el estado de un administrador."
+      });
+    }
+
+    const field =
+      actionType === "account_status" ? "isActive" : "creditEnabled";
+
+const previousValue =
+  actionType === "account_status"
+    ? targetUser.isActive !== false
+    : targetUser.creditEnabled === true;
+    
+    // Evitar registrar acciones que no producen cambios
+    if (previousValue === newValue) {
+      return res.status(400).json({
+        success: false,
+        message: "El usuario ya tiene ese estado."
+      });
+    }
+
+    
+    // Actualizar el estado
+    targetUser[field] = newValue;
+    await targetUser.save();
+
+    // Registrar el historial
+    let history;
+
+    try {
+      history = await UserStatusHistory.create({
+        targetUserId: targetUser.id,
+        targetUserName: targetUser.name,
+        targetUserEmail: targetUser.email,
+        actionType,
+        previousValue,
+        newValue,
+        reason: reason.trim(),
+        performedBy: {
+          adminId: admin.id,
+          adminName: admin.name,
+          adminEmail: admin.email
+        }
+      });
+    } catch (historyError) {
+      // Intentar restaurar el estado anterior si falla el historial
+      targetUser[field] = previousValue;
+      await targetUser.save();
+
+      throw historyError;
+    }
+
+
+    return res.json({
+      success: true,
+      message: "Estado actualizado correctamente.",
+      user: sanitizeUser(targetUser),
+      history
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getUserStatusHistory = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "El ID del usuario es obligatorio."
+      });
+    }
+
+    const history = await UserStatusHistory.find({
+      targetUserId: id
+    }).sort({ createdAt: -1 });
+
+    return res.json({
+      success: true,
+      history
+    });
   } catch (err) {
     next(err);
   }

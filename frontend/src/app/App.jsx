@@ -144,13 +144,16 @@ function App() {
   } = useWarehouse(false);
 
   // Centralized Users State from useUsers
-  const {
-    users,
-    setUsers,
-    loadUsers,
-    updateUser: handleUpdateUserAction,
-    createUser: handleCreateUserAction
-  } = useUsers(false);
+ const {
+  users,
+  setUsers,
+  loadUsers,
+  updateUser: handleUpdateUserAction,
+  updateUserStatus,
+  loadUserStatusHistory,
+  userStatusHistory,
+  createUser: handleCreateUserAction
+} = useUsers(false);
 
   // Centralized Invoices State from useInvoices
   const {
@@ -395,6 +398,9 @@ function App() {
                 users={users}
                 setUsers={setUsers}
                 onUpdateUser={handleUpdateUserAction}
+                onUpdateUserStatus={updateUserStatus}
+                loadUserStatusHistory={loadUserStatusHistory}
+                userStatusHistory={userStatusHistory}
                 orders={orders}
                 setOrders={setOrders}
                 handleShipOrder={handleShipOrder}
