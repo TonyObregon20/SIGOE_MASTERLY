@@ -110,9 +110,11 @@ const [historyError, setHistoryError] = useState("");
     }
   };
 
+  const [showInitialPassword, setShowInitialPassword] = useState(false);
 
   const handleOpenModal = (user) => {
     setEditingUser(user || null);
+    setShowInitialPassword(false);
     setIsModalOpen(true);
   };
 
@@ -161,7 +163,7 @@ if (!editingUser) {
       </div>
 
       <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2 2xl:grid-cols-3">
-        {usersList.map((user, idx) => (
+        {usersList.filter((user) => user.role !== "worker").map((user, idx) => (
           <div key={user._id || user.id || `u-${idx}`} className="bg-white border border-shop-line rounded-[2px] p-5 transition-all group relative overflow-hidden">
 
 
@@ -557,7 +559,18 @@ className="w-[150px] shrink-0 mt-3 flex items-center justify-center gap-2 border
                   {!editingUser && (
                     <div className="space-y-1.5">
                       <label className="text-[11px] font-semibold text-shop-muted">Contraseña Inicial</label>
-                      <input name="password" type="password" placeholder="Contraseña de acceso" required className="w-full px-4 py-3 bg-shop-light border border-shop-line rounded-[2px] outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]" />
+                      <div className="relative">
+                        <input name="password" type={showInitialPassword ? "text" : "password"} placeholder="Contraseña de acceso" required className="w-full px-4 py-3 pr-12 bg-shop-light border border-shop-line rounded-[2px] outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]" />
+                        <button
+                          type="button"
+                          onClick={() => setShowInitialPassword((visible) => !visible)}
+                          className="absolute right-0 top-0 flex h-full w-12 items-center justify-center text-shop-muted transition-colors hover:text-shop-ink"
+                          aria-label={showInitialPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                          aria-pressed={showInitialPassword}
+                        >
+                          {showInitialPassword ? <Eye size={19} /> : <EyeOff size={19} />}
+                        </button>
+                      </div>
                     </div>
                   )}
 

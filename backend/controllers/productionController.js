@@ -1,6 +1,9 @@
 import ProductionOrderModel from "../models/ProductionOrder.js";
 import WarehouseMovementModel from "../models/WarehouseMovement.js";
 import SupplierModel from "../models/Supplier.js";
+import OrderModel from "../models/Order.js";
+import UserModel from "../models/User.js";
+import { sendOrderStageEmail } from "../services/emailService.js";
 
 const STAGES_LIST = [
   "Tendido",
@@ -74,6 +77,26 @@ export const updateStage = async (req, res, next) => {
 
     // Immediately respond to client for maximum UI speed and responsiveness
     res.json({ success: true, productionOrder: updatedOp });
+
+    if (status === "completed" && updatedOp.orderId) {
+      setImmediate(async () => {
+        try {
+          const order = await OrderModel.findOne({ id: updatedOp.orderId }).lean();
+          if (!order?.userId) return;
+          const user = await UserModel.findOne({ id: order.userId }).lean();
+          if (!user || user.orderStageEmailNotifications === false || !user.email) return;
+          await sendOrderStageEmail({
+            recipient: user.email,
+            name: user.name,
+            orderId: updatedOp.orderId,
+            stage: stageName,
+            progress
+          });
+        } catch (emailErr) {
+          console.error("Error sending production stage email:", emailErr.message);
+        }
+      });
+    }
 
     // If stage was completed, handle supplier metrics recording asynchronously in the background
     if (status === "completed") {

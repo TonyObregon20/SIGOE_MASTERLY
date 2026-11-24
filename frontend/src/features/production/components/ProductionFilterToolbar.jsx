@@ -30,7 +30,7 @@ export default function ProductionFilterToolbar({
       {/* Search Bar & Sort Selector */}
       <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
         {/* Search Input */}
-        <div className="relative flex-1 min-w-[280px]">
+        <div className="relative min-w-0 flex-1 lg:min-w-[280px]">
           <Search className="w-4 h-4 text-shop-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"

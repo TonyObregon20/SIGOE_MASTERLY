@@ -53,6 +53,26 @@ export function AuthProvider({ children }) {
     return res;
   };
 
+  const googleLogin = async (credential) => {
+    const res = await authService.googleLogin(credential);
+    if (res && res.success && res.user) {
+      setCurrentUser(res.user);
+      setIsLoggedIn(true);
+    }
+    return res;
+  };
+
+  const requestPasswordReset = (email) => authService.requestPasswordReset(email);
+  const verifyPasswordResetCode = (email, code) => authService.verifyPasswordResetCode(email, code);
+  const resetPassword = (resetToken, password) => authService.resetPassword(resetToken, password);
+  const updateProfile = async (updates) => {
+    const res = await authService.updateProfile(updates);
+    if (res?.success && res.user) {
+      setCurrentUser(res.user);
+    }
+    return res;
+  };
+
   const logout = () => {
     authService.logout();
     setCurrentUser(null);
@@ -67,6 +87,11 @@ export function AuthProvider({ children }) {
     loading,
     login,
     register,
+    googleLogin,
+    requestPasswordReset,
+    verifyPasswordResetCode,
+    resetPassword,
+    updateProfile,
     logout,
     refreshUser
   };

@@ -1,4 +1,13 @@
-import { loginApi, registerApi, getMeApi } from "./authApi";
+import {
+  loginApi,
+  registerApi,
+  getMeApi,
+  googleLoginApi,
+  requestPasswordResetApi,
+  verifyPasswordResetCodeApi,
+  resetPasswordApi,
+  updateProfileApi
+} from "./authApi";
 import { getAuthToken, setAuthToken, removeAuthToken, hasAuthToken } from "./authUtils";
 
 /**
@@ -25,6 +34,28 @@ export const authService = {
       setAuthToken(data.token);
     }
     return data;
+  },
+
+  async googleLogin(credential) {
+    const data = await googleLoginApi(credential);
+    if (data && data.success && data.token) setAuthToken(data.token);
+    return data;
+  },
+
+  async requestPasswordReset(email) {
+    return requestPasswordResetApi(email);
+  },
+
+  async verifyPasswordResetCode(email, code) {
+    return verifyPasswordResetCodeApi(email, code);
+  },
+
+  async resetPassword(resetToken, password) {
+    return resetPasswordApi(resetToken, password);
+  },
+
+  async updateProfile(updates) {
+    return updateProfileApi(updates);
   },
 
   async getCurrentUser() {

@@ -9,7 +9,7 @@ export default function ProductionPipelineStatus({ stageStats }) {
       <h3 className="font-medium text-shop-muted text-xs mb-3 tabular-nums">
         Distribución de Órdenes por Etapa
       </h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         {Object.entries(stageStats || {}).map(([stage, count]) => (
           <div key={stage} className="p-3 bg-shop-light border border-shop-line rounded-[2px] flex flex-col justify-between">
             <span className="text-xs text-shop-muted font-medium">{stage}</span>
