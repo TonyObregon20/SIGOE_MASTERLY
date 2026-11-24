@@ -263,19 +263,6 @@ export const getUsers = async (req, res, next) => {
 };
 
 
-export const updateUser = async (req, res, next) => {
-  try {
-    const {
-      id,
-      role,
-      creditEnabled,
-      creditLimit,
-      creditUsed,
-      name,
-      email,
-      isActive
-    } = req.body;
-
 export const getWorkers = async (req, res, next) => {
   try {
     const list = await UserModel.find({ role: "worker", isActive: { $ne: false } }).sort({ name: 1 }).lean();
@@ -319,14 +306,6 @@ export const updateUser = async (req, res, next) => {
       });
     }
 
-    // Mantener las restricciones de roles existentes
-    let finalRole = targetUser.role;
-
-    if (targetUser.role === "admin" && role === "customer") {
-      finalRole = "customer";
-    } else if (targetUser.role === "customer") {
-      finalRole = "customer";
-    }
     // Los clientes no pueden ser promovidos desde esta edición
     let finalRole = targetUser.role;
     if (targetUser.role === "customer") finalRole = "customer";
@@ -344,7 +323,6 @@ export const updateUser = async (req, res, next) => {
     };
 
     if (name) updateFields.name = name;
-    if (email) updateFields.email = email.trim().toLowerCase();
     if (email) updateFields.email = (email || "").trim().toLowerCase();
     if (password) updateFields.password = await hashPassword(password);
     if (targetUser.role === "worker") {
