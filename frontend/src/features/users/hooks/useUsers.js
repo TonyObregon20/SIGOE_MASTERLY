@@ -33,35 +33,41 @@ export function useUsers(autoLoad = true) {
     try {
       const result = await usersService.updateUser(id, updates);
       if (result?.success) {
+        // Nunca guardar password en texto plano en el estado local de React
+        const { password: _ignoredPassword, ...safeUpdates } = updates || {};
         setUsersState((previousUsers) =>
           previousUsers.map((user) =>
-            user.id === id ? { ...user, ...result.user, ...updates } : user
+            user.id === id ? { ...user, ...safeUpdates, ...(result.user || {}) } : user
           )
         );
+      } else {
+        setError(result?.message || "Error al actualizar usuario");
       }
       return result;
     } catch (err) {
       console.error("Error updating user:", err);
       setError(err.message || "Error al actualizar usuario");
-      throw err;
+      return { success: false, message: err.message || "Error al actualizar usuario" };
     } finally {
       setLoading(false);
     }
-  }, [loadUsers]);
+  }, []);
 
   const createUser = useCallback(async (userData) => {
     setLoading(true);
     setError(null);
     try {
       const result = await usersService.createUser(userData);
-      if (result && result.success) {
+      if (result?.success) {
         await loadUsers();
+      } else {
+        setError(result?.message || "Error al registrar usuario");
       }
       return result;
     } catch (err) {
       console.error("Error creating user:", err);
       setError(err.message || "Error al registrar usuario");
-      throw err;
+      return { success: false, message: err.message || "Error al registrar usuario" };
     } finally {
       setLoading(false);
     }

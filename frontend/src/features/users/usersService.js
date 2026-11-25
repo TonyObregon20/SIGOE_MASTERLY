@@ -19,17 +19,20 @@ export const usersService = {
   },
 
   /**
-   * Updates an existing user's details or role
+   * Updates an existing user's details, role or password
    */
   async updateUser(id, updates) {
     return updateUserApi(id, updates);
   },
 
   /**
-   * Registers/creates a new user
+   * Registers/creates a new user (preserving password even if normalizeUser strips it)
    */
   async createUser(userData) {
-    const payload = normalizeUser(userData);
+    const payload = {
+      ...normalizeUser(userData),
+      ...(userData?.password ? { password: userData.password } : {})
+    };
     return createUserApi(payload);
   },
 

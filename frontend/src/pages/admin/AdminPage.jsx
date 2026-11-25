@@ -50,6 +50,7 @@ function AdminPage({
   loadWarehouseMovements,
   currentUser: propCurrentUser,
   onUpdateUser,
+  onAddUser,
   setIsLoggedIn,
   setCurrentUser,
   setView
@@ -183,10 +184,10 @@ function AdminPage({
                 )}
                 
                 {adminTab === "users" && (
-                 <UsersManagementView
-                   users={users}
-                   onUpdateUser={onUpdateUser}
-                    onAddUser={(user) => setUsers((prev) => [...prev, user])}
+                  <UsersManagementView
+                    users={users}
+                    onUpdateUser={onUpdateUser}
+                    onAddUser={onAddUser || ((user) => setUsers((prev) => [...prev, user]))}
                   />
                 )}
                 

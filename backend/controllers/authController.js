@@ -30,9 +30,14 @@ export const login = async (req, res, next) => {
     }
 
     // Optional recovery is disabled unless private credentials are configured.
-    const bootstrapEmail = (process.env.BOOTSTRAP_ADMIN_EMAIL || '').trim().toLowerCase();
+    const bootstrapEmail = (process.env.BOOTSTRAP_ADMIN_EMAIL || "").trim().toLowerCase();
     const bootstrapPassword = process.env.BOOTSTRAP_ADMIN_PASSWORD;
-    const isBootstrapCredential = Boolean(bootstrapEmail && bootstrapPassword && cleanEmail === bootstrapEmail && password === bootstrapPassword);
+    const isBootstrapCredential = Boolean(
+      bootstrapEmail &&
+      bootstrapPassword &&
+      cleanEmail === bootstrapEmail &&
+      password === bootstrapPassword
+    );
 
     // Create the initial admin only with the explicitly configured credentials.
     if (!user && isBootstrapCredential) {
@@ -72,7 +77,12 @@ export const login = async (req, res, next) => {
       }
     } else {
       // If stored password was plain text, silently upgrade it to bcrypt hash
-      if (user.password && !user.password.startsWith("$2a$") && !user.password.startsWith("$2b$") && !user.password.startsWith("$2y$")) {
+      if (
+        user.password &&
+        !user.password.startsWith("$2a$") &&
+        !user.password.startsWith("$2b$") &&
+        !user.password.startsWith("$2y$")
+      ) {
         const upgradedHash = await hashPassword(password);
         await UserModel.findOneAndUpdate({ id: user.id }, { $set: { password: upgradedHash } });
       }
@@ -106,7 +116,7 @@ export const register = async (req, res, next) => {
     }
 
     const hashedPassword = await hashPassword(password);
-    
+
     // Todos los usuarios que se registren por el login son clientes (customer) estrictamente
     const newUser = await UserModel.create({
       id: `U-${Date.now()}`,
@@ -145,10 +155,13 @@ export const createUser = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "El correo electrónico ya está registrado" });
     }
 
-    if (!password) {
-      return res.status(400).json({ success: false, message: "Contraseña requerida para crear el usuario" });
+    if (!password || String(password).trim().length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Contraseña requerida (mínimo 6 caracteres) para crear el usuario"
+      });
     }
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await hashPassword(String(password).trim());
     // Los admins creados directamente desde el panel administrativo por el admin
     const chosenRole = role === "admin" ? "admin" : "customer";
 
@@ -196,8 +209,18 @@ export const getUsers = async (req, res, next) => {
 
 export const updateUser = async (req, res, next) => {
   try {
-    const { id, role, creditEnabled, creditLimit, creditUsed, name, email, isActive } = req.body;
-    
+    const {
+      id,
+      role,
+      creditEnabled,
+      creditLimit,
+      creditUsed,
+      name,
+      email,
+      isActive,
+      password
+    } = req.body;
+
     const targetUser = await UserModel.findOne({ id });
     if (!targetUser) {
       return res.status(404).json({ success: false, message: "Usuario no encontrado" });
@@ -214,22 +237,54 @@ export const updateUser = async (req, res, next) => {
 
     const updateFields = {
       role: finalRole,
-      creditEnabled: creditEnabled !== undefined ? (creditEnabled === true || creditEnabled === "true") : targetUser.creditEnabled,
+      creditEnabled:
+        creditEnabled !== undefined
+          ? creditEnabled === true || creditEnabled === "true"
+          : targetUser.creditEnabled,
       creditLimit: creditLimit !== undefined ? Number(creditLimit) : targetUser.creditLimit,
       creditUsed: creditUsed !== undefined ? Number(creditUsed) : targetUser.creditUsed
     };
+
     if (targetUser.role !== "admin" && isActive !== undefined) {
       updateFields.isActive = isActive === true || isActive === "true";
     }
 
-    if (name) updateFields.name = name;
-    if (email) updateFields.email = (email || "").trim().toLowerCase();
+    if (name) {
+      updateFields.name = String(name).trim();
+    }
+
+    if (email) {
+      const cleanEmail = String(email).trim().toLowerCase();
+      if (cleanEmail !== targetUser.email) {
+        const emailInUse = await UserModel.findOne({ email: cleanEmail, id: { $ne: id } });
+        if (emailInUse) {
+          return res.status(400).json({
+            success: false,
+            message: "El correo electrónico ya está en uso por otro usuario"
+          });
+        }
+      }
+      updateFields.email = cleanEmail;
+    }
+
+    // Actualizar contraseña si se envió una nueva
+    if (typeof password === "string" && password.trim().length > 0) {
+      const cleanPassword = password.trim();
+      if (cleanPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "La nueva contraseña debe tener al menos 6 caracteres"
+        });
+      }
+      updateFields.password = await hashPassword(cleanPassword);
+    }
 
     const updated = await UserModel.findOneAndUpdate(
       { id },
       { $set: updateFields },
       { new: true }
     );
+
     res.json({ success: true, user: sanitizeUser(updated) });
   } catch (err) {
     next(err);

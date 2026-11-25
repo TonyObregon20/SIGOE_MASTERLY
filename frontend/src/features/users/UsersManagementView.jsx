@@ -46,34 +46,76 @@ function UsersManagementView({
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [isPasswordDirty, setIsPasswordDirty] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleOpenModal = (user) => {
     setEditingUser(user || null);
+    setNewPassword("");
+    setIsPasswordDirty(false);
+    setShowPassword(false);
+    setFormError("");
     setIsModalOpen(true);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
+    setFormError("");
+
     const formData = new FormData(e.currentTarget);
     const userData = {
-      name: formData.get("name"),
-      email: formData.get("email"),
+      name: String(formData.get("name") || "").trim(),
+      email: String(formData.get("email") || "").trim().toLowerCase(),
       role: editingUser ? editingUser.role : (formData.get("role") || "customer"),
       creditEnabled: formData.get("creditEnabled") === "true",
       creditLimit: Number(formData.get("creditLimit") || 0)
     };
+
     if (editingUser) {
-      onUpdateUser(editingUser.id, userData);
+      if (editingUser.role === "admin" && isPasswordDirty && newPassword.trim()) {
+        if (newPassword.trim().length < 6) {
+          setFormError("La nueva contraseña debe tener al menos 6 caracteres.");
+          return;
+        }
+        userData.password = newPassword.trim();
+      }
     } else {
-      const newUser = {
-        ...userData,
-        password: formData.get("password"),
-        creditUsed: 0,
-        joinDate: new Date().toISOString().split("T")[0]
-      };
-      onAddUser(newUser);
+      const initialPassword = String(formData.get("password") || "").trim();
+      if (initialPassword.length < 6) {
+        setFormError("La contraseña inicial debe tener al menos 6 caracteres.");
+        return;
+      }
+      userData.password = initialPassword;
     }
-    setIsModalOpen(false);
+
+    try {
+      setIsSaving(true);
+      let result;
+      if (editingUser) {
+        result = await onUpdateUser(editingUser.id || editingUser._id, userData);
+      } else {
+        const newUser = {
+          ...userData,
+          creditUsed: 0,
+          joinDate: new Date().toISOString().split("T")[0]
+        };
+        result = await onAddUser(newUser);
+      }
+
+      if (result && result.success === false) {
+        setFormError(result.message || "No se pudo guardar el usuario.");
+        return;
+      }
+
+      setIsModalOpen(false);
+    } catch (err) {
+      setFormError(err?.message || "No se pudo guardar el usuario. Intenta nuevamente.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -96,8 +138,6 @@ function UsersManagementView({
       <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2 2xl:grid-cols-3">
         {usersList.map((user, idx) => (
           <div key={user._id || user.id || `u-${idx}`} className="bg-white border border-shop-line rounded-[2px] p-5 transition-all group relative overflow-hidden">
-
-
             <div className="flex flex-wrap items-start justify-between gap-3 relative z-10">
               <div className="flex min-w-0 items-center gap-3">
                 <div className={`size-10 shrink-0 rounded-[2px] border flex items-center justify-center ${user.role === "admin" ? "bg-shop-ink text-white border-slate-900" : "bg-white text-shop-blue border-shop-line"}`}>
@@ -115,7 +155,7 @@ function UsersManagementView({
             {user.role === "customer" && (
               <button
                 type="button"
-                onClick={() => onUpdateUser(user.id, { isActive: user.isActive === false })}
+                onClick={() => onUpdateUser(user.id || user._id, { isActive: user.isActive === false })}
                 className={`mt-4 flex w-full items-center justify-between rounded-[2px] border px-3 py-2 text-[11px] font-semibold transition-all ${
                   user.isActive === false
                     ? "border-red-200 bg-red-50 text-red-700"
@@ -140,7 +180,7 @@ function UsersManagementView({
                     <button
                       aria-label={`Acceso a crédito de ${user.name}`}
                       aria-pressed={Boolean(user.creditEnabled)}
-                      onClick={() => onUpdateUser(user.id, { creditEnabled: !user.creditEnabled })}
+                      onClick={() => onUpdateUser(user.id || user._id, { creditEnabled: !user.creditEnabled })}
                       className={`w-8 h-4 rounded-full transition-all relative ${user.creditEnabled ? "bg-emerald-500" : "bg-slate-300"}`}
                     >
                       <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${user.creditEnabled ? "left-4" : "left-0.5"}`} />
@@ -155,7 +195,7 @@ function UsersManagementView({
                       </div>
                       <div className="space-y-1 tabular-nums">
                         <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-shop-ink rounded-full" style={{ width: `${(user.creditUsed / user.creditLimit) * 100}%` }} />
+                          <div className="h-full bg-shop-ink rounded-full" style={{ width: `${user.creditLimit > 0 ? Math.min(100, ((user.creditUsed || 0) / user.creditLimit) * 100) : 0}%` }} />
                         </div>
                         <div className="flex justify-between text-[11px] font-semibold">
                           <span className="text-shop-blue">Usado: S/ {user.creditUsed || 0}</span>
@@ -213,13 +253,20 @@ function UsersManagementView({
                       {editingUser ? "Editar Usuario" : "Nuevo Usuario"}
                     </h3>
                     <p className="text-xs text-shop-muted font-medium mt-1 tabular-nums">
-                      {editingUser ? `ID: ${editingUser.id}` : "Complete los datos"}
+                      {editingUser ? `ID: ${editingUser.id || editingUser._id}` : "Complete los datos"}
                     </p>
                   </div>
                   <button aria-label="Cerrar ventana" onClick={() => setIsModalOpen(false)} className="p-2 bg-shop-light text-shop-muted rounded-[2px] hover:bg-shop-light">
                     <Plus className="w-5 h-5 rotate-45" />
                   </button>
                 </div>
+
+                {formError && (
+                  <div className="flex items-center gap-2 rounded-[2px] border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{formError}</span>
+                  </div>
+                )}
 
                 <form onSubmit={handleSave} className="space-y-4">
                   <div className="space-y-1.5">
@@ -233,7 +280,70 @@ function UsersManagementView({
                   {!editingUser && (
                     <div className="space-y-1.5">
                       <label className="text-[11px] font-semibold text-shop-muted">Contraseña Inicial</label>
-                      <input name="password" type="password" placeholder="Contraseña de acceso" required className="w-full px-4 py-3 bg-shop-light border border-shop-line rounded-[2px] outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]" />
+                      <div className="relative">
+                        <input
+                          name="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Contraseña de acceso (mín. 6 caracteres)"
+                          minLength={6}
+                          required
+                          className="w-full px-4 py-3 pr-10 bg-shop-light border border-shop-line rounded-[2px] outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-shop-muted hover:text-shop-ink"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {editingUser?.role === "admin" && (
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-semibold text-shop-muted flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 text-shop-blue" /> Cambiar Contraseña
+                      </label>
+                      <div className="relative">
+                        <input
+                          name="password"
+                          type={isPasswordDirty && showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          value={isPasswordDirty ? newPassword : "••••••••••••"}
+                          onFocus={() => {
+                            if (!isPasswordDirty) {
+                              setIsPasswordDirty(true);
+                              setNewPassword("");
+                            }
+                          }}
+                          onBlur={() => {
+                            if (!newPassword.trim()) {
+                              setIsPasswordDirty(false);
+                              setShowPassword(false);
+                            }
+                          }}
+                          onChange={(e) => {
+                            setIsPasswordDirty(true);
+                            setNewPassword(e.target.value);
+                          }}
+                          placeholder="Escribe la nueva contraseña (mín. 6 caracteres)"
+                          className="w-full px-4 py-3 pr-10 bg-shop-light border border-shop-line rounded-[2px] outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]"
+                        />
+                        {isPasswordDirty && (
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword((prev) => !prev)}
+                            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-shop-muted hover:text-shop-ink"
+                          >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-shop-muted">
+                        La contraseña actual está oculta por seguridad. Haz clic para ingresar una nueva o déjalo sin cambios.
+                      </p>
                     </div>
                   )}
 
@@ -284,8 +394,16 @@ function UsersManagementView({
                     </div>
                   </div>
 
-                  <button type="submit" className="w-full py-4 bg-shop-ink text-white font-semibold rounded-[2px] hover:bg-shop-ink transition-all tabular-nums">
-                    {editingUser ? "Actualizar Usuario" : "Crear Usuario"}
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="w-full py-4 bg-shop-ink text-white font-semibold rounded-[2px] hover:bg-shop-ink transition-all tabular-nums disabled:opacity-60"
+                  >
+                    {isSaving
+                      ? "Guardando..."
+                      : editingUser
+                        ? "Actualizar Usuario"
+                        : "Crear Usuario"}
                   </button>
                 </form>
               </div>

@@ -395,6 +395,7 @@ function App() {
                 users={users}
                 setUsers={setUsers}
                 onUpdateUser={handleUpdateUserAction}
+                onAddUser={handleCreateUserAction}
                 orders={orders}
                 setOrders={setOrders}
                 handleShipOrder={handleShipOrder}
