@@ -10,6 +10,7 @@ import shirts from '@/assets/shop/shirts.jpg';
 import workshop from '@/assets/shop/workshop.jpg';
 import brand from '@/assets/shop/brand.png';
 
+// shop ui
 export const shopImages = { campaign, oxford, atelier, white, navy, shirts, workshop, brand };
 export const money = value => `S/ ${Number(value || 0).toFixed(2)}`;
 
