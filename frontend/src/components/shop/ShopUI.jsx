@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import campaign from '@/assets/shop/campaign.jpg';
 import oxford from '@/assets/shop/oxford.jpg';
@@ -9,6 +10,7 @@ import shirts from '@/assets/shop/shirts.jpg';
 import workshop from '@/assets/shop/workshop.jpg';
 import brand from '@/assets/shop/brand.png';
 
+// shop ui
 export const shopImages = { campaign, oxford, atelier, white, navy, shirts, workshop, brand };
 export const money = value => `S/ ${Number(value || 0).toFixed(2)}`;
 
@@ -75,8 +77,10 @@ export function ShopProductGrid({ children, catalog = false }) {
   return <div className={`grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 ${catalog ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} xl:gap-x-6`}>{children}</div>;
 }
 
-export function ShopModal({ title, eyebrow, onClose, children, wide = false, drawer = false }) {
+export function ShopModal({ title, eyebrow, onClose, children, wide = false, drawer = false, animateOnOpen = false }) {
   const panel = useRef(null);
+  const reduceMotion = useReducedMotion();
+  const shouldAnimate = animateOnOpen && !reduceMotion;
   const close = useRef(onClose);
   const titleId = useId();
   close.current = onClose;
@@ -105,14 +109,14 @@ export function ShopModal({ title, eyebrow, onClose, children, wide = false, dra
   }, []);
   return (
     <div className={`fixed inset-0 z-[120] flex font-shop text-[15px] leading-relaxed text-shop-ink ${drawer ? 'justify-start' : 'items-center justify-center p-4'}`}>
-      <div className="absolute inset-0 bg-shop-dark/50" onClick={onClose} aria-hidden="true" />
-      <section ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`relative flex w-full flex-col bg-white outline-none ${drawer ? 'h-full max-w-[460px] shop-drawer-enter' : `max-h-[92dvh] overflow-y-auto ${wide ? 'max-w-[960px]' : 'max-w-[470px]'}`}`}>
+      <motion.div initial={shouldAnimate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: shouldAnimate ? 0.2 : 0 }} className="absolute inset-0 bg-shop-dark/50" onClick={onClose} aria-hidden="true" />
+      <motion.section initial={shouldAnimate ? { opacity: 0, y: 16 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldAnimate ? 0.24 : 0, ease: [0.22, 1, 0.36, 1] }} ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`relative flex w-full flex-col bg-white outline-none ${drawer ? 'h-full max-w-[460px] shop-drawer-enter' : `max-h-[92dvh] overflow-y-auto ${wide ? 'max-w-[960px]' : 'max-w-[470px]'}`}`}>
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-shop-line p-6 sm:p-7">
           <div>{eyebrow && <ShopEyebrow>{eyebrow}</ShopEyebrow>}<h2 id={titleId} className="text-[28px] leading-tight font-medium tracking-tight">{title}</h2></div>
           <ShopIconButton aria-label="Cerrar ventana" onClick={onClose}><X size={21} /></ShopIconButton>
         </header>
         {children}
-      </section>
+      </motion.section>
     </div>
   );
 }

@@ -130,7 +130,7 @@ function PaymentModal({
   const finalAmount = acquisitionMode === "pedido" ? cartTotal * 0.5 : cartTotal;
 
   return (
-    <ShopModal title="Completa tu compra." eyebrow="Tu selección Masterly" onClose={onClose} wide>
+    <ShopModal title="Completa tu compra." eyebrow="Tu selección Masterly" onClose={onClose} wide animateOnOpen>
       <div className="grid md:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-7 p-6 sm:p-7">
           {isLoggedIn && currentUser?.creditEnabled && <section><h3 className="mb-3 text-sm font-medium">Modalidad de compra</h3><div className="grid grid-cols-2 gap-3">{[['direct', 'Compra directa', 'Pago del 100%'], ['pedido', 'A pedido', 'Adelanto del 50%']].map(([value, label, detail]) => <button type="button" key={value} aria-pressed={acquisitionMode === value} onClick={() => setAcquisitionMode(value)} className="border border-shop-line p-3 text-left text-xs text-shop-muted aria-pressed:border-shop-ink aria-pressed:bg-shop-light aria-pressed:text-shop-ink"><strong className="mb-2 block font-medium">{label}</strong>{detail}</button>)}</div></section>}
