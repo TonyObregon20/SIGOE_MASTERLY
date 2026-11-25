@@ -1,3 +1,4 @@
+import "../config/env.js";
 import nodemailer from "nodemailer";
 
 let transporter;
@@ -137,6 +138,58 @@ export async function sendInvoiceEmail({ recipient, invoice, order, pdfBase64, p
             <div style="color:#334155;font-weight:700;">MASTERLY</div>
             <div>Av. Prolongación Gamarra 1120, La Victoria, Lima - Perú</div>
             <div>ventas@masterly.pe · +51 987 654 321</div>
+          </div>
+        </div>
+      </div>
+    `
+  });
+}
+
+export async function sendPasswordResetCode({ recipient, code, name }) {
+  const minutes = Number(process.env.PASSWORD_RESET_MINUTES) || 10;
+  const sender = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+
+  await getTransporter().sendMail({
+    from: sender,
+    to: recipient,
+    subject: "Código de recuperación - Masterly",
+    text: `Recuperación de contraseña - Masterly\nTu código es: ${code}\nExpira en ${minutes} minutos.`,
+    html: `
+      <div style="margin:0;padding:24px 12px;background:#f8fafc;font-family:Arial,Helvetica,sans-serif;color:#334155;">
+        <div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
+          <div style="padding:26px;text-align:center;background:#001c55;">
+            <div style="color:#fff;font-size:24px;font-weight:800;letter-spacing:1px;">MASTERLY</div>
+          </div>
+          <div style="padding:32px;text-align:center;">
+            <h1 style="margin:0;color:#001c55;font-size:22px;">Recupera tu contraseña</h1>
+            <p style="margin:12px 0 24px;color:#64748b;font-size:14px;line-height:1.6;">Hola${name ? `, ${escapeHtml(name)}` : ""}. Usa este código para continuar:</p>
+            <div style="display:inline-block;padding:16px 24px;border-radius:8px;background:#f4faff;color:#001c55;font-size:30px;font-weight:800;letter-spacing:10px;">${code}</div>
+            <p style="margin:24px 0 0;color:#64748b;font-size:13px;">Expira en ${minutes} minutos.</p>
+            <p style="margin:10px 0 0;color:#94a3b8;font-size:12px;">Si no solicitaste este código, puedes ignorarlo.</p>
+          </div>
+        </div>
+      </div>
+    `
+  });
+}
+
+export async function sendOrderStageEmail({ recipient, name, orderId, stage, progress }) {
+  const sender = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+  await getTransporter().sendMail({
+    from: sender,
+    to: recipient,
+    subject: `Tu pedido ${orderId} avanzó a ${stage} - Masterly`,
+    text: `Hola ${name || "Cliente"}. Tu pedido ${orderId} avanzó a la etapa ${stage}. Progreso: ${progress || 0}%.`,
+    html: `
+      <div style="margin:0;padding:24px 12px;background:#f8fafc;font-family:Arial,Helvetica,sans-serif;color:#334155;">
+        <div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
+          <div style="padding:26px;text-align:center;background:#001c55;color:#fff;font-size:24px;font-weight:800;">MASTERLY</div>
+          <div style="padding:32px;">
+            <h1 style="margin:0;color:#001c55;font-size:22px;">Tu pedido avanzó</h1>
+            <p style="margin:12px 0;color:#64748b;font-size:14px;">Hola, ${escapeHtml(name || "Cliente")}.</p>
+            <p style="margin:12px 0;color:#334155;font-size:15px;">El pedido <strong>${escapeHtml(orderId)}</strong> avanzó a:</p>
+            <div style="margin:20px 0;padding:16px;border-left:4px solid #0e6ba8;background:#f4faff;color:#001c55;font-size:18px;font-weight:700;">${escapeHtml(stage)}</div>
+            <p style="margin:12px 0;color:#64748b;font-size:13px;">Progreso actual: ${Number(progress) || 0}%</p>
           </div>
         </div>
       </div>

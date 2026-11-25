@@ -13,6 +13,8 @@ import SuppliersView from "@/features/suppliers/SuppliersView";
 import SalesManagementView from "@/features/orders/SalesManagementView";
 import UsersManagementView from "@/features/users/UsersManagementView";
 import EcommerceView from "@/features/products/EcommerceView";
+import WorkersManagementView from "@/features/users/WorkersManagementView";
+import AttendanceView from "@/features/attendance/AttendanceView";
 
 function AdminPage({
   products,
@@ -48,8 +50,12 @@ function AdminPage({
   loadOrders,
   loadProductionOrders,
   loadWarehouseMovements,
-  currentUser: propCurrentUser,
+   currentUser: propCurrentUser,
   onUpdateUser,
+  onUpdateUserStatus,
+  loadUserStatusHistory,
+userStatusHistory,
+  onCreateUser,
   setIsLoggedIn,
   setCurrentUser,
   setView
@@ -60,7 +66,7 @@ function AdminPage({
 
   return (
     <>
-      {currentUser && currentUser.role === "admin" ? (
+      {currentUser && ["admin", "worker"].includes(currentUser.role) ? (
         <AdminLayout
           currentUser={currentUser}
           activeTab={adminTab}
@@ -183,11 +189,33 @@ function AdminPage({
                 )}
                 
                 {adminTab === "users" && (
-                 <UsersManagementView
-                   users={users}
-                   onUpdateUser={onUpdateUser}
-                    onAddUser={(user) => setUsers((prev) => [...prev, user])}
-                  />
+                <UsersManagementView
+                      users={users}
+                          onUpdateUser={onUpdateUser}
+                           onUpdateUserStatus={onUpdateUserStatus} 
+                           loadUserStatusHistory={loadUserStatusHistory}
+                            userStatusHistory={userStatusHistory}
+                           onAddUser={(user) => setUsers((prev) => [...prev, user])}
+                          />
+                )}
+
+                {adminTab === "workers" && currentUser.role === "admin" && (
+                   <WorkersManagementView
+                     users={users}
+                     onUpdateWorker={onUpdateUser}
+                     onAddWorker={async (worker) => {
+                       const result = await onCreateUser(worker);
+                       if (result?.success) loadUsers?.();
+                       return result;
+                     }}
+                   />
+                )}
+
+                {adminTab === "attendance" && (
+                   <AttendanceView
+                     currentUser={currentUser}
+                     users={users}
+                   />
                 )}
                 
                 {adminTab === "ecommerce" && (

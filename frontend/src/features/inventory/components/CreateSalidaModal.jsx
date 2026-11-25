@@ -14,6 +14,8 @@ import {
   Plus,
   Trash2
 } from "lucide-react";
+import { formatProductionOrderId } from "@/features/production/productionUtils";
+import { formatOrderId } from "@/features/orders/ordersUtils";
 
 export default function CreateSalidaModal({
   isOpen,
@@ -558,7 +560,7 @@ export default function CreateSalidaModal({
                       </option>
                       {eligibleOps.map((op) => (
                         <option key={op.id} value={op.id}>
-                          {op.id} {op.orderId ? `• Pedido: ${op.orderId}` : "• Autostock"} [Ingreso Aceptado en Almacén]
+                          {formatProductionOrderId(op.id)} {op.orderId ? `• Pedido: ${formatOrderId(op.orderId)}` : "• Autostock"} [Ingreso Aceptado en Almacén]
                         </option>
                       ))}
                     </select>

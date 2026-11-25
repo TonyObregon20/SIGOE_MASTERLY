@@ -26,10 +26,17 @@ export function normalizeUser(user = {}) {
     id: user._id || user.id || `u-${Date.now()}`,
     name: user.name || "",
     email: user.email || "",
+    password: user.password,
     username: user.username || user.email?.split("@")[0] || "",
-    role: user.role || "client",
+    role: user.role || "customer",
     phone: user.phone || "",
     address: user.address || "",
+    isActive: user.isActive !== false,
+    workerPosition: user.workerPosition || "",
+    hourlyRate: Number(user.hourlyRate) || 0,
+    creditEnabled: user.creditEnabled === true,
+    creditLimit: Number(user.creditLimit) || 0,
+    creditUsed: Number(user.creditUsed) || 0,
     createdAt: user.createdAt || new Date().toISOString()
   };
 }

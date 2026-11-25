@@ -15,6 +15,8 @@ import {
   Boxes,
   Split
 } from "lucide-react";
+import { formatProductionOrderId } from "@/features/production/productionUtils";
+import { formatOrderId } from "@/features/orders/ordersUtils";
 
 export default function CreateIngresoModal({
   isOpen,
@@ -359,7 +361,7 @@ export default function CreateIngresoModal({
                               key={op.id}
                               className="flex items-center justify-between text-[11px] bg-white/70 px-2.5 py-1.5 rounded-[2px] border border-amber-200/50"
                             >
-                              <span className="tabular-nums font-medium text-shop-ink">{op.id}</span>
+                              <span className="tabular-nums font-medium text-shop-ink" title={op.id}>{formatProductionOrderId(op.id)}</span>
                               <span className="text-amber-800 font-medium">
                                 Etapa: {op.currentStage} ({Math.round(op.progress || 0)}%)
                               </span>
@@ -382,7 +384,7 @@ export default function CreateIngresoModal({
                       <option value="" disabled>Seleccione una OP con saldo disponible...</option>
                       {eligibleOps.map((op) => (
                         <option key={op.id} value={op.id}>
-                          {op.id} {op.orderId ? `• Pedido: ${op.orderId}` : "• Autostock"} ({op.pendingUnits} uds pendientes de {op.totalUnits} uds)
+                          {formatProductionOrderId(op.id)} {op.orderId ? `• Pedido: ${formatOrderId(op.orderId)}` : "• Autostock"} ({op.pendingUnits} uds pendientes de {op.totalUnits} uds)
                         </option>
                       ))}
                     </select>

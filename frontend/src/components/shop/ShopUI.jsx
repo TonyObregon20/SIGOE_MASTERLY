@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { X } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import campaign from '@/assets/shop/campaign.jpg';
 import oxford from '@/assets/shop/oxford.jpg';
 import atelier from '@/assets/shop/atelier.jpg';
@@ -108,9 +108,9 @@ export function ShopModal({ title, eyebrow, onClose, children, wide = false, dra
     };
   }, []);
   return (
-    <div className={`fixed inset-0 z-[120] flex font-shop text-[15px] leading-relaxed text-shop-ink ${drawer ? 'justify-end' : 'items-center justify-center p-4'}`}>
+    <div className={`fixed inset-0 z-[120] flex font-shop text-[15px] leading-relaxed text-shop-ink ${drawer ? 'justify-start' : 'items-center justify-center p-4'}`}>
       <motion.div initial={shouldAnimate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: shouldAnimate ? 0.2 : 0 }} className="absolute inset-0 bg-shop-dark/50" onClick={onClose} aria-hidden="true" />
-      <motion.section initial={shouldAnimate ? { opacity: 0, y: 16 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldAnimate ? 0.24 : 0, ease: [0.22, 1, 0.36, 1] }} ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`relative flex w-full flex-col bg-white outline-none ${drawer ? 'h-full max-w-[460px]' : `max-h-[92dvh] overflow-y-auto ${wide ? 'max-w-[960px]' : 'max-w-[470px]'}`}`}>
+      <motion.section initial={shouldAnimate ? { opacity: 0, y: 16 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldAnimate ? 0.24 : 0, ease: [0.22, 1, 0.36, 1] }} ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`relative flex w-full flex-col bg-white outline-none ${drawer ? 'h-full max-w-[460px] shop-drawer-enter' : `max-h-[92dvh] overflow-y-auto ${wide ? 'max-w-[960px]' : 'max-w-[470px]'}`}`}>
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-shop-line p-6 sm:p-7">
           <div>{eyebrow && <ShopEyebrow>{eyebrow}</ShopEyebrow>}<h2 id={titleId} className="text-[28px] leading-tight font-medium tracking-tight">{title}</h2></div>
           <ShopIconButton aria-label="Cerrar ventana" onClick={onClose}><X size={21} /></ShopIconButton>
@@ -123,4 +123,84 @@ export function ShopModal({ title, eyebrow, onClose, children, wide = false, dra
 
 export function ShopProductSkeleton({ count = 4 }) {
   return <div role="status" aria-label="Cargando colección"><ShopProductGrid>{Array.from({ length: count }, (_, index) => <div key={index} aria-hidden="true"><div className="aspect-[3/4] bg-slate-100" /><div className="mt-4 h-3 w-4/5 bg-slate-100" /><div className="mt-4 h-3 w-2/5 bg-slate-100" /></div>)}</ShopProductGrid></div>;
+}
+
+export function Pagination({
+  currentPage,
+  pageSize,
+  totalItems,
+  onPageChange,
+  onPageSizeChange,
+  itemLabel = "registros"
+}) {
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const start = totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const end = Math.min(safePage * pageSize, totalItems);
+
+  const getVisiblePages = () => {
+    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, index) => index + 1);
+    if (safePage <= 3) return [1, 2, 3, 4, totalPages];
+    if (safePage >= totalPages - 2) return [1, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    return [1, safePage - 1, safePage, safePage + 1, totalPages];
+  };
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-shop-line bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-shop-muted">
+        <span>
+          Mostrando <strong className="font-semibold text-shop-ink tabular-nums">{start}-{end}</strong> de{" "}
+          <strong className="font-semibold text-shop-ink tabular-nums">{totalItems}</strong> {itemLabel}
+        </span>
+        {onPageSizeChange && (
+          <select
+            value={pageSize}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+            className="ml-1 min-h-9 border border-shop-line bg-shop-light px-2 text-xs text-shop-ink outline-none"
+            aria-label="Registros por página"
+          >
+            {[10, 20, 50, 100].map((size) => (
+              <option key={size} value={size}>{size} por página</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      <nav className="flex items-center justify-end gap-1" aria-label="Paginación">
+        <button
+          type="button"
+          onClick={() => onPageChange(safePage - 1)}
+          disabled={safePage <= 1}
+          className="flex size-9 items-center justify-center border border-shop-line text-shop-muted disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label="Página anterior"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        {getVisiblePages().map((page) => (
+          <button
+            type="button"
+            key={page}
+            onClick={() => onPageChange(page)}
+            className={`size-9 border text-xs tabular-nums ${
+              page === safePage
+                ? "border-shop-ink bg-shop-ink text-white"
+                : "border-shop-line bg-white text-shop-muted hover:bg-shop-light"
+            }`}
+            aria-current={page === safePage ? "page" : undefined}
+          >
+            {page}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => onPageChange(safePage + 1)}
+          disabled={safePage >= totalPages}
+          className="flex size-9 items-center justify-center border border-shop-line text-shop-muted disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label="Página siguiente"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </nav>
+    </div>
+  );
 }

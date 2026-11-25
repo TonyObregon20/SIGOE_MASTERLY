@@ -27,6 +27,15 @@ export function generateProductionOrderId() {
   return `OP-${Math.floor(Math.random() * 1e3).toString().padStart(3, "0")}`;
 }
 
+export function formatProductionOrderId(opId = "") {
+  const value = String(opId);
+  const legacyMatch = value.match(/^OP-(\d+)-[A-Z0-9]+$/i);
+  if (legacyMatch) {
+    return `OP-${legacyMatch[1].slice(-3).padStart(3, "0")}`;
+  }
+  return value;
+}
+
 /**
  * Builds a canonical Production Order payload from item lists and order context
  */

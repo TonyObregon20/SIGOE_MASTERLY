@@ -44,3 +44,10 @@ export function requireAdmin(req, res, next) {
   }
   next();
 }
+
+export function requireStaff(req, res, next) {
+  if (!req.user || !["admin", "worker"].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: "Acceso denegado: Se requieren permisos de administrador o trabajador" });
+  }
+  next();
+}

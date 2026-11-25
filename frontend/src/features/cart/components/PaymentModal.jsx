@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ShopButton, ShopField, ShopModal, shopInput, money } from '@/components/shop/ShopUI';
 import ShopBagItem from '@/components/shop/ShopBagItem';
+import { updateProfileApi } from "@/features/auth/authApi";
 
 function PaymentModal({
   isOpen,
@@ -27,6 +28,8 @@ function PaymentModal({
   const [cardCvv, setCardCvv] = useState("");
   const [isCvvFocused, setIsCvvFocused] = useState(false);
   const [creditValidationError, setCreditValidationError] = useState("");
+  const [savePayment, setSavePayment] = useState(false);
+  const [useSavedPayment, setUseSavedPayment] = useState(Boolean(currentUser?.savedPayment));
 
   if (!isOpen) return null;
 
@@ -63,6 +66,7 @@ function PaymentModal({
     const isDocValid = documentType === "Factura" 
       ? customerDocument.length >= 11 
       : customerDocument.length === 0 || customerDocument.length >= 8;
+    if (useSavedPayment && currentUser?.savedPayment) return isDocValid;
     const isCardValid = cardNumber.replace(/\s/g, "").length === 16 
       && cardExpiry.length === 5 
       && cardCvv.length >= 3 
@@ -70,7 +74,7 @@ function PaymentModal({
     return isDocValid && isCardValid;
   };
 
-  const handlePayClick = () => {
+  const handlePayClick = async () => {
     if (acquisitionMode === "pedido") {
       const creditLimit = Number(currentUser?.creditLimit || 0);
       const creditUsed = orders
@@ -94,6 +98,17 @@ function PaymentModal({
         setCreditValidationError(CREDIT_LIMIT_EXCEEDED_MESSAGE);
         return;
       }
+    }
+
+    if (savePayment && isLoggedIn && cardNumber.replace(/\s/g, "").length === 16) {
+      await updateProfileApi({
+        savedPayment: {
+          brand: getCardBrand(),
+          last4: cardNumber.replace(/\s/g, "").slice(-4),
+          expiry: cardExpiry,
+          holderName: cardName
+        }
+      });
     }
 
     const result = handleCheckout(acquisitionMode, documentType, customerDocument);
@@ -126,12 +141,31 @@ function PaymentModal({
           </section>
           <section className="space-y-4">
             <div className="flex items-center justify-between"><h3 className="text-sm font-medium">Datos de tarjeta</h3><span className="text-[11px] text-shop-muted">{getCardBrand()}</span></div>
+            {isLoggedIn && currentUser?.savedPayment && (
+              <label className="flex items-center justify-between gap-3 border border-shop-line bg-shop-light p-3 text-xs">
+                <span>
+                  <strong className="block text-shop-ink">Usar método guardado</strong>
+                  <span className="mt-1 block text-shop-muted">{currentUser.savedPayment.brand} terminada en {currentUser.savedPayment.last4} · {currentUser.savedPayment.expiry}</span>
+                </span>
+                <input type="checkbox" checked={useSavedPayment} onChange={(event) => setUseSavedPayment(event.target.checked)} className="size-5 accent-shop-ink" />
+              </label>
+            )}
+            {(!useSavedPayment || !currentUser?.savedPayment) && (
+              <>
             <ShopField label="Nombre del titular">{id => <input id={id} type="text" autoComplete="cc-name" value={cardName} onChange={event => setCardName(event.target.value)} className={shopInput} />}</ShopField>
             <ShopField label="Número de tarjeta">{id => <input id={id} type="text" inputMode="numeric" autoComplete="cc-number" value={cardNumber} onChange={handleCardNumberChange} placeholder="0000 0000 0000 0000" className={shopInput} />}</ShopField>
             <div className="grid grid-cols-2 gap-4">
               <ShopField label="Vencimiento">{id => <input id={id} type="text" inputMode="numeric" autoComplete="cc-exp" value={cardExpiry} onChange={handleExpiryChange} placeholder="MM/AA" className={shopInput} />}</ShopField>
               <ShopField label="Código de seguridad">{id => <input id={id} type="password" inputMode="numeric" autoComplete="cc-csc" value={cardCvv} onChange={handleCvvChange} onFocus={() => setIsCvvFocused(true)} onBlur={() => setIsCvvFocused(false)} placeholder="CVV" className={shopInput} />}</ShopField>
             </div>
+              </>
+            )}
+            {isLoggedIn && (!useSavedPayment || !currentUser?.savedPayment) && (
+              <label className="flex items-center gap-3 text-xs text-shop-muted">
+                <input type="checkbox" checked={savePayment} onChange={(event) => setSavePayment(event.target.checked)} className="size-4 accent-shop-ink" />
+                Guardar método de pago de forma segura
+              </label>
+            )}
           </section>
           {creditValidationError && <p role="alert" className="border-l-2 border-red-700 pl-3 text-sm text-red-800">{creditValidationError}</p>}
         </div>

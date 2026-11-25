@@ -4,9 +4,14 @@ import { sendInvoiceEmail } from "../services/emailService.js";
 
 export const getInvoices = async (req, res, next) => {
   try {
-    const filter = req.user?.role === "admin"
+    const filter = ["admin", "worker"].includes(req.user?.role)
       ? {}
-      : { customerName: req.currentUser.name };
+      : {
+          $or: [
+            { customerEmail: req.currentUser.email },
+            { customerName: req.currentUser.name }
+          ].filter((condition) => Object.values(condition)[0])
+        };
     const list = await InvoiceModel.find(filter).sort({ _id: -1 }).lean();
     res.json(list);
   } catch (err) {

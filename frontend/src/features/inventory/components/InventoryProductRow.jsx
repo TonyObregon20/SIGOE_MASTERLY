@@ -25,7 +25,7 @@ export default function InventoryProductRow({
     <div className="bg-white border border-shop-line rounded-[2px] overflow-hidden transition-shadow">
       <div className="p-5 flex items-center justify-between flex-wrap gap-4">
         {/* Product image & ID/Category info */}
-        <div className="flex items-center gap-4 2xl:w-[312px] 2xl:shrink-0">
+        <div className="flex min-w-0 items-center gap-4">
           <div className="w-16 h-16 bg-shop-light rounded-[2px] overflow-hidden border border-shop-line p-1 flex-shrink-0">
             <img
               src={p.image}
@@ -50,7 +50,7 @@ export default function InventoryProductRow({
         </div>
 
         {/* Stock Breakdown by Sizes */}
-        <div className="bg-shop-light p-2.5 rounded-[2px] border border-shop-line/80 min-w-[220px]">
+        <div className="w-full bg-shop-light p-2.5 rounded-[2px] border border-shop-line/80 sm:min-w-[220px] sm:w-auto">
           <div className="flex items-center justify-between text-[11px] font-semibold text-shop-muted tabular-nums mb-1">
             <span className="flex items-center gap-1">
               <Layers className="w-3 h-3 text-shop-blue" /> Tallas Disponibles
