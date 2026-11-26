@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import {
   Users,
@@ -14,7 +15,7 @@ import {
   Tags,
   CheckCircle2,
   AlertCircle,
-  FileText,
+  FileDown,
   Edit3,
   Trash2,
   Phone,
@@ -33,6 +34,7 @@ import {
   SPECIALTY_COLORS,
   filterSuppliers
 } from "./suppliersUtils";
+import { generateSupplierReport } from "./supplierReport";
 import SupplierFormModal from "./components/SupplierFormModal";
 import SupplierHistoryModal from "./components/SupplierHistoryModal";
 import DeleteSupplierModal from "./components/DeleteSupplierModal";
@@ -56,7 +58,7 @@ export default function SuppliersView({
   loadSuppliers
 }) {
   // Filter States
-  const [activeTab, setActiveTab] = useState("all"); // 'all' | 'servicios' | 'insumos'
+  const [activeTab, setActiveTab] = useState("all");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -81,26 +83,32 @@ export default function SuppliersView({
   // KPIs
   const stats = useMemo(() => {
     const total = suppliers.length;
+
     const services = suppliers.filter(
       (s) => s.specialty !== "Insumos" && s.type !== "Insumos"
     );
+
     const insumos = suppliers.filter(
       (s) => s.specialty === "Insumos" || s.type === "Insumos"
     );
 
     const totalServicesCount = services.reduce(
-      (acc, s) => acc + (Number(s.servicesCount) || (s.history ? s.history.length : 0)),
+      (acc, s) =>
+        acc + (Number(s.servicesCount) || (s.history ? s.history.length : 0)),
       0
     );
+
     const totalPrendasProcessed = services.reduce(
       (acc, s) => acc + (Number(s.totalUnitsProcessed) || 0),
       0
     );
 
     const totalPurchasesCount = insumos.reduce(
-      (acc, s) => acc + (Number(s.purchasesCount) || (s.history ? s.history.length : 0)),
+      (acc, s) =>
+        acc + (Number(s.purchasesCount) || (s.history ? s.history.length : 0)),
       0
     );
+
     const totalInsumosUnits = insumos.reduce(
       (acc, s) => acc + (Number(s.totalUnitsPurchased) || 0),
       0
@@ -134,6 +142,7 @@ export default function SuppliersView({
       // Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
+
         const matches =
           s.name?.toLowerCase().includes(q) ||
           s.contact?.toLowerCase().includes(q) ||
@@ -143,6 +152,7 @@ export default function SuppliersView({
           s.insumoDetails?.toLowerCase().includes(q) ||
           s.specialty?.toLowerCase().includes(q) ||
           s.address?.toLowerCase().includes(q);
+
         if (!matches) return false;
       }
 
@@ -153,9 +163,14 @@ export default function SuppliersView({
   // Keep history modal in sync when suppliers update
   const currentHistorySupplier = useMemo(() => {
     if (!supplierForHistory) return null;
-    return suppliers.find(
-      (s) => (s.id && s.id === supplierForHistory.id) || (s._id && s._id === supplierForHistory._id)
-    ) || supplierForHistory;
+
+    return (
+      suppliers.find(
+        (s) =>
+          (s.id && s.id === supplierForHistory.id) ||
+          (s._id && s._id === supplierForHistory._id)
+      ) || supplierForHistory
+    );
   }, [suppliers, supplierForHistory]);
 
   // CRUD Handlers
@@ -177,6 +192,17 @@ export default function SuppliersView({
   const handleOpenDelete = (supplier) => {
     setSupplierToDelete(supplier);
     setIsDeleteModalOpen(true);
+  };
+
+  // Generate individual supplier PDF report
+  const handleGenerateReport = (supplier) => {
+    try {
+      generateSupplierReport(supplier);
+      showToast(`Reporte de "${supplier.name}" generado correctamente.`);
+    } catch (error) {
+      console.error("Error al generar el reporte del proveedor:", error);
+      showToast("No fue posible generar el reporte PDF.");
+    }
   };
 
   const handleSaveSupplier = async (data) => {
@@ -215,10 +241,13 @@ export default function SuppliersView({
       <div className="flex flex-col sm:flex-col sm:items-start justify-between gap-4 border-b border-shop-line pb-4 xl:flex-row xl:items-center">
         <div className="space-y-1">
           <h1 className="text-shop-ink tracking-tight flex items-center gap-2 font-medium text-[28px]">
-            <Building2 className="w-6 h-6 text-shop-blue" /> Gestión de Proveedores
+            <Building2 className="w-6 h-6 text-shop-blue" />
+            Gestión de Proveedores
           </h1>
+
           <p className="text-xs font-medium text-shop-muted font-shop">
-            Control de tercerización por etapas (corte, costura, limpieza, planchado, empaque) y compras de insumos
+            Control de tercerización por etapas (corte, costura, limpieza,
+            planchado, empaque) y compras de insumos
           </p>
         </div>
 
@@ -227,7 +256,8 @@ export default function SuppliersView({
           onClick={handleOpenCreate}
           className="flex items-center justify-center gap-2 px-5 py-2.5 bg-shop-ink hover:bg-shop-ink text-white rounded-[2px] text-xs font-medium transition-all tabular-nums min-h-9"
         >
-          <Plus className="w-4 h-4" /> Nuevo Proveedor
+          <Plus className="w-4 h-4" />
+          Nuevo Proveedor
         </button>
       </div>
 
@@ -239,72 +269,95 @@ export default function SuppliersView({
             <span className="text-[11px] font-medium text-shop-muted">
               Total Proveedores
             </span>
+
             <div className="w-8 h-8 rounded-[2px] bg-shop-light flex items-center justify-center text-shop-muted">
               <Building2 className="w-4 h-4" />
             </div>
           </div>
+
           <div className="text-2xl font-semibold text-shop-ink tabular-nums">
             {stats.total}
           </div>
+
           <div className="text-[11px] text-shop-muted mt-1 flex items-center gap-2">
-            <span className="text-shop-blue font-medium">{stats.servicesCount} Servicios</span> •{" "}
-            <span className="text-emerald-600 font-medium">{stats.insumosCount} Insumos</span>
+            <span className="text-shop-blue font-medium">
+              {stats.servicesCount} Servicios
+            </span>
+            •
+            <span className="text-emerald-600 font-medium">
+              {stats.insumosCount} Insumos
+            </span>
           </div>
         </div>
 
-        {/* Talleres de Servicio (Costura, Corte, etc.) */}
+        {/* Talleres de Servicio */}
         <div className="p-5 rounded-[2px] bg-white border border-shop-light relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-medium text-shop-blue">
               Talleres de Servicio
             </span>
+
             <div className="w-8 h-8 rounded-[2px] bg-shop-light text-shop-blue flex items-center justify-center">
               <Layers className="w-4 h-4" />
             </div>
           </div>
+
           <div className="text-2xl font-semibold text-blue-950 tabular-nums">
             {stats.servicesCount}
           </div>
+
           <div className="text-[11px] text-shop-blue mt-1">
             Corte, costura, limpieza, planchado y empaque
           </div>
         </div>
 
-        {/* Servicios Brindados (Pedidos / OPs) */}
+        {/* Servicios Brindados */}
         <div className="p-5 rounded-[2px] bg-white border border-shop-line relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-medium text-shop-muted">
               Servicios Brindados
             </span>
+
             <div className="w-8 h-8 rounded-[2px] bg-amber-50 text-amber-600 flex items-center justify-center">
               <ClipboardList className="w-4 h-4" />
             </div>
           </div>
+
           <div className="text-2xl font-semibold text-shop-ink tabular-nums">
             {stats.totalServicesCount}{" "}
-            <span className="text-xs font-normal text-shop-muted">veces / pedidos</span>
+            <span className="text-xs font-normal text-shop-muted">
+              veces / pedidos
+            </span>
           </div>
+
           <div className="text-[11px] text-shop-muted mt-1">
-            {stats.totalPrendasProcessed.toLocaleString("es-PE")} prendas procesadas en total
+            {stats.totalPrendasProcessed.toLocaleString("es-PE")} prendas
+            procesadas en total
           </div>
         </div>
 
-        {/* Compras de Insumos Registradas */}
+        {/* Compras de Insumos */}
         <div className="p-5 rounded-[2px] bg-white border border-emerald-100 relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-medium text-emerald-700">
               Compras de Insumos
             </span>
+
             <div className="w-8 h-8 rounded-[2px] bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <Tags className="w-4 h-4" />
             </div>
           </div>
+
           <div className="text-2xl font-semibold text-emerald-950 tabular-nums">
             {stats.totalPurchasesCount}{" "}
-            <span className="text-xs font-normal text-emerald-700">compras</span>
+            <span className="text-xs font-normal text-emerald-700">
+              compras
+            </span>
           </div>
+
           <div className="text-[11px] text-emerald-700 mt-1">
-            {stats.totalInsumosUnits.toLocaleString("es-PE")} unidades (collarines, agujas, etc.)
+            {stats.totalInsumosUnits.toLocaleString("es-PE")} unidades
+            (collarines, agujas, etc.)
           </div>
         </div>
       </div>
@@ -328,6 +381,7 @@ export default function SuppliersView({
             >
               Todos ({stats.total})
             </button>
+
             <button
               type="button"
               onClick={() => {
@@ -343,6 +397,7 @@ export default function SuppliersView({
               <Layers className="w-3.5 h-3.5" />
               <span>Servicios de Taller ({stats.servicesCount})</span>
             </button>
+
             <button
               type="button"
               onClick={() => {
@@ -363,6 +418,7 @@ export default function SuppliersView({
           {/* Search Box */}
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 text-shop-muted absolute left-3.5 top-3" />
+
             <input
               type="text"
               value={searchQuery}
@@ -370,6 +426,7 @@ export default function SuppliersView({
               placeholder="Buscar por nombre, RUC/DNI, contacto, insumo o teléfono..."
               className="w-full pl-9 pr-4 py-2.5 bg-shop-light border border-shop-line rounded-[2px] outline-none focus:ring-2 focus:ring-shop-blue/20 focus:border-shop-line transition-all min-h-10 min-w-0 text-base sm:text-[13px]"
             />
+
             {searchQuery && (
               <button
                 type="button"
@@ -387,8 +444,10 @@ export default function SuppliersView({
         {activeTab !== "insumos" && (
           <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-shop-line text-xs">
             <span className="text-[11px] font-medium text-shop-muted mr-2 flex items-center gap-1">
-              <Filter className="w-3 h-3" /> Filtrar Especialidad:
+              <Filter className="w-3 h-3" />
+              Filtrar Especialidad:
             </span>
+
             <button
               type="button"
               onClick={() => setSelectedSpecialty("all")}
@@ -400,9 +459,11 @@ export default function SuppliersView({
             >
               Todas
             </button>
+
             {SUPPLIER_SPECIALTIES.map((spec) => {
               const Icon = SPECIALTY_ICONS[spec] || Tags;
               const isSelected = selectedSpecialty === spec;
+
               return (
                 <button
                   key={spec}
@@ -428,9 +489,14 @@ export default function SuppliersView({
         {filteredSuppliers.length === 0 ? (
           <div className="py-16 text-center">
             <Building2 className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-base font-medium text-shop-muted">No se encontraron proveedores</p>
+
+            <p className="text-base font-medium text-shop-muted">
+              No se encontraron proveedores
+            </p>
+
             <p className="text-xs text-shop-muted max-w-sm mx-auto mt-1">
-              Prueba cambiando los filtros de búsqueda o registra un nuevo proveedor con el botón superior.
+              Prueba cambiando los filtros de búsqueda o registra un nuevo
+              proveedor con el botón superior.
             </p>
           </div>
         ) : (
@@ -441,61 +507,95 @@ export default function SuppliersView({
                   <th className="px-5 py-4 text-xs font-medium text-shop-muted whitespace-nowrap">
                     Proveedor
                   </th>
+
                   <th className="px-5 py-4 text-xs font-medium text-shop-muted whitespace-nowrap">
                     Característica / Servicio
                   </th>
+
                   <th className="px-5 py-4 text-xs font-medium text-shop-muted whitespace-nowrap">
                     Contacto & Teléfono
                   </th>
+
                   <th className="px-5 py-4 text-xs font-medium text-shop-muted whitespace-nowrap">
                     Insumos / Tarifa
                   </th>
+
                   <th className="px-5 py-4 text-xs font-medium text-shop-muted whitespace-nowrap">
                     Control & Historial
                   </th>
+
                   <th className="px-5 py-4 text-xs font-medium text-shop-muted whitespace-nowrap">
                     Estado
                   </th>
+
                   <th className="px-5 py-4 text-xs font-medium text-shop-muted text-right whitespace-nowrap">
                     Acciones
                   </th>
                 </tr>
               </thead>
+
               <tbody className="divide-y divide-shop-line">
                 {filteredSuppliers.map((supplier) => {
                   const isService =
-                    supplier.specialty !== "Insumos" && supplier.type !== "Insumos";
+                    supplier.specialty !== "Insumos" &&
+                    supplier.type !== "Insumos";
+
                   const Icon = SPECIALTY_ICONS[supplier.specialty] || Tags;
+
                   const colorConfig =
-                    SPECIALTY_COLORS[supplier.specialty] || SPECIALTY_COLORS["Costura"];
+                    SPECIALTY_COLORS[supplier.specialty] ||
+                    SPECIALTY_COLORS["Costura"];
+
+                  const supplierId = supplier.id || supplier._id;
 
                   return (
                     <tr
-                      key={supplier.id || supplier._id}
+                      key={supplierId}
                       className="hover:bg-shop-light/70 transition-colors group"
                     >
-                      {/* 1. Proveedor */}
+                      {/* 1. Proveedor e identificación */}
                       <td className="px-5 py-4">
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-9 h-9 rounded-[2px] flex items-center justify-center shrink-0 border ${colorConfig.border}  ${colorConfig.bg}  ${colorConfig.text}`}
+                            className={`w-9 h-9 rounded-[2px] flex items-center justify-center shrink-0 border ${colorConfig.border} ${colorConfig.bg} ${colorConfig.text}`}
                           >
                             <Icon className="w-4 h-4" />
                           </div>
-                          <div>
-                            <div className="font-medium text-shop-ink text-sm tracking-tight flex items-center gap-1.5">
-                              <span>{supplier.name}</span>
+
+                          <div className="min-w-0">
+                            <div className="font-medium text-shop-ink text-sm tracking-tight">
+                              {supplier.name}
                             </div>
-                            <div className="flex items-center gap-2 text-[11px] text-shop-muted tabular-nums mt-0.5">
+
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                               {supplier.documentNumber && (
-                                <span>
-                                  {supplier.documentType || "RUC"}: {supplier.documentNumber}
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-[2px] bg-slate-100 border border-slate-200 text-[10px] text-slate-600 font-medium">
+                                  <span className="text-slate-400">
+                                    {supplier.documentType || "RUC"}
+                                  </span>
+
+                                  <span className="font-mono tracking-wide text-slate-700">
+                                    {supplier.documentNumber}
+                                  </span>
                                 </span>
                               )}
-                              <span>• ID: {supplier.id}</span>
+
+                              {supplierId && (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-[2px] bg-blue-50 border border-blue-100 text-[10px] text-blue-700 font-medium max-w-[125px]"
+                                  title={`ID interno: ${supplierId}`}
+                                >
+                                  <span className="text-blue-400">ID</span>
+
+                                  <span className="font-mono truncate">
+                                    {supplierId}
+                                  </span>
+                                </span>
+                              )}
                             </div>
+
                             {supplier.address && (
-                              <div className="text-[11px] text-shop-muted flex items-center gap-1 mt-0.5 line-clamp-1">
+                              <div className="text-[11px] text-shop-muted flex items-center gap-1 mt-1.5 line-clamp-1">
                                 <MapPin className="w-2.5 h-2.5 shrink-0" />
                                 <span>{supplier.address}</span>
                               </div>
@@ -508,11 +608,12 @@ export default function SuppliersView({
                       <td className="px-5 py-4">
                         <div className="space-y-1">
                           <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] text-xs font-medium border ${colorConfig.bg}  ${colorConfig.text}  ${colorConfig.border}`}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] text-xs font-medium border ${colorConfig.bg} ${colorConfig.text} ${colorConfig.border}`}
                           >
                             <Icon className="w-3.5 h-3.5" />
                             <span>{supplier.specialty}</span>
                           </span>
+
                           <div>
                             <span
                               className={`text-[11px] font-medium px-1.5 py-0.5 rounded-[2px] ${
@@ -521,7 +622,9 @@ export default function SuppliersView({
                                   : "bg-emerald-100/70 text-emerald-800"
                               }`}
                             >
-                              {isService ? "Servicio Tercerizado" : "Material / Insumo"}
+                              {isService
+                                ? "Servicio Tercerizado"
+                                : "Material / Insumo"}
                             </span>
                           </div>
                         </div>
@@ -535,12 +638,14 @@ export default function SuppliersView({
                               <span>{supplier.contact}</span>
                             </div>
                           )}
+
                           {supplier.phone && (
                             <div className="text-[11px] text-shop-muted tabular-nums flex items-center gap-1">
                               <Phone className="w-3 h-3 text-shop-muted" />
                               <span>{supplier.phone}</span>
                             </div>
                           )}
+
                           {supplier.email && (
                             <div className="text-[11px] text-shop-muted flex items-center gap-1">
                               <Mail className="w-3 h-3 text-shop-muted" />
@@ -557,6 +662,7 @@ export default function SuppliersView({
                             <span className="text-[11px] font-medium text-shop-muted block">
                               Tarifa Estimada
                             </span>
+
                             <div className="tabular-nums font-medium text-shop-ink text-xs">
                               {supplier.unitCostRate > 0
                                 ? `S/ ${Number(supplier.unitCostRate).toFixed(2)} / prenda`
@@ -568,14 +674,16 @@ export default function SuppliersView({
                             <span className="text-[11px] font-medium text-emerald-700 block">
                               Insumos suministrados
                             </span>
+
                             <p className="text-shop-muted text-[11px] line-clamp-2">
-                              {supplier.insumoDetails || "Collarines, agujas, botones..."}
+                              {supplier.insumoDetails ||
+                                "Collarines, agujas, botones..."}
                             </p>
                           </div>
                         )}
                       </td>
 
-                      {/* 5. Control & Historial (Métricas diferenciadas) */}
+                      {/* 5. Control & Historial */}
                       <td className="px-5 py-4">
                         {isService ? (
                           <div className="space-y-1">
@@ -583,10 +691,17 @@ export default function SuppliersView({
                               <span className="tabular-nums font-medium text-blue-900 text-xs bg-shop-light px-2 py-0.5 rounded-[2px] border border-shop-line">
                                 {supplier.servicesCount || 0} servicios
                               </span>
-                              <span className="text-[11px] text-shop-muted">atendidos</span>
+
+                              <span className="text-[11px] text-shop-muted">
+                                atendidos
+                              </span>
                             </div>
+
                             <div className="text-[11px] text-shop-muted tabular-nums">
-                              {(supplier.totalUnitsProcessed || 0).toLocaleString("es-PE")} prendas
+                              {(supplier.totalUnitsProcessed || 0).toLocaleString(
+                                "es-PE"
+                              )}{" "}
+                              prendas
                             </div>
                           </div>
                         ) : (
@@ -595,10 +710,17 @@ export default function SuppliersView({
                               <span className="tabular-nums font-medium text-emerald-900 text-xs bg-emerald-50 px-2 py-0.5 rounded-[2px] border border-emerald-200">
                                 {supplier.purchasesCount || 0} compras
                               </span>
-                              <span className="text-[11px] text-shop-muted">registradas</span>
+
+                              <span className="text-[11px] text-shop-muted">
+                                registradas
+                              </span>
                             </div>
+
                             <div className="text-[11px] text-shop-muted tabular-nums">
-                              {(supplier.totalUnitsPurchased || 0).toLocaleString("es-PE")} insumos
+                              {(supplier.totalUnitsPurchased || 0).toLocaleString(
+                                "es-PE"
+                              )}{" "}
+                              insumos
                             </div>
                           </div>
                         )}
@@ -615,33 +737,48 @@ export default function SuppliersView({
                         >
                           <span
                             className={`w-1.5 h-1.5 rounded-full ${
-                              supplier.status === "Inactivo" ? "bg-slate-400" : "bg-emerald-500"
+                              supplier.status === "Inactivo"
+                                ? "bg-slate-400"
+                                : "bg-emerald-500"
                             }`}
                           />
+
                           <span>{supplier.status || "Activo"}</span>
                         </span>
                       </td>
 
                       {/* 7. Acciones */}
-                      <td className="px-5 py-4 text-right">
+                      <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Ver Historial & Control */}
+                          {/* Generar reporte PDF */}
+                          <button
+                            type="button"
+                            onClick={() => handleGenerateReport(supplier)}
+                            className="p-2 rounded-[2px] text-shop-blue hover:text-blue-800 hover:bg-blue-50 transition-colors"
+                            title="Generar reporte individual en PDF"
+                            aria-label={`Generar reporte PDF de ${supplier.name}`}
+                          >
+                            <FileDown className="w-4 h-4" />
+                          </button>
+
+                          {/* Ver historial */}
                           <button
                             type="button"
                             onClick={() => handleOpenHistory(supplier)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-[2px] bg-shop-light text-shop-blue hover:bg-shop-light text-[11px] font-medium transition-all border border-shop-line"
+                            className="p-2 rounded-[2px] text-shop-muted hover:text-shop-blue hover:bg-shop-light transition-colors"
                             title="Ver historial y control"
+                            aria-label={`Ver historial de ${supplier.name}`}
                           >
-                            <ClipboardList className="w-3.5 h-3.5" />
-                            <span>Historial</span>
+                            <ClipboardList className="w-4 h-4" />
                           </button>
 
                           {/* Editar */}
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(supplier)}
-                            className="p-1.5 rounded-[2px] text-shop-muted hover:text-shop-ink hover:bg-shop-light transition-colors"
+                            className="p-2 rounded-[2px] text-shop-muted hover:text-shop-ink hover:bg-shop-light transition-colors"
                             title="Editar proveedor"
+                            aria-label={`Editar ${supplier.name}`}
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
@@ -650,8 +787,9 @@ export default function SuppliersView({
                           <button
                             type="button"
                             onClick={() => handleOpenDelete(supplier)}
-                            className="p-1.5 rounded-[2px] text-shop-muted hover:text-red-600 hover:bg-red-50 transition-colors"
+                            className="p-2 rounded-[2px] text-shop-muted hover:text-red-600 hover:bg-red-50 transition-colors"
                             title="Eliminar proveedor"
+                            aria-label={`Eliminar ${supplier.name}`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
