@@ -206,6 +206,9 @@ export const createSalidaMovement = async (req, res, next) => {
         ? await OrderModel.findOne({ id: linkedOrderId }).session(session)
         : null;
       if (linkedOrderId && !targetOrder) return { status: 404, message: "Pedido no encontrado." };
+      if (targetOrder?.channel === "presencial") {
+        return { status: 409, message: "La venta presencial ya tiene una salida automática y no requiere guía." };
+      }
       if (targetOrder?.status === "Enviado") {
         return { status: 409, message: "Este pedido ya fue despachado." };
       }

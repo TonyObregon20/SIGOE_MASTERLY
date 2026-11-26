@@ -30,6 +30,7 @@ function AdminPage({
   orders,
   setOrders,
   handleShipOrder,
+  onRegisterInPersonSale,
   kardex,
   onAddStock,
   warehouseMovements = [],
@@ -181,6 +182,9 @@ userStatusHistory,
                 
                 {adminTab === "sales" && (
                   <SalesManagementView
+                    currentUser={currentUser}
+                    users={users}
+                    onRegisterInPersonSale={onRegisterInPersonSale}
                     orders={orders}
                     products={products}
                     warehouseMovements={warehouseMovements}

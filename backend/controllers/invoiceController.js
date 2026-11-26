@@ -8,9 +8,10 @@ export const getInvoices = async (req, res, next) => {
       ? {}
       : {
           $or: [
-            { customerEmail: req.currentUser.email },
-            { customerName: req.currentUser.name }
-          ].filter((condition) => Object.values(condition)[0])
+            { channel: "presencial", userId: req.currentUser.id },
+            ...(req.currentUser.email ? [{ channel: { $ne: "presencial" }, customerEmail: req.currentUser.email }] : []),
+            ...(req.currentUser.name ? [{ channel: { $ne: "presencial" }, customerName: req.currentUser.name }] : [])
+          ]
         };
     const list = await InvoiceModel.find(filter).sort({ _id: -1 }).lean();
     res.json(list);

@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   Download,
   Banknote,
+  Plus,
+  Store,
   CalendarClock
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -15,9 +17,13 @@ import AdminDialog from "@/components/admin/AdminDialog";
 import { Pagination } from "@/components/shop/ShopUI";
 import { formatOrderId } from "@/features/orders/ordersUtils";
 import { generateSalidaGuidePDF } from "@/utils/pdfGenerator";
+import InPersonSaleModal from "./components/InPersonSaleModal";
 
 function SalesManagementView({
   orders = [],
+  currentUser,
+  users = [],
+  onRegisterInPersonSale,
   products = [],
   warehouseMovements = [],
   productionOrders = [],
@@ -32,6 +38,8 @@ function SalesManagementView({
   const [pageSize, setPageSize] = useState(10);
   const [shippingOrderId, setShippingOrderId] = useState(null);
   const [dispatchNotice, setDispatchNotice] = useState(null);
+  const [isSaleOpen, setIsSaleOpen] = useState(false);
+  const [saleNotice, setSaleNotice] = useState("");
 
   const filteredOrders = orders.filter((o) => filter === "all" || o.type === filter);
   const pagedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -46,6 +54,7 @@ function SalesManagementView({
   }, [filteredOrders.length, pageSize, currentPage]);
 
   const handleDispatch = async (order, guide) => {
+    if (order.channel === "presencial") return;
     if (shippingOrderId) return;
     if (!guide || guide.status !== "Aceptado") {
       setDispatchNotice({
@@ -77,7 +86,7 @@ function SalesManagementView({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between flex-col gap-4 xl:flex-row xl:items-center">
+      <div className="flex flex-col gap-4">
         <div className="space-y-1">
           <h1 className="text-shop-ink tracking-tight flex items-center gap-2 font-medium text-[28px]">
             <Banknote className="w-6 h-6 text-emerald-600" /> Gestión de Ventas
@@ -86,12 +95,17 @@ function SalesManagementView({
             Control de ingresos, pedidos personalizados y despacho coordinado con Almacén.
           </p>
         </div>
-        <div className="grid w-full grid-cols-3 gap-1 bg-white p-1 rounded-[2px] border border-shop-line tabular-nums sm:w-auto">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="grid w-full grid-cols-3 gap-1 bg-white p-1 rounded-[2px] border border-shop-line tabular-nums sm:w-[360px]">
           <button onClick={() => setFilter("all")} className={`px-4 py-1.5 rounded-[2px] text-[11px] font-semibold transition-all ${filter === "all" ? "bg-shop-ink text-white" : "text-shop-muted hover:bg-shop-light"}`}>Todos</button>
           <button onClick={() => setFilter("direct")} className={`px-4 py-1.5 rounded-[2px] text-[11px] font-semibold transition-all ${filter === "direct" ? "bg-shop-ink text-white" : "text-shop-muted hover:bg-shop-light"}`}>Venta Directa</button>
           <button onClick={() => setFilter("pedido")} className={`px-4 py-1.5 rounded-[2px] text-[11px] font-semibold transition-all ${filter === "pedido" ? "bg-shop-ink text-white" : "text-shop-muted hover:bg-shop-light"}`}>A Pedido</button>
         </div>
+        {currentUser?.role === "admin" && onRegisterInPersonSale && <button type="button" onClick={() => { setSaleNotice(""); setIsSaleOpen(true); }} className="inline-flex min-h-10 shrink-0 self-end items-center justify-center gap-2 whitespace-nowrap border border-shop-ink bg-shop-ink px-4 text-xs font-medium text-white hover:bg-shop-blue sm:self-auto"><Plus size={16} />Registrar venta</button>}
+        </div>
       </div>
+
+      {saleNotice && <p role="status" className="flex items-center gap-2 border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800"><CheckCircle2 size={16} />{saleNotice}</p>}
 
       <div className="bg-white border border-shop-line rounded-[2px] overflow-x-auto max-w-full">
         <table className="w-full text-left min-w-[680px] text-[13px]">
@@ -117,6 +131,7 @@ function SalesManagementView({
               );
               const isSalidaAccepted = guide?.status === "Aceptado";
               const isShipped = order.status === "Enviado";
+              const isInPerson = order.channel === "presencial";
 
               const associatedOp = (productionOrders || []).find((op) => op.orderId === order.id);
               const isCustomOrder = order.type === "pedido" || Boolean(associatedOp);
@@ -157,7 +172,7 @@ function SalesManagementView({
                       </div>
                       <div>
                         <div className="text-sm font-medium text-shop-ink leading-none">{order.customerName}</div>
-                        <div className="text-[11px] text-shop-muted font-medium mt-1 tracking-tighter">ID: {order.userId}</div>
+                        <div className="text-[11px] text-shop-muted font-medium mt-1 tracking-tighter">{isInPerson ? `Doc.: ${order.customerDocument || "—"}` : `ID: ${order.userId}`}</div>
                       </div>
                     </div>
                   </td>
@@ -170,7 +185,8 @@ function SalesManagementView({
                       }`}>
                         {order.type === "pedido" ? "A Pedido" : "Directa"}
                       </span>
-                      <select
+                      {isInPerson && <span className="inline-flex items-center gap-1 text-[11px] font-medium text-shop-blue"><Store size={12} />Presencial</span>}
+                      {isInPerson ? <span className="text-[11px] font-medium text-emerald-600">Pagado Total</span> : <select
                         value={order.status}
                         disabled={isShipped || shippingOrderId === order.id}
                         onChange={(e) => {
@@ -193,7 +209,7 @@ function SalesManagementView({
                         <option value="Pagado Total">Pagado Total</option>
                         <option value="En Producción">En Producción</option>
                         <option value="Enviado">Enviado</option>
-                      </select>
+                      </select>}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -213,7 +229,7 @@ function SalesManagementView({
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    {guide ? (
+                    {isInPerson ? <span className="whitespace-nowrap text-xs text-shop-muted">No aplica</span> : guide ? (
                       <div className="inline-flex items-center gap-2 whitespace-nowrap align-middle">
                         <span className="rounded-[2px] bg-shop-light px-2.5 py-1 text-xs font-semibold tabular-nums text-shop-ink">
                           {guide.guideNumber}
@@ -232,7 +248,7 @@ function SalesManagementView({
                   </td>
                   <td className="px-6 py-4 text-right tabular-nums">
                     <div className="flex items-center justify-end gap-2">
-                      {isShipped ? (
+                      {isInPerson ? <span className="inline-flex items-center gap-1.5 whitespace-nowrap border border-shop-line bg-shop-light px-3 py-1.5 text-[11px] font-medium text-shop-ink"><Store className="size-3.5 text-shop-blue" />Entregado en tienda</span> : isShipped ? (
                         <span className="px-3 py-1.5 bg-shop-light text-shop-muted text-[11px] font-medium rounded-[2px] flex items-center gap-1.5 border border-shop-line">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Enviado
                         </span>
@@ -381,6 +397,12 @@ function SalesManagementView({
         </AdminDialog>
       )}
 
+      {isSaleOpen && currentUser?.role === "admin" && <InPersonSaleModal products={products} users={users} onClose={() => setIsSaleOpen(false)} onRegister={async sale => {
+        const result = await onRegisterInPersonSale(sale);
+        if (result?.success) { setFilter("all"); setCurrentPage(1); setSaleNotice(`Venta ${formatOrderId(result.order.id)} registrada. Stock y Kardex actualizados.`); }
+        return result;
+      }} />}
+
       <AnimatePresence>
         {selectedOrder && (
           <motion.div
@@ -390,6 +412,7 @@ function SalesManagementView({
             className="bg-white border border-shop-line rounded-[2px] p-6"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {selectedOrder.channel === "presencial" && <section className="space-y-3 border border-shop-line bg-shop-light p-4 md:col-span-2"><h3 className="flex items-center gap-2 text-sm font-medium"><Store size={16} />Venta presencial · Entregado en tienda</h3><dl className="grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-3">{[["Cliente", selectedOrder.customerName], ["Documento", selectedOrder.customerDocument], ["Correo", selectedOrder.customerEmail], ["Teléfono", selectedOrder.customerPhone], ["Dirección", selectedOrder.customerAddress], ["Medio de pago", selectedOrder.paymentMethod], ["N.º de operación", selectedOrder.paymentReference], ["Registrado por", selectedOrder.recordedByName], ["Observaciones", selectedOrder.notes]].filter(([, value]) => value).map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-shop-muted">{label}</dt><dd className="mt-1 break-words text-shop-ink">{value}</dd></div>)}</dl></section>}
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-shop-muted">Detalle de Productos</h3>
                 <div className="space-y-3">

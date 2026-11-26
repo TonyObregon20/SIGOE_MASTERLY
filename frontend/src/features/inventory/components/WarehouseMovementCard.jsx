@@ -9,7 +9,7 @@ export default function WarehouseMovementCard({ movement: wm, onAcceptMovement }
   const isIngreso = wm.type === "Ingreso";
   const isPending = wm.status === "Pendiente";
   const isAccepted = wm.status === "Aceptado";
-  const requiresGuide = !isIngreso && Boolean(wm.orderId || wm.opId);
+  const requiresGuide = !isIngreso && wm.requiresGuide !== false && wm.channel !== "presencial" && Boolean(wm.orderId || wm.opId);
   const hasGuide = requiresGuide && wm.guideNumber && wm.carrier?.trim();
   const needsGuide = requiresGuide && !hasGuide;
 
@@ -73,6 +73,7 @@ export default function WarehouseMovementCard({ movement: wm, onAcceptMovement }
             <p><strong className="text-shop-ink">Transportista:</strong> {wm.carrier}</p>
           </>
         )}
+        {wm.channel === "presencial" && <p className="text-xs text-shop-blue">Venta presencial · Entregado en tienda · No requiere guía</p>}
 
         <div className="bg-white p-3 rounded-[2px] border border-shop-line space-y-1 mt-2">
           <p className="text-[11px] font-semibold text-shop-muted tabular-nums">

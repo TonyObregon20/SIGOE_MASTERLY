@@ -15,8 +15,8 @@ export const getOrders = async (req, res, next) => {
       : {
           $or: [
             { userId: req.currentUser.id },
-            { customerName: req.currentUser.name },
-            ...(req.currentUser.email ? [{ customerEmail: req.currentUser.email }] : [])
+            { channel: { $ne: "presencial" }, customerName: req.currentUser.name },
+            ...(req.currentUser.email ? [{ channel: { $ne: "presencial" }, customerEmail: req.currentUser.email }] : [])
           ]
         };
     const list = await OrderModel.find(filter).sort({ _id: -1 }).lean();
@@ -340,6 +340,10 @@ export const shipOrder = async (req, res, next) => {
     const order = await OrderModel.findOne({ id: orderId });
     if (!order) {
       return res.status(404).json({ success: false, message: "Orden no encontrada" });
+    }
+
+    if (order.channel === "presencial") {
+      return res.status(409).json({ success: false, message: "La venta presencial ya fue entregada en tienda y no requiere despacho." });
     }
 
     if (order.status === "Enviado") {

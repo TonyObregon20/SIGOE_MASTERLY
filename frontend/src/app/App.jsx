@@ -16,6 +16,7 @@ import OnDemandPage from "@/pages/OnDemandPage";
 import CollectionsPage from "@/pages/CollectionsPage";
 import AboutUsPage from "@/pages/AboutUsPage";
 import AdminPage from "@/pages/admin/AdminPage";
+import { createInPersonSaleApi } from "@/features/orders/ordersApi";
 
 // Application UI Hooks
 import { useAppModals } from "./hooks/useAppModals";
@@ -151,6 +152,16 @@ function App() {
     setInvoices,
     loadInvoices
   } = useInvoices(false);
+
+  const registerInPersonSale = async (sale) => {
+    const result = await createInPersonSaleApi(sale);
+    if (result?.success) {
+      setOrders(previous => [result.order, ...previous.filter(order => order.id !== result.order.id)]);
+      if (result.invoice) setInvoices(previous => [result.invoice, ...previous.filter(invoice => invoice.id !== result.invoice.id)]);
+      await Promise.allSettled([loadProducts(), loadKardex(), loadWarehouseMovements()]);
+    }
+    return result;
+  };
 
   // Document & Billing Configuration
   const [invoiceSeries] = useState(INVOICE_SERIES);
@@ -395,6 +406,7 @@ function App() {
                 orders={orders}
                 setOrders={setOrders}
                 handleShipOrder={handleShipOrder}
+                onRegisterInPersonSale={registerInPersonSale}
                 kardex={kardex}
                 onAddStock={onAddStock}
                 warehouseMovements={warehouseMovements}

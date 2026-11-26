@@ -92,7 +92,7 @@ export default function CreateSalidaModal({
       );
       const hasGuide = linkedSalidas.some((wm) => wm.guideNumber && wm.carrier?.trim());
       const existingSalida = linkedSalidas.find((wm) => wm.status === "Aceptado") || linkedSalidas[0];
-      const isOpenOrder = o.status !== "Enviado" && !hasGuide;
+      const isOpenOrder = o.channel !== "presencial" && o.status !== "Enviado" && !hasGuide;
       const waitingForIngress = isOpenOrder && isCustomOrder && existingSalida?.status !== "Aceptado" &&
         totalIngressedUnits < totalOrderUnits;
 

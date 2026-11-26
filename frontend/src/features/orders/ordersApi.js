@@ -9,6 +9,10 @@ export async function getOrdersApi() {
   return apiClient("/api/orders");
 }
 
+export async function createInPersonSaleApi(sale) {
+  return apiClient("/api/orders/in-person", { method: "POST", body: JSON.stringify(sale) });
+}
+
 export async function createOrderApi({ order, docType = "Boleta", docNumber = "00000000", invoiceSeriesNumber = "000001", productionOrder }) {
   return apiClient("/api/orders", {
     method: "POST",

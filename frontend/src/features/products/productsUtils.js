@@ -39,7 +39,7 @@ export function calculateEcommerceMetrics(products = [], orders = []) {
     ? products.reduce((sum, p) => sum + (Number(p.price) || 0), 0) / products.length
     : 0;
 
-  const webOrders = orders.filter((o) => o.type === "pedido" || o.type === "direct");
+  const webOrders = orders.filter((o) => o.channel !== "presencial" && (o.type === "pedido" || o.type === "direct"));
   const webTotalSales = webOrders.reduce((sum, o) => sum + (o.total || 0), 0);
   const webOrdersCount = webOrders.length;
 
