@@ -122,3 +122,4 @@ export function useUsers(autoLoad = true) {
 }
 
 export default useUsers;
+
