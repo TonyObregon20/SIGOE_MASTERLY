@@ -60,6 +60,13 @@ export async function updateProfileApi(updates) {
   });
 }
 
+export async function changeMyPasswordApi({ currentPassword, newPassword, confirmPassword }) {
+  return apiClient("/api/auth/password/change", {
+    method: "POST",
+    body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+  });
+}
+
 export async function getMeApi() {
   const token = getAuthToken();
   if (!token) return { success: false, message: "No token provided" };

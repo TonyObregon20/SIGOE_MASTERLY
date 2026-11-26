@@ -1,4 +1,5 @@
 import UserModel from "../models/User.js";
+import { createChangePasswordHandler } from "./changePasswordController.js";
 import UserStatusHistory from "../models/UserStatusHistory.js";
 import PasswordResetModel from "../models/PasswordReset.js";
 import crypto from "node:crypto";
@@ -13,6 +14,8 @@ import {
   generatePasswordResetToken,
   verifyPasswordResetToken
 } from "../utils/authUtils.js";
+
+export const changeMyPassword = createChangePasswordHandler({ comparePassword, hashPassword, UserModel });
 
 export const getStatus = (req, res) => {
   res.json({

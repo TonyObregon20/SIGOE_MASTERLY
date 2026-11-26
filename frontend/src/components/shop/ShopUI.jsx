@@ -77,7 +77,9 @@ export function ShopProductGrid({ children, catalog = false }) {
   return <div className={`grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 ${catalog ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} xl:gap-x-6`}>{children}</div>;
 }
 
-export function ShopModal({ title, eyebrow, onClose, children, wide = false, drawer = false, animateOnOpen = false }) {
+const shopModalStack = [];
+
+export function ShopModal({ title, eyebrow, onClose, children, wide = false, drawer = false, animateOnOpen = false, inactive = false }) {
   const panel = useRef(null);
   const reduceMotion = useReducedMotion();
   const shouldAnimate = animateOnOpen && !reduceMotion;
@@ -88,8 +90,11 @@ export function ShopModal({ title, eyebrow, onClose, children, wide = false, dra
     const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const currentPanel = panel.current;
+    shopModalStack.push(currentPanel);
     panel.current?.focus();
     const keydown = event => {
+      if (shopModalStack.at(-1) !== currentPanel) return;
       if (event.key === 'Escape') close.current();
       if (event.key !== 'Tab') return;
       const controls = [...panel.current.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], textarea:not(:disabled)')].filter(element => element.offsetParent !== null);
@@ -102,13 +107,15 @@ export function ShopModal({ title, eyebrow, onClose, children, wide = false, dra
     };
     document.addEventListener('keydown', keydown);
     return () => {
+      const index = shopModalStack.indexOf(currentPanel);
+      if (index !== -1) shopModalStack.splice(index, 1);
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', keydown);
       if (previousFocus?.isConnected) previousFocus.focus?.();
     };
   }, []);
   return (
-    <div className={`fixed inset-0 z-[120] flex font-shop text-[15px] leading-relaxed text-shop-ink ${drawer ? 'justify-start' : 'items-center justify-center p-4'}`}>
+    <div inert={inactive} aria-hidden={inactive || undefined} className={`fixed inset-0 z-[120] flex font-shop text-[15px] leading-relaxed text-shop-ink ${drawer ? 'justify-start' : 'items-center justify-center p-4'}`}>
       <motion.div initial={shouldAnimate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: shouldAnimate ? 0.2 : 0 }} className="absolute inset-0 bg-shop-dark/50" onClick={onClose} aria-hidden="true" />
       <motion.section initial={shouldAnimate ? { opacity: 0, y: 16 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldAnimate ? 0.24 : 0, ease: [0.22, 1, 0.36, 1] }} ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`relative flex w-full flex-col bg-white outline-none ${drawer ? 'h-full max-w-[460px] shop-drawer-enter' : `max-h-[92dvh] overflow-y-auto ${wide ? 'max-w-[960px]' : 'max-w-[470px]'}`}`}>
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-shop-line p-6 sm:p-7">
