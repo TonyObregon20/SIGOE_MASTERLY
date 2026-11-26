@@ -26,7 +26,6 @@ function PaymentModal({
   const [cardName, setCardName] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
-  const [isCvvFocused, setIsCvvFocused] = useState(false);
   const [creditValidationError, setCreditValidationError] = useState("");
   const [savePayment, setSavePayment] = useState(false);
   const [useSavedPayment, setUseSavedPayment] = useState(Boolean(currentUser?.savedPayment));
@@ -156,7 +155,7 @@ function PaymentModal({
             <ShopField label="Número de tarjeta">{id => <input id={id} type="text" inputMode="numeric" autoComplete="cc-number" value={cardNumber} onChange={handleCardNumberChange} placeholder="0000 0000 0000 0000" className={shopInput} />}</ShopField>
             <div className="grid grid-cols-2 gap-4">
               <ShopField label="Vencimiento">{id => <input id={id} type="text" inputMode="numeric" autoComplete="cc-exp" value={cardExpiry} onChange={handleExpiryChange} placeholder="MM/AA" className={shopInput} />}</ShopField>
-              <ShopField label="Código de seguridad">{id => <input id={id} type="password" inputMode="numeric" autoComplete="cc-csc" value={cardCvv} onChange={handleCvvChange} onFocus={() => setIsCvvFocused(true)} onBlur={() => setIsCvvFocused(false)} placeholder="CVV" className={shopInput} />}</ShopField>
+              <ShopField label="Código de seguridad">{id => <input id={id} type="password" inputMode="numeric" autoComplete="cc-csc" value={cardCvv} onChange={handleCvvChange} placeholder="CVV" className={shopInput} />}</ShopField>
             </div>
               </>
             )}

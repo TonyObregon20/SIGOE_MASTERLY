@@ -4,11 +4,6 @@ import {
   createSalidaMovementApi,
   createIngresoMovementApi
 } from "./warehouseApi";
-import {
-  filterMovements,
-  calculateWarehouseMetrics,
-  normalizeWarehouseMovement
-} from "./warehouseUtils";
 
 /**
  * Warehouse Domain Service Layer
@@ -46,14 +41,7 @@ export const warehouseService = {
    */
   async createIngreso(payload) {
     return createIngresoMovementApi(payload);
-  },
-
-  /**
-   * Helpers
-   */
-  filterMovements,
-  calculateWarehouseMetrics,
-  normalizeWarehouseMovement
+  }
 };
 
 export default warehouseService;

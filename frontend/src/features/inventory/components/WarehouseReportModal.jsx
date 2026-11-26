@@ -1,28 +1,7 @@
 import AdminDialog from "@/components/admin/AdminDialog";
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  FileSpreadsheet,
-  X,
-  Package,
-  Truck,
-  TrendingUp,
-  Download,
-  Printer,
-  Calendar,
-  Search,
-  Filter,
-  Layers,
-  FileText,
-  CheckCircle2,
-  Clock,
-  ArrowDownLeft,
-  ArrowUpRight,
-  ChevronDown,
-  ChevronUp,
-  Sparkles,
-  ShoppingBag
-} from "lucide-react";
+import { FileSpreadsheet, X, Package, TrendingUp, Download, Printer, Calendar, Search, Layers, FileText, CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronUp, Sparkles, ShoppingBag } from "lucide-react";
 import { generateWarehousePDF } from "../utils/warehousePdfGenerator";
 import { generateWarehouseExcel } from "../utils/warehouseExcelGenerator";
 

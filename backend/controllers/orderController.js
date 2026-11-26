@@ -2,7 +2,6 @@ import OrderModel from "../models/Order.js";
 import ProductModel from "../models/Product.js";
 import WarehouseMovementModel from "../models/WarehouseMovement.js";
 import InvoiceModel from "../models/Invoice.js";
-import KardexModel from "../models/Kardex.js";
 import ProductionOrderModel from "../models/ProductionOrder.js";
 import UserModel from "../models/User.js";
 import { sendInvoiceEmail } from "../services/emailService.js";
@@ -226,7 +225,8 @@ export const createOrder = async (req, res, next) => {
           productId: i.productId,
           productName: i.productName || "Prenda",
           quantity: i.quantity,
-          selectedSize: i.selectedSize
+          selectedSize: i.selectedSize,
+          sizeDistribution: i.sizeDistribution
         })),
         date: new Date().toISOString().split("T")[0],
         createdAt: new Date().toISOString()
@@ -334,76 +334,48 @@ export const createOrder = async (req, res, next) => {
 export const shipOrder = async (req, res, next) => {
   try {
     const { orderId } = req.body;
+    if (typeof orderId !== "string" || !orderId.trim()) {
+      return res.status(400).json({ success: false, message: "El pedido no es válido." });
+    }
     const order = await OrderModel.findOne({ id: orderId });
     if (!order) {
       return res.status(404).json({ success: false, message: "Orden no encontrada" });
     }
 
-    // Mark order as shipped
-    const updatedOrder = await OrderModel.findOneAndUpdate(
-      { id: orderId },
-      { 
-        $set: { 
-          status: "Enviado",
-          shippedAt: new Date().toISOString()
-        } 
-      },
-      { new: true }
-    );
+    if (order.status === "Enviado") {
+      return res.json({ success: true, order });
+    }
 
-    // Check if a Salida movement was already accepted by Warehouse
-    const existingAcceptedSalida = await WarehouseMovementModel.findOne({ 
-      orderId: orderId, 
-      type: "Salida", 
-      status: "Aceptado" 
-    });
+    const guide = await WarehouseMovementModel.findOne({
+      orderId,
+      type: "Salida",
+      guideNumber: /^GR-(?:[0-9]{5,15}|[0-9A-F]{16})$/,
+      carrier: /\S/,
+      status: { $in: ["Pendiente", "Aceptado"] }
+    }).sort({ createdAt: -1 }).lean();
 
-    // If warehouse has NOT already deducted stock via an accepted Salida movement, perform fallback deduction
-    if (!existingAcceptedSalida) {
-      for (const item of safeOrder.items || []) {
-        const prod = await ProductModel.findOne({ id: item.productId });
-        if (prod) {
-          const qty = item.quantity || 1;
-          const newPhysical = Math.max(0, (prod.stockPhysical || 0) - qty);
-          const newCommitted = Math.max(0, (prod.stockCommitted || 0) - qty);
-          await ProductModel.findOneAndUpdate(
-            { id: item.productId },
-            { $set: { stockPhysical: newPhysical, stockCommitted: newCommitted } }
-          );
-
-          // Kardex entry
-          await KardexModel.create({
-            productId: item.productId,
-            date: new Date().toISOString().split("T")[0],
-            type: "Salida",
-            quantity: qty,
-            reason: `Despacho Directo Orden ${orderId}`,
-            documentRef: orderId,
-            balance: newPhysical
-          });
-        }
-      }
-
-      const movementId = `S-${(Math.floor(Math.random() * 900) + 100).toString()}`;
-      await WarehouseMovementModel.create({
-        id: movementId,
-        type: "Salida",
-        originType: safeOrder.type === "pedido" ? "A Pedido" : "Venta Directa",
-        status: "Aceptado",
-        orderId: order.id,
-        items: (safeOrder.items || []).map((i) => ({
-          productId: i.productId,
-          productName: i.productName || "Prenda",
-          quantity: i.quantity || 1,
-          selectedSize: i.selectedSize
-        })),
-        date: new Date().toISOString().split("T")[0],
-        createdAt: new Date().toISOString(),
-        processedAt: new Date().toISOString()
+    if (!guide) {
+      return res.status(409).json({
+        success: false,
+        code: "GUIDE_REQUIRED",
+        message: "Primero debes generar una salida (guía) con transportista en Almacén y Kardex."
+      });
+    }
+    if (guide.status !== "Aceptado") {
+      return res.status(409).json({
+        success: false,
+        code: "GUIDE_PENDING",
+        message: "Primero debes aprobar la salida en Almacén y Kardex."
       });
     }
 
-    res.json({ success: true, order: updatedOrder });
+    const updatedOrder = await OrderModel.findOneAndUpdate(
+      { id: orderId, status: { $ne: "Enviado" } },
+      { $set: { status: "Enviado", shippedAt: new Date().toISOString() } },
+      { new: true }
+    );
+
+    res.json({ success: true, order: updatedOrder || await OrderModel.findOne({ id: orderId }) });
   } catch (err) {
     next(err);
   }

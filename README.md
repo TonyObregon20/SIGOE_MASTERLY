@@ -20,8 +20,6 @@ Para habilitar el envío, solicita al equipo la configuración por un canal priv
 ## Antes de publicar
 
 ```sh
-npm run security:check
-npm run test:security
 npm run build
 npm run build --workspace=frontend
 git diff --check

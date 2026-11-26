@@ -6,7 +6,7 @@ import {
   addSupplierRecordApi,
   deleteSupplierRecordApi
 } from "./suppliersApi";
-import { filterSuppliers, normalizeSupplier } from "./suppliersUtils";
+import { normalizeSupplier } from "./suppliersUtils";
 
 /**
  * Suppliers Domain Service Layer
@@ -60,13 +60,6 @@ export const suppliersService = {
    */
   async deleteRecord(id, recordId) {
     return deleteSupplierRecordApi(id, recordId);
-  },
-
-  /**
-   * Utility for filtering suppliers
-   */
-  filterSuppliers(suppliers, options) {
-    return filterSuppliers(suppliers, options);
   }
 };
 

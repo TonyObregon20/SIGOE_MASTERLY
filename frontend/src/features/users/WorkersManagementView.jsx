@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Clock3, Eye, EyeOff, Plus, UserCog, X } from "lucide-react";
+import { Eye, EyeOff, Plus, UserCog, X } from "lucide-react";
 import AdminDialog from "@/components/admin/AdminDialog";
 
 export default function WorkersManagementView({ users = [], onUpdateWorker, onAddWorker }) {

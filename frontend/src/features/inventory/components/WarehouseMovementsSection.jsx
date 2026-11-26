@@ -1,109 +1,134 @@
-import React from "react";
-import { CheckCircle2, Truck, Plus, Package, FileSpreadsheet } from "lucide-react";
+import React, { useState } from "react";
+import { CheckCircle2, ChevronDown } from "lucide-react";
+import { Pagination } from "@/components/shop/ShopUI";
 import WarehouseMovementCard from "./WarehouseMovementCard";
 
-/**
- * Section container for managing warehouse movements (Pending, All, Accepted)
- */
+const PAGE_SIZE = 10;
+const FILTERS = ["Pendientes", "Todos", "Aceptados"];
+const STATUS_COLORS = {
+  Pendiente: "bg-amber-100 text-amber-900",
+  Aceptado: "bg-emerald-100 text-emerald-800",
+  Rechazado: "bg-rose-100 text-rose-800"
+};
+
 export default function WarehouseMovementsSection({
   movements = [],
   filter = "Pendientes",
   onFilterChange,
-  pendingCount = 0,
-  onAcceptMovement,
-  onOpenCreateSalida,
-  onOpenCreateIngreso,
-  onOpenIncomeStock,
-  onOpenReport
+  onAcceptMovement
 }) {
-  const handleOpenIngreso = onOpenCreateIngreso || onOpenIncomeStock;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [expandedId, setExpandedId] = useState(null);
+  const page = Math.min(currentPage, Math.max(1, Math.ceil(movements.length / PAGE_SIZE)));
+  const pageMovements = movements.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const changeFilter = (nextFilter) => {
+    if (nextFilter === filter) return;
+    setCurrentPage(1);
+    setExpandedId(null);
+    onFilterChange(nextFilter);
+  };
 
   return (
-    <div className="bg-white border border-shop-line rounded-[2px] p-6 space-y-4">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-shop-line pb-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-shop-ink tracking-tight">
-              Movimientos de Almacén (Ingresos y Salidas)
-            </h3>
-            {pendingCount > 0 && (
-              <span className="px-2 py-0.5 bg-amber-500 text-white text-[11px] font-semibold rounded-full">
-                {pendingCount} Pendiente{pendingCount > 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-shop-muted font-shop">
-            Aceptación y verificación del almacenero para actualizar el stock físico y habilitar despachos.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {onOpenReport && (
+    <div className="overflow-hidden rounded-[2px] border border-shop-line bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-shop-line px-4 py-3 sm:px-6">
+        <h2 className="text-base font-semibold text-shop-ink">Movimientos de Almacén</h2>
+        <div role="group" aria-label="Filtrar movimientos" className="flex flex-wrap gap-1 rounded-[2px] bg-shop-light p-1">
+          {FILTERS.map((tab) => (
             <button
+              key={tab}
               type="button"
-              onClick={onOpenReport}
-              className="px-3.5 py-1.5 bg-shop-ink hover:bg-shop-ink text-white text-[11px] font-semibold rounded-[2px] transition-all flex items-center gap-1.5 tabular-nums min-h-9"
+              aria-pressed={filter === tab}
+              onClick={() => changeFilter(tab)}
+              className={`min-h-8 rounded-[2px] px-3 py-1 text-[11px] font-semibold ${filter === tab
+                ? "bg-white text-shop-ink"
+                : "text-shop-muted hover:text-shop-ink"}`}
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-blue-400" /> Generar Reporte
+              {tab}
             </button>
-          )}
-
-          {handleOpenIngreso && (
-            <button
-              type="button"
-              onClick={handleOpenIngreso}
-              className="px-3.5 py-1.5 bg-shop-ink hover:bg-shop-blue text-white text-[11px] font-semibold rounded-[2px] transition-all flex items-center gap-1.5 min-h-9"
-            >
-              <Package className="w-3.5 h-3.5" /> Generar Ingreso (OP / Manual)
-            </button>
-          )}
-
-          {onOpenCreateSalida && (
-            <button
-              type="button"
-              onClick={onOpenCreateSalida}
-              className="px-3.5 py-1.5 bg-shop-ink hover:bg-shop-ink text-white text-[11px] font-semibold rounded-[2px] transition-all flex items-center gap-1.5 min-h-9"
-            >
-              <Truck className="w-3.5 h-3.5" /> Generar Salida (OP / Pedido)
-            </button>
-          )}
-
-          <div className="flex items-center gap-1 bg-shop-light p-1 rounded-[2px]">
-            {["Pendientes", "Todos", "Aceptados"].map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => onFilterChange(tab)}
-                className={`px-3 py-1 text-[11px] font-semibold rounded-[2px] transition-all ${
-                  filter === tab
-                    ? "bg-white text-shop-ink font-medium"
-                    : "text-shop-muted hover:text-shop-ink"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
 
-      {movements.length === 0 ? (
-        <div className="py-8 text-center bg-shop-light rounded-[2px] border border-dashed border-shop-line">
-          <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-60" />
-          <p className="text-xs font-medium text-shop-muted tabular-nums">
-            No hay movimientos {filter.toLowerCase()} en este momento
-          </p>
+      {pageMovements.length === 0 ? (
+        <div className="flex items-center justify-center gap-2 px-4 py-6 text-xs font-medium text-shop-muted">
+          <CheckCircle2 aria-hidden="true" className="size-4 shrink-0 text-emerald-600" />
+          {filter === "Todos" ? "No hay movimientos registrados." : `No hay movimientos ${filter.toLowerCase()}.`}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {movements.map((wm) => (
-            <WarehouseMovementCard
-              key={wm.id}
-              movement={wm}
-              onAcceptMovement={onAcceptMovement}
+        <>
+          <div className="overflow-x-auto">
+            <table aria-label="Movimientos de almacén" className="w-full min-w-[560px] text-left text-xs">
+              <thead className="border-b border-shop-line bg-shop-light text-shop-muted">
+                <tr>
+                  <th scope="col" className="px-4 py-3 font-semibold sm:pl-6">Movimiento</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Referencia</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Fecha</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Estado</th>
+                  <th scope="col" className="px-4 py-3 text-center font-semibold sm:px-6">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-shop-line">
+                {pageMovements.map((movement) => {
+                  const { id, type, originType, orderId, opId, guideNumber, date, status } = movement;
+                  const expanded = expandedId === id;
+                  const actionLabel = expanded ? "Ocultar" : status === "Pendiente" ? "Revisar" : "Ver detalle";
+                  return (
+                    <React.Fragment key={id}>
+                      <tr className="hover:bg-shop-light/50">
+                        <td className="px-4 py-2.5 sm:pl-6">
+                          <span className="font-semibold text-shop-ink">{type}</span>
+                          {originType && <span className="ml-2 text-[11px] text-shop-muted">{originType}</span>}
+                        </td>
+                        <td className="px-4 py-2.5 tabular-nums">
+                          <span className="break-all text-shop-ink">{orderId || opId || id}</span>
+                          {guideNumber && <span className="block text-[11px] font-medium text-shop-blue">{guideNumber}</span>}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-2.5 tabular-nums text-shop-muted">{date || "—"}</td>
+                        <td className="px-4 py-2.5">
+                          <span className={`whitespace-nowrap rounded-[2px] px-2 py-1 text-[11px] font-semibold ${STATUS_COLORS[status] || "bg-shop-light text-shop-muted"}`}>
+                            {status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-center sm:px-6">
+                          <button
+                            type="button"
+                            aria-label={`${actionLabel} · ${id}`}
+                            aria-expanded={expanded}
+                            onClick={() => setExpandedId(expanded ? null : id)}
+                            className="inline-flex min-h-9 items-center gap-1 whitespace-nowrap rounded-[2px] border border-shop-line bg-white px-2.5 font-semibold text-shop-blue hover:bg-shop-light"
+                          >
+                            {actionLabel}
+                            <ChevronDown aria-hidden="true" className={`size-3.5 ${expanded ? "rotate-180" : ""}`} />
+                          </button>
+                        </td>
+                      </tr>
+                      {expanded && (
+                        <tr>
+                          <td colSpan={5} className="bg-shop-light/40 px-4 py-3 sm:px-6">
+                            <WarehouseMovementCard movement={movement} onAcceptMovement={onAcceptMovement} />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {movements.length > PAGE_SIZE && (
+            <Pagination
+              currentPage={page}
+              pageSize={PAGE_SIZE}
+              totalItems={movements.length}
+              itemLabel="movimientos"
+              onPageChange={(nextPage) => {
+                setCurrentPage(nextPage);
+                setExpandedId(null);
+              }}
             />
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

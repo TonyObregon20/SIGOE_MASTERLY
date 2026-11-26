@@ -1,20 +1,7 @@
 import AdminDialog from "@/components/admin/AdminDialog";
 import React, { useState, useMemo, useEffect } from "react";
 import { motion } from "motion/react";
-import {
-  X,
-  Package,
-  Layers,
-  CheckCircle2,
-  AlertTriangle,
-  FileText,
-  User,
-  Plus,
-  Trash2,
-  ArrowRight,
-  Boxes,
-  Split
-} from "lucide-react";
+import { X, Package, Layers, CheckCircle2, AlertTriangle, User, Plus, Trash2, Boxes, Split } from "lucide-react";
 import { formatProductionOrderId } from "@/features/production/productionUtils";
 import { formatOrderId } from "@/features/orders/ordersUtils";
 
@@ -285,7 +272,7 @@ export default function CreateIngresoModal({
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         className="relative w-full max-w-2xl bg-white rounded-[2px] overflow-y-auto border border-shop-line max-h-[90dvh]"
       >
-        <div className="p-7 space-y-6 max-h-[90vh] overflow-y-auto">
+        <div className="p-7 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-shop-line pb-4">
             <div className="space-y-1">
@@ -355,7 +342,7 @@ export default function CreateIngresoModal({
                         <p className="text-[11px] font-semibold text-amber-900">
                           OPs en proceso de taller ({inProgressOps.length}):
                         </p>
-                        <div className="max-h-28 overflow-y-auto space-y-1 pr-1">
+                        <div className="space-y-1">
                           {inProgressOps.map((op) => (
                             <div
                               key={op.id}
@@ -502,7 +489,7 @@ export default function CreateIngresoModal({
                       <p className="text-[11px] font-semibold text-shop-muted">
                         Prendas verificadas que ingresarán al stock:
                       </p>
-                      <div className="space-y-1 max-h-28 overflow-y-auto pr-1">
+                      <div className="space-y-1">
                         {(selectedOp.items || []).map((item, idx) => (
                           <div
                             key={idx}
@@ -567,7 +554,7 @@ export default function CreateIngresoModal({
                   </div>
 
                   {manualItems.length > 0 && (
-                    <div className="mt-3 space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    <div className="mt-3 space-y-1.5">
                       {manualItems.map((item, idx) => (
                         <div
                           key={idx}

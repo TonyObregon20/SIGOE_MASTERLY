@@ -20,9 +20,7 @@ function ProductionView({
   salesOrders = [],
   warehouseMovements = [],
   onOpenGenerateIngreso,
-  suppliers = [],
-  loadSuppliers,
-  onAddSupplierRecord
+  suppliers = []
 }) {
   const hookProduction = useProduction(!propOrders);
 

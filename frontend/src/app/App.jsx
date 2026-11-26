@@ -8,7 +8,6 @@ import AuthModal from "@/features/auth/components/AuthModal";
 import CartDrawer from "@/features/cart/components/CartDrawer";
 import PaymentModal from "@/features/cart/components/PaymentModal";
 import OrderSuccessModal from "@/features/orders/components/OrderSuccessModal";
-import MyOrdersModal from "@/features/orders/components/MyOrdersModal";
 import CustomerDrawer from "@/features/users/components/CustomerDrawer";
 
 import StorePage from "@/pages/StorePage";
@@ -50,13 +49,10 @@ function App() {
     isLoginOpen,
     setIsLoginOpen,
     loginMode,
-    setLoginMode,
     isPaymentModalOpen,
     setIsPaymentModalOpen,
     isOrderSuccessOpen,
     setIsOrderSuccessOpen,
-    isMyOrdersOpen,
-    setIsMyOrdersOpen,
     isCustomerDrawerOpen,
     openCustomerDrawer,
     closeCustomerDrawer,
@@ -65,8 +61,7 @@ function App() {
     customerDocument,
     setCustomerDocument,
     openLogin,
-    openOrderSuccess,
-    handleOpenMyOrdersFromSuccess
+    openOrderSuccess
   } = useAppModals();
 
   // Centralized Auth State from AuthContext
@@ -91,8 +86,7 @@ function App() {
     setProducts,
     loadProducts,
     addProduct,
-    updateProduct,
-    deleteProduct
+    updateProduct
   } = useProducts();
 
   // Centralized Orders State from useOrders
@@ -100,7 +94,6 @@ function App() {
     orders,
     setOrders,
     loadOrders,
-    createOrder,
     shipOrder
   } = useOrders(false);
 
@@ -116,7 +109,6 @@ function App() {
   // Centralized Inventory / Kardex State from useInventory
   const {
     kardex,
-    setKardex,
     loadKardex,
     addStock: handleInventoryAddStock
   } = useInventory(false);
@@ -124,7 +116,6 @@ function App() {
   // Centralized Suppliers State from useSuppliers
   const {
     suppliers,
-    setSuppliers,
     loadSuppliers,
     addSupplier,
     updateSupplier,
@@ -136,7 +127,6 @@ function App() {
   // Centralized Warehouse State from useWarehouse
   const {
     warehouseMovements,
-    setWarehouseMovements,
     loadWarehouseMovements,
     acceptMovement: handleAcceptWarehouseMovementAction,
     createSalida: handleCreateWarehouseSalidaAction,
@@ -249,12 +239,11 @@ function App() {
         loadOrders();
         loadProductionOrders();
         loadKardex();
-      } else {
-        alert(data?.message || "Error al crear salida.");
       }
       return data;
     } catch (err) {
       console.error("Error creating salida:", err);
+      return { success: false, message: err.message };
     }
   };
 
@@ -302,8 +291,10 @@ function App() {
         loadWarehouseMovements();
         alert(`¡Orden ${orderId} despachada exitosamente!`);
       }
+      return data;
     } catch (err) {
       console.error(err);
+      return { success: false, message: err.message };
     }
   };
 
@@ -390,7 +381,6 @@ function App() {
                 setProducts={setProducts}
                 onAddProduct={addProduct}
                 onUpdateProduct={updateProduct}
-                onDeleteProduct={deleteProduct}
                 productionOrders={productionOrders}
                 setProductionOrders={setProductionOrders}
                 createProductionOrder={createProductionOrder}
@@ -414,7 +404,6 @@ function App() {
                 invoices={invoices}
                 setInvoices={setInvoices}
                 suppliers={suppliers}
-                setSuppliers={setSuppliers}
                 onAddSupplier={addSupplier}
                 onUpdateSupplier={updateSupplier}
                 onDeleteSupplier={deleteSupplier}
@@ -440,7 +429,6 @@ function App() {
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
         loginMode={loginMode}
-        setLoginMode={setLoginMode}
         setUsers={setUsers}
         setView={setView}
       />
@@ -480,17 +468,6 @@ function App() {
         onClose={() => setIsOrderSuccessOpen(false)}
         orderData={completedOrderData}
         currentUser={currentUser}
-        onOpenMyOrders={handleOpenMyOrdersFromSuccess}
-      />
-
-      {/* Customer Orders & Invoice History Modal */}
-      <MyOrdersModal
-        isOpen={isMyOrdersOpen}
-        onClose={() => setIsMyOrdersOpen(false)}
-        orders={orders}
-        invoices={invoices}
-        currentUser={currentUser}
-        onRefresh={loadOrders}
       />
 
       <CustomerDrawer
