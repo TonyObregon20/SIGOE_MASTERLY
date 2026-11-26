@@ -14,6 +14,7 @@ import {
   requestPasswordReset,
   verifyPasswordResetCode,
   resetPassword,
+  changeMyPassword,
   getWorkers,
   updateMyProfile
 } from "../controllers/authController.js";
@@ -34,6 +35,7 @@ router.post("/auth/google", googleLogin);
 router.post("/auth/password/request", requestPasswordReset);
 router.post("/auth/password/verify", verifyPasswordResetCode);
 router.post("/auth/password/reset", resetPassword);
+router.post("/auth/password/change", authenticate, requireAdmin, changeMyPassword);
 
 // User management routes
 router.get("/users", authenticate, requireAdmin, getUsers);

@@ -1,7 +1,8 @@
 import InvoiceEmailModal from "@/features/invoices/components/InvoiceEmailModal";
+import ChangePasswordModal from "@/features/auth/components/ChangePasswordModal";
 import { ShopModal } from "@/components/shop/ShopUI";
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, BarChart3, Check, CreditCard, Download, FileText, LogOut, Mail, Package, Settings, ShoppingBag, Store, X } from "lucide-react";
+import { ArrowRight, BarChart3, Check, CreditCard, Download, FileText, LockKeyhole, LogOut, Mail, Package, Settings, ShoppingBag, Store, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { generateInvoicePDF, generateInvoicePDFBase64 } from "@/utils/pdfGenerator";
 import { sendInvoiceEmailApi } from "@/features/invoices/invoicesApi";
@@ -29,6 +30,14 @@ function CustomerDrawer({
   const [invoiceNotifications, setInvoiceNotifications] = useState(currentUser?.invoiceEmailNotifications !== false);
   const [stageNotifications, setStageNotifications] = useState(currentUser?.orderStageEmailNotifications !== false);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [passwordUpdated, setPasswordUpdated] = useState(false);
+  useEffect(() => {
+    if (!isOpen) {
+      setIsPasswordOpen(false);
+      setPasswordUpdated(false);
+    }
+  }, [isOpen]);
   useEffect(() => {
     setProfileName(currentUser?.name || "");
     setAvatarColor(currentUser?.avatarColor || "blue");
@@ -147,7 +156,7 @@ function CustomerDrawer({
     onSend={email => sendInvoice(emailInvoice.order, emailInvoice.invoice, email)}
   />;
 
-  return isOpen ? <ShopModal drawer title={displayName} eyebrow={currentUser?.email || "Tu cuenta Masterly"} onClose={onClose}><div className="mx-4 mt-5 grid shrink-0 grid-cols-4 gap-1 border-b border-shop-line pb-3 sm:mx-6">
+  return isOpen ? <><ShopModal drawer inactive={isPasswordOpen} title={displayName} eyebrow={currentUser?.email || "Tu cuenta Masterly"} onClose={onClose}><div className="mx-4 mt-5 grid shrink-0 grid-cols-4 gap-1 border-b border-shop-line pb-3 sm:mx-6">
                 {[["summary", "Resumen", BarChart3], ["orders", "Pedidos", Package], ["invoices", "Comprobantes", FileText], ["settings", "Cuenta", Settings]].map(([tab, label, Icon]) => <button type="button" key={tab} onClick={() => setActiveTab(tab)} className="flex min-w-0 items-center justify-center gap-1 border-b border-transparent px-1 py-3 text-[10px] text-shop-muted hover:text-shop-ink aria-pressed:border-shop-ink aria-pressed:text-shop-ink sm:text-[11px]" aria-pressed={activeTab === tab}>
                     <Icon className="w-4 h-4" /> {label}
                   </button>)}
@@ -270,6 +279,16 @@ function CustomerDrawer({
                     </div>
                   </section>
 
+                  {currentUser?.role === "admin" && (
+                    <section className="border border-shop-line bg-white p-5">
+                      <h3 className="flex items-center gap-2 text-sm font-medium text-shop-ink"><LockKeyhole size={16} className="text-shop-blue" />Seguridad</h3>
+                      <p className="mt-4 text-xs font-medium text-shop-ink">Contraseña de acceso</p>
+                      <p className="mt-1 text-xs leading-6 text-shop-muted">Actualiza la contraseña de tu cuenta.</p>
+                      <button type="button" onClick={() => { setPasswordUpdated(false); setIsPasswordOpen(true); }} className="mt-4 inline-flex min-h-10 items-center gap-3 border border-shop-line px-4 py-2 text-xs font-medium text-shop-ink hover:bg-shop-light">Cambiar contraseña<ArrowRight size={14} /></button>
+                      {passwordUpdated && <p role="status" className="mt-4 flex items-start gap-2 text-xs leading-5 text-emerald-700"><Check size={16} className="shrink-0" />Tu contraseña se actualizó correctamente.</p>}
+                    </section>
+                  )}
+
                   <button type="button" disabled={savingProfile} onClick={handleSaveProfile} className="min-h-11 w-full bg-shop-ink text-xs font-medium text-white disabled:opacity-50">
                     {savingProfile ? "Guardando..." : "Guardar configuración"}
                   </button>
@@ -277,7 +296,9 @@ function CustomerDrawer({
             </div><footer className="flex items-center justify-between border-t border-shop-line bg-white p-5">
               <button type="button" onClick={handleLogout} className="flex items-center gap-2 rounded-none bg-shop-light px-4 py-3 text-xs font-medium tracking-wider text-shop-muted hover:bg-red-50 hover:text-red-600"><LogOut className="w-4 h-4" /> Cerrar sesión</button>
               <button type="button" onClick={onClose} className="rounded-none bg-shop-ink px-5 py-3 text-xs font-medium tracking-wider text-white">Cerrar</button>
-            </footer></ShopModal> : null;
+            </footer></ShopModal>
+            {isPasswordOpen && currentUser?.role === "admin" && <ChangePasswordModal onClose={() => setIsPasswordOpen(false)} onSuccess={() => { setIsPasswordOpen(false); setPasswordUpdated(true); }} />}
+          </> : null;
 }
 function EmptyState({
   icon: Icon,
