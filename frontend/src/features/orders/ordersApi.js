@@ -28,6 +28,3 @@ export async function shipOrderApi(orderId) {
     body: JSON.stringify({ orderId })
   });
 }
-
-// Backwards compatibility alias
-export const checkoutOrderApi = createOrderApi;

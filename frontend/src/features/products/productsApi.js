@@ -15,8 +15,6 @@ export async function createProductApi(productData) {
   });
 }
 
-export const addProductApi = createProductApi;
-
 export async function updateProductApi(id, updates) {
   return apiClient("/api/products", {
     method: "POST",
@@ -29,4 +27,3 @@ export async function deleteProductApi(id) {
     method: "DELETE"
   });
 }
-

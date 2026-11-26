@@ -8,16 +8,13 @@
     "backend"
   ],
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "tsx watch server.ts",
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev:backend": "npm run dev --workspace=backend",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "clean": "rm -rf dist",
-    "lint": "echo 'Pure JavaScript Project - No Lint Required'",
-    "hash-passwords": "node scripts/hash-passwords.mjs",
-    "security:check": "node scripts/security-check.mjs",
-    "test:security": "node --test scripts/security-check.test.mjs"
+    "hash-passwords": "node scripts/hash-passwords.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",

@@ -22,8 +22,8 @@ export default function InventoryProductRow({
   const sizeBreakdown = getSizeStockBreakdown(p);
 
   return (
-    <div className="bg-white border border-shop-line rounded-[2px] overflow-hidden transition-shadow">
-      <div className="p-5 flex items-center justify-between flex-wrap gap-4">
+    <div className="@container bg-white border border-shop-line rounded-[2px] overflow-hidden transition-shadow">
+      <div className="grid grid-cols-1 items-center gap-4 p-5 @min-[36rem]:grid-cols-[minmax(0,1fr)_220px] @min-[70rem]:grid-cols-[minmax(0,1fr)_220px_minmax(0,1.54fr)]">
         {/* Product image & ID/Category info */}
         <div className="flex min-w-0 items-center gap-4">
           <div className="w-16 h-16 bg-shop-light rounded-[2px] overflow-hidden border border-shop-line p-1 flex-shrink-0">
@@ -35,7 +35,7 @@ export default function InventoryProductRow({
             />
           </div>
           <div className="min-w-0">
-            <h4 className="font-semibold text-shop-ink text-base tracking-tight leading-tight">
+            <h4 className="font-semibold text-shop-ink text-base tracking-tight leading-tight [overflow-wrap:anywhere]">
               {p.name}
             </h4>
             <div className="flex items-center gap-3 mt-1">
@@ -50,7 +50,7 @@ export default function InventoryProductRow({
         </div>
 
         {/* Stock Breakdown by Sizes */}
-        <div className="w-full bg-shop-light p-2.5 rounded-[2px] border border-shop-line/80 sm:min-w-[220px] sm:w-auto">
+        <div className="w-full bg-shop-light p-2.5 rounded-[2px] border border-shop-line/80 @min-[36rem]:self-start">
           <div className="flex items-center justify-between text-[11px] font-semibold text-shop-muted tabular-nums mb-1">
             <span className="flex items-center gap-1">
               <Layers className="w-3 h-3 text-shop-blue" /> Tallas Disponibles
@@ -72,7 +72,7 @@ export default function InventoryProductRow({
         </div>
 
         {/* Stock Metrics and Action Buttons */}
-        <div className="flex items-center gap-8 flex-wrap sm:flex-nowrap">
+        <div className="flex max-w-full flex-wrap items-center gap-x-8 gap-y-4 @min-[36rem]:col-span-full @min-[36rem]:justify-self-end @min-[70rem]:col-span-1">
           {/* Physical stock */}
           <div className="text-center">
             <div className="text-[11px] text-shop-muted font-semibold mb-0.5 tabular-nums">

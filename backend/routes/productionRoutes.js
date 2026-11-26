@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getProductionOrders, createProductionOrder, updateStage } from "../controllers/productionController.js";
-import { authenticate, requireAdmin, requireStaff } from "../middlewares/authMiddleware.js";
+import { authenticate, requireStaff } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 

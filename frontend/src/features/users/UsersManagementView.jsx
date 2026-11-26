@@ -1,47 +1,10 @@
 import AdminDialog from "@/components/admin/AdminDialog";
-import React, { useState, useEffect, useMemo } from "react";
-import {
-  ShoppingBag,
-  Package,
-  Truck,
-  Users as UsersIcon,
-  ChevronRight,
-  Plus,
-  Search,
-  Filter,
-  AlertCircle,
-  Clock,
-  CheckCircle2,
-  ClipboardList,
-  User as UserIcon,
-  History,
-  LayoutDashboard,
-  Eye,
-  EyeOff,
-  Printer,
-  Globe,
-  Download,
-  X,
-  Edit3,
-  CreditCard,
-  FileText,
-  UserPlus,
-  Banknote,
-  TrendingUp,
-  Lock,
-  Trash2,
-  CalendarClock,
-  BarChart3,
-  Upload
-} from "lucide-react";
+import React, { useState } from "react";
+import { Users as UsersIcon, Plus, History, Eye, EyeOff, Edit3, CreditCard, UserPlus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
-import StatCard from "@/components/ui/StatCard";
 
 function UsersManagementView({
   users: usersList,
-  onUpdateUser,
   onUpdateUserStatus,
   loadUserStatusHistory,
   userStatusHistory,

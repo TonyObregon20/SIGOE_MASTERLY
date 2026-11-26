@@ -1,9 +1,8 @@
 import { getOrdersApi, createOrderApi, shipOrderApi } from "./ordersApi";
-import { buildOrderPayload, filterOrdersByCustomer, calculateTotalSales } from "./ordersUtils";
 
 /**
  * Orders Domain Service Layer
- * Encapsulates order workflows, validation and data preparation
+ * Encapsulates API operations for orders
  */
 export const ordersService = {
   /**
@@ -31,27 +30,6 @@ export const ordersService = {
    */
   async shipOrder(orderId) {
     return shipOrderApi(orderId);
-  },
-
-  /**
-   * Helper to build order data structure from cart & context
-   */
-  prepareOrder(params) {
-    return buildOrderPayload(params);
-  },
-
-  /**
-   * Helper to filter user orders
-   */
-  getUserOrders(orders, currentUser) {
-    return filterOrdersByCustomer(orders, currentUser);
-  },
-
-  /**
-   * Helper to get total sales
-   */
-  getTotalSales(orders) {
-    return calculateTotalSales(orders);
   }
 };
 

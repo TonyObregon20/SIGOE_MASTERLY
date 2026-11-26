@@ -1,37 +1,9 @@
 import React, { useEffect, useState, useMemo } from "react";
-import {
-  Users,
-  X,
-  Building2,
-  Plus,
-  Search,
-  Filter,
-  Scissors,
-  Layers,
-  Sparkles,
-  Flame,
-  Package,
-  Tags,
-  CheckCircle2,
-  AlertCircle,
-  FileText,
-  Edit3,
-  Trash2,
-  Phone,
-  Mail,
-  MapPin,
-  DollarSign,
-  TrendingUp,
-  Clock,
-  ChevronRight,
-  ClipboardList
-} from "lucide-react";
+import { X, Building2, Plus, Search, Filter, Scissors, Layers, Sparkles, Flame, Package, Tags, CheckCircle2, Edit3, Trash2, Phone, Mail, MapPin, ClipboardList } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   SUPPLIER_SPECIALTIES,
-  SERVICE_SPECIALTIES,
-  SPECIALTY_COLORS,
-  filterSuppliers
+  SPECIALTY_COLORS
 } from "./suppliersUtils";
 import SupplierFormModal from "./components/SupplierFormModal";
 import SupplierHistoryModal from "./components/SupplierHistoryModal";

@@ -1,44 +1,20 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  ShoppingBag,
   Package,
   Truck,
-  Users as UsersIcon,
   ChevronRight,
-  Plus,
-  Search,
-  Filter,
   AlertCircle,
   Clock,
   CheckCircle2,
-  ClipboardList,
-  User as UserIcon,
-  History,
-  LayoutDashboard,
-  Eye,
-  EyeOff,
-  Printer,
-  Globe,
   Download,
-  X,
-  Edit3,
-  CreditCard,
-  FileText,
-  UserPlus,
   Banknote,
-  TrendingUp,
-  Lock,
-  Trash2,
-  CalendarClock,
-  BarChart3,
-  Upload
+  CalendarClock
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
-import StatCard from "@/components/ui/StatCard";
+import AdminDialog from "@/components/admin/AdminDialog";
 import { Pagination } from "@/components/shop/ShopUI";
 import { formatOrderId } from "@/features/orders/ordersUtils";
+import { generateSalidaGuidePDF } from "@/utils/pdfGenerator";
 
 function SalesManagementView({
   orders = [],
@@ -54,6 +30,8 @@ function SalesManagementView({
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [shippingOrderId, setShippingOrderId] = useState(null);
+  const [dispatchNotice, setDispatchNotice] = useState(null);
 
   const filteredOrders = orders.filter((o) => filter === "all" || o.type === filter);
   const pagedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -67,8 +45,34 @@ function SalesManagementView({
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [filteredOrders.length, pageSize, currentPage]);
 
-  const handleStatusChange = (orderId, newStatus) => {
-    onUpdateOrder(orderId, { status: newStatus });
+  const handleDispatch = async (order, guide) => {
+    if (shippingOrderId) return;
+    if (!guide || guide.status !== "Aceptado") {
+      setDispatchNotice({
+        orderId: order.id,
+        needsWarehouse: true,
+        message: guide
+          ? "Primero debes aprobar la salida en Almacén y Kardex."
+          : "Primero debes generar una salida (guía) con transportista en Almacén y Kardex."
+      });
+      return;
+    }
+
+    setShippingOrderId(order.id);
+    try {
+      const result = await onShipOrder(order.id);
+      if (!result?.success) {
+        setDispatchNotice({
+          orderId: order.id,
+          needsWarehouse: ["GUIDE_REQUIRED", "GUIDE_PENDING"].includes(result?.code),
+          message: result?.message || "No se pudo despachar el pedido."
+        });
+      }
+    } catch (error) {
+      setDispatchNotice({ orderId: order.id, message: error.message || "No se pudo despachar el pedido." });
+    } finally {
+      setShippingOrderId(null);
+    }
   };
 
   return (
@@ -97,22 +101,21 @@ function SalesManagementView({
               <th className="px-6 py-4 text-xs font-medium text-shop-muted whitespace-nowrap">Cliente</th>
               <th className="px-6 py-4 text-xs font-medium text-shop-muted whitespace-nowrap">Tipo / Estado</th>
               <th className="px-6 py-4 text-xs font-medium text-shop-muted whitespace-nowrap">Total / Cobro</th>
+              <th scope="col" className="whitespace-nowrap px-6 py-4 text-center text-xs font-semibold text-shop-ink">Guía</th>
               <th className="px-6 py-4 text-xs font-medium text-shop-muted text-right whitespace-nowrap">Estado Almacén & Despacho</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-shop-line">
             {pagedOrders.map((order, idx) => {
               const salidaMovement = (warehouseMovements || []).find(
-                (wm) => wm.orderId === order.id && wm.type === "Salida"
+                (wm) => wm.orderId === order.id && wm.type === "Salida" && wm.status !== "Rechazado"
               );
-              const isSalidaAccepted = Boolean(
-                order.salidaApproved ||
-                order.warehouseApproved ||
-                (salidaMovement && salidaMovement.status === "Aceptado")
+              const guide = warehouseMovements.find(
+                (wm) => wm.orderId === order.id && wm.type === "Salida" &&
+                  (wm.status === "Aceptado" || wm.status === "Pendiente") &&
+                  wm.guideNumber && wm.carrier?.trim()
               );
-              const isSalidaPending = Boolean(
-                salidaMovement && salidaMovement.status === "Pendiente"
-              );
+              const isSalidaAccepted = guide?.status === "Aceptado";
               const isShipped = order.status === "Enviado";
 
               const associatedOp = (productionOrders || []).find((op) => op.orderId === order.id);
@@ -169,7 +172,12 @@ function SalesManagementView({
                       </span>
                       <select
                         value={order.status}
-                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                        disabled={isShipped || shippingOrderId === order.id}
+                        onChange={(e) => {
+                          const status = e.target.value;
+                          if (status === "Enviado") handleDispatch(order, guide);
+                          else onUpdateOrder(order.id, { status });
+                        }}
                         className={`text-[11px] font-medium border-none bg-transparent focus:ring-0 p-0 cursor-pointer tabular-nums ${
                           order.status === "Pagado Total"
                             ? "text-emerald-600"
@@ -204,118 +212,112 @@ function SalesManagementView({
                       )}
                     </div>
                   </td>
+                  <td className="px-6 py-4 text-center">
+                    {guide ? (
+                      <div className="inline-flex items-center gap-2 whitespace-nowrap align-middle">
+                        <span className="rounded-[2px] bg-shop-light px-2.5 py-1 text-xs font-semibold tabular-nums text-shop-ink">
+                          {guide.guideNumber}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => generateSalidaGuidePDF(guide)}
+                          aria-label={`Descargar guía ${guide.guideNumber} en PDF`}
+                          title="Descargar PDF"
+                          className="inline-flex size-9 shrink-0 items-center justify-center rounded-[2px] border border-shop-line bg-white text-shop-blue transition-colors hover:border-shop-blue hover:bg-shop-light focus-visible:outline-2 focus-visible:outline-shop-blue focus-visible:outline-offset-2"
+                        >
+                          <Download className="size-4" aria-hidden="true" />
+                        </button>
+                      </div>
+                    ) : <span className="whitespace-nowrap text-xs text-shop-muted">Sin guía</span>}
+                  </td>
                   <td className="px-6 py-4 text-right tabular-nums">
                     <div className="flex items-center justify-end gap-2">
                       {isShipped ? (
                         <span className="px-3 py-1.5 bg-shop-light text-shop-muted text-[11px] font-medium rounded-[2px] flex items-center gap-1.5 border border-shop-line">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Enviado
                         </span>
-                      ) : isSalidaAccepted ? (
-                        <div className="flex flex-col items-end gap-1">
+                      ) : (
+                        <div className="flex flex-col items-end gap-2">
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onShipOrder(order.id);
-                            }}
-                            className="px-3.5 py-1.5 bg-shop-ink hover:bg-shop-blue text-white text-[11px] font-semibold rounded-[2px] transition-all flex items-center gap-1.5 min-h-9"
-                            title="Salida aprobada en almacén. Clic para marcar como despachado al cliente."
+                            type="button"
+                            disabled={Boolean(shippingOrderId)}
+                            onClick={() => handleDispatch(order, guide)}
+                            className="px-3.5 py-1.5 bg-shop-ink hover:bg-shop-blue text-white text-[11px] font-semibold rounded-[2px] flex items-center gap-1.5 min-h-9 disabled:opacity-50"
                           >
-                            <Truck className="w-3.5 h-3.5" /> Despachar
+                            <Truck className="w-3.5 h-3.5" /> {shippingOrderId === order.id ? "Despachando…" : "Despachar"}
                           </button>
-                          <span className="text-[11px] font-medium text-emerald-600 tabular-nums">
-                            Salida Almacén OK ({salidaMovement?.id || order.warehouseSalidaId || "Aprobada"})
-                          </span>
-                        </div>
-                      ) : isSalidaPending ? (
-                        <div className="flex flex-col items-end gap-1">
-                          <button
-                            disabled
-                            className="px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-medium rounded-[2px] cursor-not-allowed flex items-center gap-1.5 min-h-9"
-                            title="Salida registrada en almacén pero pendiente de aprobación física por el almacenero."
-                          >
-                            <Clock className="w-3 h-3 text-amber-600" /> Salida en Almacén ({salidaMovement.id})
-                          </button>
-                          {onNavigateToWarehouse && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onNavigateToWarehouse();
-                              }}
-                              className="text-[11px] text-amber-700 hover:underline font-medium tabular-nums"
-                            >
-                              Ver en Almacén →
-                            </button>
+                          {isSalidaAccepted ? (
+                            <span className="text-[11px] font-medium text-emerald-600">Salida aprobada</span>
+                          ) : guide?.status === "Pendiente" ? (
+                            <span className="text-[11px] font-medium text-amber-700">Salida pendiente de aprobación</span>
+                          ) : salidaMovement?.status === "Aceptado" ? (
+                            <span className="text-[11px] font-medium text-amber-700">Salida aprobada · Falta guía</span>
+                          ) : isCustomOrder && (!associatedOp || !isOpFinished) ? (
+                              <div className="flex flex-col items-end gap-1">
+                                <span className="px-3 py-1.5 bg-shop-light border border-shop-line text-shop-muted text-[11px] font-medium rounded-[2px] flex items-center gap-1.5">
+                                  <Clock className="w-3 h-3 text-shop-blue" />
+                                  {associatedOp
+                                    ? `En Fabricación (${associatedOp.id} • ${associatedOp.progress || 0}%)`
+                                    : "En Fabricación (Sin OP)"}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] text-shop-muted font-medium tabular-nums">En Taller • No en Almacén</span>
+                                  {onNavigateToProduction && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onNavigateToProduction();
+                                      }}
+                                      className="text-[11px] text-shop-blue hover:underline font-medium tabular-nums"
+                                    >
+                                      Ver OP →
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ) : isCustomOrder && isOpFinished && !ingresoAccepted ? (
+                              <div className="flex flex-col items-end gap-1">
+                                <span className="px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-medium rounded-[2px] flex items-center gap-1.5">
+                                  <AlertCircle className="w-3 h-3 text-amber-600" />
+                                  {ingresoPending ? `Ingreso Pendiente (${ingresoPending.id})` : "Pendiente Ingreso Almacén"}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] text-amber-600 font-medium tabular-nums">
+                                    {ingresoPending ? "OP 100% • Falta Aceptar en Almacén" : "OP 100% • Falta Generar Ingreso con OP"}
+                                  </span>
+                                  {onNavigateToWarehouse && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onNavigateToWarehouse();
+                                      }}
+                                      className="text-[11px] text-shop-blue hover:underline font-medium tabular-nums"
+                                    >
+                                      {ingresoPending ? "Aceptar Ingreso →" : "Generar Ingreso →"}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-end gap-1">
+                                <span className="text-[11px] font-medium text-shop-blue flex items-center gap-1.5">
+                                  <Package className="w-3 h-3 text-shop-blue" /> En Almacén • Requiere Salida
+                                </span>
+                                {onNavigateToWarehouse && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onNavigateToWarehouse();
+                                    }}
+                                    className="text-[11px] text-shop-blue hover:underline font-medium tabular-nums"
+                                  >
+                                    Generar Salida en Almacén →
+                                  </button>
                           )}
                         </div>
-                      ) : isCustomOrder && (!associatedOp || !isOpFinished) ? (
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="px-3 py-1.5 bg-shop-light border border-shop-line text-shop-muted text-[11px] font-medium rounded-[2px] flex items-center gap-1.5">
-                            <Clock className="w-3 h-3 text-shop-blue" />
-                            {associatedOp
-                              ? `En Fabricación (${associatedOp.id} • ${associatedOp.progress || 0}%)`
-                              : "En Fabricación (Sin OP)"}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-shop-muted font-medium tabular-nums">En Taller • No en Almacén</span>
-                            {onNavigateToProduction && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onNavigateToProduction();
-                                }}
-                                className="text-[11px] text-shop-blue hover:underline font-medium tabular-nums"
-                              >
-                                Ver OP →
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ) : isCustomOrder && isOpFinished && !ingresoAccepted ? (
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-medium rounded-[2px] flex items-center gap-1.5">
-                            <AlertCircle className="w-3 h-3 text-amber-600" />
-                            {ingresoPending ? `Ingreso Pendiente (${ingresoPending.id})` : "Pendiente Ingreso Almacén"}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-amber-600 font-medium tabular-nums">
-                              {ingresoPending ? "OP 100% • Falta Aceptar en Almacén" : "OP 100% • Falta Generar Ingreso con OP"}
-                            </span>
-                            {onNavigateToWarehouse && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onNavigateToWarehouse();
-                                }}
-                                className="text-[11px] text-shop-blue hover:underline font-medium tabular-nums"
-                              >
-                                {ingresoPending ? "Aceptar Ingreso →" : "Generar Ingreso →"}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-end gap-1">
-                          <button
-                            disabled
-                            className="px-3 py-1.5 bg-shop-light border border-shop-line text-shop-blue text-[11px] font-medium rounded-[2px] cursor-not-allowed flex items-center gap-1.5 min-h-9"
-                            title="Prendas disponibles en almacén. Almacén debe generar la salida para activar el despacho."
-                          >
-                            <Package className="w-3 h-3 text-shop-blue" /> En Almacén • Requiere Salida
-                          </button>
-                          {onNavigateToWarehouse && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onNavigateToWarehouse();
-                              }}
-                              className="text-[11px] text-shop-blue hover:underline font-medium tabular-nums"
-                            >
-                              Generar Salida en Almacén →
-                            </button>
                           )}
                         </div>
                       )}
@@ -334,7 +336,7 @@ function SalesManagementView({
               );
             })}
             {filteredOrders.length === 0 && (
-              <tr><td colSpan={5} className="px-6 py-16 text-center text-sm text-shop-muted">No hay ventas en esta selección.</td></tr>
+              <tr><td colSpan={6} className="px-6 py-16 text-center text-sm text-shop-muted">No hay ventas en esta selección.</td></tr>
             )}
           </tbody>
         </table>
@@ -351,6 +353,32 @@ function SalesManagementView({
             setCurrentPage(1);
           }}
         />
+      )}
+
+      {dispatchNotice && (
+        <AdminDialog
+          label="Despacho pendiente"
+          onClose={() => setDispatchNotice(null)}
+          className="fixed inset-0 z-[120] grid place-items-center bg-shop-ink/60 p-4"
+        >
+          <div className="w-full max-w-md space-y-4 rounded-[2px] border border-shop-line bg-white p-6">
+            <h2 className="text-lg font-semibold">Despacho pendiente · {formatOrderId(dispatchNotice.orderId)}</h2>
+            <p className="text-shop-muted">{dispatchNotice.message}</p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button type="button" onClick={() => setDispatchNotice(null)} className="rounded-[2px] border border-shop-line px-4 py-2">
+                Cerrar
+              </button>
+              {dispatchNotice.needsWarehouse && onNavigateToWarehouse && (
+                <button type="button" onClick={() => {
+                  setDispatchNotice(null);
+                  onNavigateToWarehouse();
+                }} className="rounded-[2px] bg-shop-ink px-4 py-2 text-white">
+                  Ir a Almacén y Kardex
+                </button>
+              )}
+            </div>
+          </div>
+        </AdminDialog>
       )}
 
       <AnimatePresence>

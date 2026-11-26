@@ -36,5 +36,4 @@ export const productsService = {
   }
 };
 
-export const productService = productsService;
 export default productsService;

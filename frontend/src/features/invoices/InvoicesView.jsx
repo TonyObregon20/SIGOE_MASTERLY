@@ -11,7 +11,7 @@ import InvoiceDetailModal from "./components/InvoiceDetailModal";
  * Invoices View / SUNAT Electronic Receipts Register
  * Lists, filters, prints, and manages Boletas and Facturas
  */
-function InvoicesView({ invoices = [], products, onCancelInvoice }) {
+function InvoicesView({ invoices = [], onCancelInvoice }) {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
