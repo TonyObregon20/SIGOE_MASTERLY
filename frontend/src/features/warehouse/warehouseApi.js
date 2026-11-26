@@ -9,6 +9,10 @@ export async function getWarehouseMovementsApi() {
   return apiClient("/api/warehouse-movements");
 }
 
+export async function getNextGuideNumberApi() {
+  return apiClient("/api/warehouse-movements/next-guide-number", { cache: "no-store" });
+}
+
 export async function acceptWarehouseMovementApi(movementId) {
   return apiClient("/api/warehouse-movements/accept", {
     method: "POST",

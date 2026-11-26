@@ -1,15 +1,13 @@
 import { ShopModal } from "@/components/shop/ShopUI";
 import React, { useState } from "react";
-import { CheckCircle2, Download, Mail, FileText, X, Sparkles, Send, ArrowRight, ShieldCheck, Building2 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { CheckCircle2, Download, Mail, Sparkles, Send } from "lucide-react";
 import { generateInvoicePDF, generateInvoicePDFBase64 } from "@/utils/pdfGenerator";
 import { sendInvoiceEmailApi } from "@/features/invoices/invoicesApi";
 function OrderSuccessModal({
   isOpen,
   onClose,
   orderData,
-  currentUser,
-  onOpenMyOrders
+  currentUser
 }) {
   const [emailOverride, setEmail] = useState(null);
   const [isSendingEmail, setIsSendingEmail] = useState(false);

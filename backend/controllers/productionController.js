@@ -1,5 +1,4 @@
 import ProductionOrderModel from "../models/ProductionOrder.js";
-import WarehouseMovementModel from "../models/WarehouseMovement.js";
 import SupplierModel from "../models/Supplier.js";
 import OrderModel from "../models/Order.js";
 import UserModel from "../models/User.js";

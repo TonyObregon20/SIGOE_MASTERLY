@@ -1,5 +1,5 @@
 import AdminDialog from "@/components/admin/AdminDialog";
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { motion } from "motion/react";
 import {
   X,
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { formatProductionOrderId } from "@/features/production/productionUtils";
 import { formatOrderId } from "@/features/orders/ordersUtils";
+import { getNextGuideNumberApi } from "@/features/warehouse/warehouseApi";
 
 export default function CreateSalidaModal({
   isOpen,
@@ -33,10 +34,34 @@ export default function CreateSalidaModal({
   const [manualProductId, setManualProductId] = useState("");
   const [manualQuantity, setManualQuantity] = useState(1);
   const [manualSize, setManualSize] = useState("");
+  const [guideNumber, setGuideNumber] = useState("");
+  const [guideLoadError, setGuideLoadError] = useState("");
+  const [guideRequest, setGuideRequest] = useState(0);
+  const [carrier, setCarrier] = useState("");
   const [reason, setReason] = useState("");
-  const [notes, setNotes] = useState("");
+  const [manualReason, setManualReason] = useState("");
+  const [manualNotes, setManualNotes] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const [autoAccept, setAutoAccept] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const requiresGuide = sourceType !== "manual";
+  useEffect(() => {
+    if (!isOpen || !requiresGuide) return;
+    let active = true;
+    getNextGuideNumberApi().then((result) => {
+      if (!active) return;
+      if (result?.success && result.guideNumber) {
+        setGuideNumber(result.guideNumber);
+        setGuideLoadError("");
+      } else {
+        setGuideLoadError(result?.status === 404
+          ? "El servidor aún no está actualizado para emitir guías."
+          : result?.message || "No se pudo cargar el número de guía.");
+      }
+    });
+    return () => { active = false; };
+  }, [guideRequest, isOpen, requiresGuide]);
 
   // Detailed analysis of each order in relation to production & warehouse lifecycle
   const analyzedOrders = useMemo(() => {
@@ -59,74 +84,24 @@ export default function CreateSalidaModal({
       }, 0);
 
       // Salida movements accepted in warehouse for this order
-      const acceptedSalidas = warehouseMovements.filter(
+      const linkedSalidas = warehouseMovements.filter(
         (wm) =>
           wm.type === "Salida" &&
-          wm.status === "Aceptado" &&
+          (wm.status === "Aceptado" || wm.status === "Pendiente") &&
           (wm.orderId === o.id || (associatedOp && wm.opId === associatedOp.id))
       );
-      const totalDispatchedUnits = acceptedSalidas.reduce((sum, wm) => {
-        const itemSum = (wm.items || []).reduce((s, it) => s + (Number(it.quantity) || 0), 0);
-        return sum + (itemSum || Number(wm.quantity) || 0);
-      }, 0);
-
-      const availableInWarehouse = isCustomOrder
-        ? Math.max(0, totalIngressedUnits - totalDispatchedUnits)
-        : totalOrderUnits;
-
-      let opProgress = 0;
-      let opStage = "";
-      let isOpFinished = false;
-      if (associatedOp) {
-        opProgress = associatedOp.progress || 0;
-        opStage = associatedOp.currentStage || "En proceso";
-        isOpFinished = associatedOp.currentStage === "Finalizado" || associatedOp.progress === 100;
-      }
-
-      let canGenerateSalida = false;
-      let statusCategory = "ready";
-      let statusMessage = "";
-
-      if (totalOrderUnits > 0 && totalDispatchedUnits >= totalOrderUnits) {
-        statusCategory = "shipped";
-        statusMessage = `Pedido 100% Despachado (${totalDispatchedUnits}/${totalOrderUnits} uds entregadas)`;
-      } else if (availableInWarehouse > 0) {
-        canGenerateSalida = true;
-        statusCategory = "ready";
-        if (totalDispatchedUnits > 0) {
-          statusMessage = `Despacho parcial previo (${totalDispatchedUnits}/${totalOrderUnits} uds). Disponible en almacén: ${availableInWarehouse} uds para entregar.`;
-        } else {
-          statusMessage = `Disponible en almacén: ${availableInWarehouse} uds. Listo para autorizar salida y despacho.`;
-        }
-      } else if (isCustomOrder) {
-        if (!associatedOp) {
-          statusCategory = "in_production";
-          statusMessage = "A Pedido - Aún no se ha iniciado la Orden de Producción (OP)";
-        } else if (totalIngressedUnits === 0) {
-          statusCategory = "in_production";
-          statusMessage = `En Fabricación (${associatedOp.id} • ${opStage} ${opProgress}%). Aún no hay ingresos recibidos en almacén.`;
-        } else {
-          statusCategory = "waiting_production";
-          statusMessage = `Lote anterior ya despachado (${totalDispatchedUnits}/${totalOrderUnits} uds). Esperando que el taller ingrese las siguientes prendas a almacén.`;
-        }
-      } else {
-        canGenerateSalida = true;
-        statusCategory = "ready";
-        statusMessage = "Venta directa de stock disponible";
-      }
+      const hasGuide = linkedSalidas.some((wm) => wm.guideNumber && wm.carrier?.trim());
+      const existingSalida = linkedSalidas.find((wm) => wm.status === "Aceptado") || linkedSalidas[0];
+      const isOpenOrder = o.channel !== "presencial" && o.status !== "Enviado" && !hasGuide;
+      const waitingForIngress = isOpenOrder && isCustomOrder && existingSalida?.status !== "Aceptado" &&
+        totalIngressedUnits < totalOrderUnits;
 
       return {
         ...o,
-        associatedOp,
-        isCustomOrder,
-        isOpFinished,
-        totalOrderUnits,
-        totalIngressedUnits,
-        totalDispatchedUnits,
-        availableInWarehouse,
-        canGenerateSalida,
-        statusCategory,
-        statusMessage
+        existingSalida,
+        canGenerateSalida: isOpenOrder && !waitingForIngress,
+        waitingForIngress,
+        statusMessage: `Ingreso aceptado en Almacén: ${totalIngressedUnits}/${totalOrderUnits} uds.`
       };
     });
   }, [orders, productionOrders, warehouseMovements]);
@@ -138,9 +113,7 @@ export default function CreateSalidaModal({
 
   // Orders currently in workshop / awaiting ingress acceptance
   const inProgressOrders = useMemo(() => {
-    return analyzedOrders.filter(
-      (o) => o.statusCategory === "in_production" || o.statusCategory === "ingreso_pending"
-    );
+    return analyzedOrders.filter((o) => o.waitingForIngress);
   }, [analyzedOrders]);
 
   // Selected Order object
@@ -158,13 +131,17 @@ export default function CreateSalidaModal({
       const isIngresoAccepted = Boolean(ingresoMovement && ingresoMovement.status === "Aceptado");
       const isIngresoPending = Boolean(ingresoMovement && ingresoMovement.status === "Pendiente");
 
-      const salidaMovement = warehouseMovements.find(
-        (wm) => (wm.opId === op.id || (op.orderId && wm.orderId === op.orderId)) && wm.type === "Salida"
+      const salidas = warehouseMovements.filter(
+        (wm) => (wm.opId === op.id || (op.orderId && wm.orderId === op.orderId)) &&
+          wm.type === "Salida" && wm.status !== "Rechazado"
       );
+      const salidaMovement = salidas.find((wm) => wm.status === "Aceptado") || salidas[0];
       const isSalidaAccepted = Boolean(salidaMovement && salidaMovement.status === "Aceptado");
       const isSalidaPending = Boolean(salidaMovement && salidaMovement.status === "Pendiente");
 
-      const canGenerateSalida = isFinished && isIngresoAccepted && !isSalidaAccepted;
+      const hasGuide = salidas.some((wm) => wm.guideNumber && wm.carrier?.trim());
+      const isShipped = orders.some((order) => order.id === op.orderId && order.status === "Enviado");
+      const canGenerateSalida = !hasGuide && !isShipped && (isSalidaAccepted || (isFinished && isIngresoAccepted));
 
       return {
         ...op,
@@ -178,7 +155,7 @@ export default function CreateSalidaModal({
         canGenerateSalida
       };
     });
-  }, [productionOrders, warehouseMovements]);
+  }, [orders, productionOrders, warehouseMovements]);
 
   // Eligible OPs: Only OPs that reached 100% and have their Ingreso accepted in warehouse
   const eligibleOps = useMemo(() => {
@@ -195,21 +172,28 @@ export default function CreateSalidaModal({
     return eligibleOps.find((op) => op.id === selectedOpId);
   }, [eligibleOps, selectedOpId]);
 
-  // Check if selected order already has a salida movement
-  const orderExistingSalida = useMemo(() => {
-    if (!selectedOrderId) return null;
-    return warehouseMovements.find(
-      (wm) => wm.orderId === selectedOrderId && wm.type === "Salida"
-    );
-  }, [selectedOrderId, warehouseMovements]);
+  const orderExistingSalida = selectedOrder?.existingSalida;
+  const opExistingSalida = selectedOp?.salidaMovement;
+  const alreadyApproved = requiresGuide &&
+    (sourceType === "order" ? orderExistingSalida : opExistingSalida)?.status === "Aceptado";
+  const canSubmit = requiresGuide
+    ? Boolean(guideNumber && !guideLoadError && carrier.trim() && (sourceType === "order" ? selectedOrder : selectedOp))
+    : manualItems.length > 0;
 
-  // Check if selected OP already has a salida movement
-  const opExistingSalida = useMemo(() => {
-    if (!selectedOpId) return null;
-    return warehouseMovements.find(
-      (wm) => (wm.opId === selectedOpId || (selectedOp?.orderId && wm.orderId === selectedOp.orderId)) && wm.type === "Salida"
-    );
-  }, [selectedOpId, selectedOp, warehouseMovements]);
+  const reloadGuideNumber = () => {
+    setGuideNumber("");
+    setGuideLoadError("");
+    setGuideRequest((request) => request + 1);
+  };
+
+  const selectSource = (source) => {
+    setSubmitError("");
+    if (!requiresGuide && source !== "manual") {
+      setGuideNumber("");
+      setGuideLoadError("");
+    }
+    setSourceType(source);
+  };
 
   // Stock check for selected Order
   const orderStockCheck = useMemo(() => {
@@ -254,47 +238,32 @@ export default function CreateSalidaModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
-
-    if (sourceType === "order") {
-      if (!selectedOrderId) {
-        alert("Por favor seleccione un pedido.");
-        return;
-      }
-      if (orderExistingSalida && orderExistingSalida.status === "Aceptado") {
-        alert("Este pedido ya cuenta con una salida de almacén aprobada.");
-        return;
-      }
-    } else if (sourceType === "op") {
-      if (!selectedOpId) {
-        alert("Por favor seleccione una Orden de Producción.");
-        return;
-      }
-    } else if (sourceType === "manual") {
-      if (manualItems.length === 0) {
-        alert("Debe agregar al menos un producto a la lista de salida.");
-        return;
-      }
-    }
+    if (isSubmitting || !canSubmit) return;
 
     setIsSubmitting(true);
+    setSubmitError("");
     try {
       const payload = {
         orderId: sourceType === "order" ? selectedOrderId : (sourceType === "op" && selectedOp?.orderId ? selectedOp.orderId : null),
         opId: sourceType === "op" ? selectedOpId : null,
-        items: sourceType === "manual" ? manualItems : undefined,
-        originType: sourceType === "order"
-          ? (selectedOrder?.type === "pedido" ? "A Pedido" : "Venta Directa")
-          : (sourceType === "op" ? "Producción OP" : "Ajuste / Merma"),
-        reason: reason || (sourceType === "order" ? `Salida Almacén para Despacho Orden ${selectedOrderId}` : `Salida OP ${selectedOpId}`),
-        notes: notes,
-        autoAccept: autoAccept
+        ...(requiresGuide
+          ? { guideNumber, carrier: carrier.trim(), reason: reason.trim() }
+          : { items: manualItems, reason: manualReason.trim(), notes: manualNotes.trim() }),
+        autoAccept
       };
 
-      await onCreateSalida(payload);
-      onClose();
+      const result = await onCreateSalida(payload);
+      if (result?.success) {
+        onClose();
+      } else {
+        if (result?.code === "GUIDE_NUMBER_CHANGED") {
+          if (result.guideNumber) setGuideNumber(result.guideNumber);
+          else reloadGuideNumber();
+        }
+        setSubmitError(result?.message || "No se pudo registrar la salida.");
+      }
     } catch (err) {
-      console.error("Error al registrar salida:", err);
+      setSubmitError(err.message || "No se pudo registrar la salida.");
     } finally {
       setIsSubmitting(false);
     }
@@ -318,7 +287,7 @@ export default function CreateSalidaModal({
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         className="relative w-full max-w-2xl bg-white rounded-[2px] overflow-y-auto border border-shop-line max-h-[90dvh]"
       >
-        <div className="p-7 space-y-6 max-h-[90vh] overflow-y-auto">
+        <div className="p-7 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-shop-line pb-4">
             <div className="space-y-1">
@@ -347,7 +316,8 @@ export default function CreateSalidaModal({
           <div className="grid grid-cols-3 gap-2 p-1.5 bg-shop-light rounded-[2px]">
             <button
               type="button"
-              onClick={() => setSourceType("order")}
+              onClick={() => selectSource("order")}
+              disabled={isSubmitting}
               className={`py-2.5 px-3 rounded-[2px] text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                 sourceType === "order"
                   ? "bg-white text-shop-ink border border-shop-line"
@@ -358,7 +328,8 @@ export default function CreateSalidaModal({
             </button>
             <button
               type="button"
-              onClick={() => setSourceType("op")}
+              onClick={() => selectSource("op")}
+              disabled={isSubmitting}
               className={`py-2.5 px-3 rounded-[2px] text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                 sourceType === "op"
                   ? "bg-white text-shop-ink border border-shop-line"
@@ -369,7 +340,8 @@ export default function CreateSalidaModal({
             </button>
             <button
               type="button"
-              onClick={() => setSourceType("manual")}
+              onClick={() => selectSource("manual")}
+              disabled={isSubmitting}
               className={`py-2.5 px-3 rounded-[2px] text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                 sourceType === "manual"
                   ? "bg-white text-shop-ink border border-shop-line"
@@ -398,7 +370,7 @@ export default function CreateSalidaModal({
                         <p className="text-[11px] font-semibold text-shop-muted">
                           Pedidos en Fabricación / Pendientes de Ingreso ({inProgressOrders.length}):
                         </p>
-                        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                        <div className="space-y-1.5">
                           {inProgressOrders.map((ord) => (
                             <div key={ord.id} className="flex items-center justify-between text-[11px] bg-white p-2.5 rounded-[2px] border border-shop-line">
                               <div>
@@ -450,7 +422,7 @@ export default function CreateSalidaModal({
                     )}
                     <div>
                       <strong className="font-medium">Movimiento {orderExistingSalida.id} existente:</strong> Estado: <strong>{orderExistingSalida.status}</strong>.
-                      {orderExistingSalida.status === "Aceptado" && " Este pedido ya tiene salida aprobada y está listo para despachar en Ventas."}
+                      {orderExistingSalida.status === "Aceptado" && " Registra la guía para habilitar el despacho en Ventas."}
                     </div>
                   </div>
                 )}
@@ -497,7 +469,7 @@ export default function CreateSalidaModal({
                       ))}
                     </div>
 
-                    {!orderStockCheck.canFulfill && (
+                    {!alreadyApproved && !orderStockCheck.canFulfill && (
                       <p className="text-[11px] text-rose-600 font-medium flex items-center gap-1.5 mt-2 bg-rose-50 p-2 rounded-[2px] border border-rose-200">
                         <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                         Atención: El stock físico en almacén es menor a la cantidad requerida. Verifica si la OP ya ingresó a almacén.
@@ -525,7 +497,7 @@ export default function CreateSalidaModal({
                         <p className="text-[11px] font-semibold text-shop-muted">
                           OPs en Fabricación o Pendientes de Ingreso ({inProgressOps.length}):
                         </p>
-                        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                        <div className="space-y-1.5">
                           {inProgressOps.map((opItem) => (
                             <div key={opItem.id} className="flex items-center justify-between text-[11px] bg-white p-2.5 rounded-[2px] border border-shop-line">
                               <div>
@@ -687,63 +659,96 @@ export default function CreateSalidaModal({
               </div>
             )}
 
-            {/* Additional Fields: Reason and Notes */}
-            <div className="space-y-3 pt-1 border-t border-shop-line">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-shop-muted pl-1">
-                  Motivo / Observaciones
-                </label>
-                <input
-                  type="text"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder={
-                    sourceType === "order"
-                      ? "Ejem: Salida por Despacho a Cliente / Courier"
-                      : sourceType === "op"
-                      ? "Ejem: Salida de lote completado para entrega"
-                      : "Ejem: Ajuste de inventario, Merma o Muestra comercial"
-                  }
-                  className="w-full px-4 py-2.5 bg-white border border-shop-line rounded-[2px] font-medium outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]"
-                />
-              </div>
+            <div className="space-y-3 pt-3 border-t border-shop-line">
+              {requiresGuide ? (
+                <>
+                  <label className="block space-y-1">
+                    <span className="text-[11px] font-semibold text-shop-muted pl-1">N° Guía</span>
+                    <div className="relative">
+                      <FileText aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-shop-muted" />
+                      <input
+                        type="text"
+                        value={guideNumber}
+                        placeholder={guideLoadError ? "" : "Cargando número…"}
+                        readOnly
+                        className="w-full pl-10 pr-4 py-2.5 bg-shop-light border border-shop-line rounded-[2px] tabular-nums min-h-10 text-base sm:text-[13px]"
+                      />
+                    </div>
+                  </label>
+                  {guideLoadError && (
+                    <p className="text-xs text-red-700" role="alert">
+                      {guideLoadError}{" "}
+                      <button type="button" onClick={reloadGuideNumber} className="font-semibold underline">Reintentar</button>
+                    </p>
+                  )}
+                  <label className="block space-y-1">
+                    <span className="text-[11px] font-semibold text-shop-muted pl-1">Transportista (obligatorio)</span>
+                    <input
+                      type="text"
+                      required
+                      maxLength={160}
+                      value={carrier}
+                      onChange={(e) => setCarrier(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-white border border-shop-line rounded-[2px] outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 text-base sm:text-[13px]"
+                    />
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="text-[11px] font-semibold text-shop-muted pl-1">Motivo / Observaciones (opcional)</span>
+                    <input
+                      type="text"
+                      maxLength={500}
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-white border border-shop-line rounded-[2px] outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 text-base sm:text-[13px]"
+                    />
+                  </label>
+                </>
+              ) : (
+                <>
+                  <label className="block space-y-1">
+                    <span className="text-[11px] font-semibold text-shop-muted pl-1">Motivo / Observaciones</span>
+                    <input
+                      type="text"
+                      value={manualReason}
+                      onChange={(e) => setManualReason(e.target.value)}
+                      placeholder="Ej. Ajuste de inventario, merma o muestra comercial"
+                      className="w-full px-4 py-2.5 bg-white border border-shop-line rounded-[2px] outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 text-base sm:text-[13px]"
+                    />
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="text-[11px] font-semibold text-shop-muted pl-1">Referencia / Responsable (opcional)</span>
+                    <input
+                      type="text"
+                      value={manualNotes}
+                      onChange={(e) => setManualNotes(e.target.value)}
+                      placeholder="Ej. Carlos Almacenero"
+                      className="w-full px-4 py-2.5 bg-white border border-shop-line rounded-[2px] outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 text-base sm:text-[13px]"
+                    />
+                  </label>
+                </>
+              )}
 
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-shop-muted pl-1">
-                  N° Guía / Transportista / Responsable (Opcional)
-                </label>
-                <div className="relative">
-                  <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-shop-muted" />
+              {!alreadyApproved && (
+                <label className="flex items-center justify-between gap-3 p-3 bg-shop-light/50 rounded-[2px] border border-shop-light">
+                  <div>
+                    <p className="text-xs font-medium text-shop-ink">Aprobar y descontar stock inmediatamente</p>
+                    <p className="text-[11px] text-shop-muted font-medium">
+                      {autoAccept
+                        ? "Descuenta el stock físico y registra el movimiento en Kardex."
+                        : "La salida queda pendiente de aprobación en Almacén."}
+                    </p>
+                  </div>
                   <input
-                    type="text"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Ejem: Guía GR-0012, Courier Olva / Carlos Almacenero"
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-shop-line rounded-[2px] tabular-nums outline-none focus:ring-2 focus:ring-shop-blue/20 min-h-10 min-w-0 text-base sm:text-[13px]"
+                    type="checkbox"
+                    checked={autoAccept}
+                    onChange={(e) => setAutoAccept(e.target.checked)}
+                    className="w-5 h-5 text-shop-blue rounded-[2px] focus:ring-shop-blue cursor-pointer"
                   />
-                </div>
-              </div>
-
-              {/* Auto Accept Switch */}
-              <div className="flex items-center justify-between p-3 bg-shop-light/50 rounded-[2px] border border-shop-light">
-                <div>
-                  <p className="text-xs font-medium text-shop-ink">
-                    Aprobar y Descontar Stock Inmediatamente
-                  </p>
-                  <p className="text-[11px] text-shop-muted font-medium">
-                    {autoAccept
-                      ? "Descuenta el stock físico, asienta en Kardex y activa el botón de Despacho en Ventas."
-                      : "Crea la salida en estado 'Pendiente' para que el almacenero la verifique luego."}
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={autoAccept}
-                  onChange={(e) => setAutoAccept(e.target.checked)}
-                  className="w-5 h-5 text-shop-blue rounded-[2px] focus:ring-shop-blue cursor-pointer"
-                />
-              </div>
+                </label>
+              )}
             </div>
+
+            {submitError && <p role="alert" className="text-xs text-red-700">{submitError}</p>}
 
             {/* Action Buttons */}
             <div className="flex items-center gap-3 pt-2">
@@ -756,11 +761,11 @@ export default function CreateSalidaModal({
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || (sourceType === "order" && !selectedOrderId) || (sourceType === "op" && !selectedOpId) || (sourceType === "manual" && manualItems.length === 0)}
+                disabled={isSubmitting || !canSubmit}
                 className="flex-1 py-3 px-4 bg-shop-ink hover:bg-shop-ink text-white rounded-[2px] text-xs font-semibold transition-all disabled:bg-slate-200 disabled:text-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-9"
               >
                 <Truck className="w-4 h-4" />
-                {autoAccept ? "Aprobar y Habilitar Despacho" : "Crear Salida Pendiente"}
+                {alreadyApproved ? "Registrar Guía" : autoAccept ? "Aprobar Salida" : "Crear Salida Pendiente"}
               </button>
             </div>
           </form>

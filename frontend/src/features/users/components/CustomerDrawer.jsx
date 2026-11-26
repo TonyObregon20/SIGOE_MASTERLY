@@ -2,8 +2,7 @@ import InvoiceEmailModal from "@/features/invoices/components/InvoiceEmailModal"
 import ChangePasswordModal from "@/features/auth/components/ChangePasswordModal";
 import { ShopModal } from "@/components/shop/ShopUI";
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, BarChart3, Check, CreditCard, Download, FileText, LockKeyhole, LogOut, Mail, Package, Settings, ShoppingBag, Store, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { ArrowRight, BarChart3, Check, CreditCard, Download, FileText, LockKeyhole, LogOut, Mail, Package, Settings, ShoppingBag, Store } from "lucide-react";
 import { generateInvoicePDF, generateInvoicePDFBase64 } from "@/utils/pdfGenerator";
 import { sendInvoiceEmailApi } from "@/features/invoices/invoicesApi";
 import { useAuth } from "@/features/auth/hooks/useAuth";

@@ -1,6 +1,79 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
+export function generateSalidaGuidePDF(guide, { returnBlob = false } = {}) {
+  const doc = new jsPDF();
+  const date = new Date(guide.guideIssuedAt);
+  const issuedAt = Number.isNaN(date.getTime()) ? guide.date : new Intl.DateTimeFormat("es-PE", {
+    timeZone: "America/Lima",
+    dateStyle: "short",
+    timeStyle: "short"
+  }).format(date);
+
+  doc.setProperties({ title: "Guía de salida " + guide.guideNumber });
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, 210, 35, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("MASTERLY", 14, 15);
+  doc.setFontSize(10);
+  doc.text("GUÍA DE SALIDA", 196, 14, { align: "right" });
+  doc.text(guide.guideNumber, 196, 23, { align: "right" });
+
+  const details = [
+    ["Fecha de emisión (Lima)", issuedAt || "-"],
+    ["Tipo de salida", guide.originType],
+    ...(guide.orderId ? [["Orden de venta", guide.orderId]] : []),
+    ...(guide.opId ? [["Orden de producción", guide.opId]] : []),
+    ...(guide.guideCustomerName ? [["Cliente", guide.guideCustomerName]] : []),
+    ["Transportista", guide.carrier],
+    ...(guide.guideObservations ? [["Motivo / Observaciones", guide.guideObservations]] : [])
+  ];
+  autoTable(doc, {
+    startY: 44,
+    margin: { left: 14, right: 14 },
+    body: details,
+    theme: "plain",
+    styles: { fontSize: 10, cellPadding: 2.5, overflow: "linebreak", textColor: [15, 23, 42] },
+    columnStyles: { 0: { cellWidth: 53, fontStyle: "bold" } }
+  });
+
+  const items = guide.items || [];
+  autoTable(doc, {
+    startY: doc.lastAutoTable.finalY + 8,
+    margin: { top: 16, bottom: 18, left: 14, right: 14 },
+    head: [["Producto", "Talla / Distribución", "Unidades"]],
+    body: items.map((item) => [
+      item.productName || item.productId,
+      item.selectedSize || Object.entries(item.sizeDistribution || {})
+        .filter(([, units]) => Number(units) > 0)
+        .map(([size, units]) => size + ": " + units).join(", ") || "-",
+      Number(item.quantity) || 0
+    ]),
+    foot: [["Total de unidades", "", items.reduce((total, item) => total + (Number(item.quantity) || 0), 0)]],
+    showFoot: "lastPage",
+    theme: "striped",
+    styles: { fontSize: 10, cellPadding: 3, overflow: "linebreak" },
+    headStyles: { fillColor: [15, 23, 42] },
+    footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42] },
+    columnStyles: { 1: { cellWidth: 48 }, 2: { cellWidth: 27, halign: "right" } },
+    rowPageBreak: "avoid"
+  });
+
+  const pageCount = doc.getNumberOfPages();
+  for (let page = 1; page <= pageCount; page += 1) {
+    doc.setPage(page);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(71, 85, 105);
+    doc.text("Página " + page + " de " + pageCount, 196, 288, { align: "right" });
+  }
+
+  if (returnBlob) return doc.output("blob");
+  doc.save(guide.guideNumber + ".pdf");
+}
+
 export function generateInvoicePDF(invoiceData) {
   const {
     docType = "Boleta",

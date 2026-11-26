@@ -9,7 +9,6 @@ function AuthModal({
   isOpen,
   onClose,
   loginMode,
-  setLoginMode,
   setUsers,
   setView
 }) {

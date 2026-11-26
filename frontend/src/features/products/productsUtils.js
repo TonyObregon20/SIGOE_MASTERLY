@@ -39,7 +39,7 @@ export function calculateEcommerceMetrics(products = [], orders = []) {
     ? products.reduce((sum, p) => sum + (Number(p.price) || 0), 0) / products.length
     : 0;
 
-  const webOrders = orders.filter((o) => o.type === "pedido" || o.type === "direct");
+  const webOrders = orders.filter((o) => o.channel !== "presencial" && (o.type === "pedido" || o.type === "direct"));
   const webTotalSales = webOrders.reduce((sum, o) => sum + (o.total || 0), 0);
   const webOrdersCount = webOrders.length;
 
@@ -111,66 +111,4 @@ export function getSizeStockBreakdown(product) {
   });
 
   return breakdown;
-}
-
-/**
- * Checks if a product has available stock for immediate delivery
- */
-export function isProductAvailable(product, size = null) {
-  return getAvailableStock(product, size) > 0;
-}
-
-/**
- * Filters out hidden/non-public products for client-facing views
- */
-export function filterPublicProducts(products = []) {
-  return products.filter((p) => p.isPublic !== false);
-}
-
-/**
- * Filters products by category (supports 'Todos' and 'all')
- */
-export function filterProductsByCategory(products = [], category = "Todos") {
-  if (!category || category === "Todos" || category === "all") {
-    return products;
-  }
-  return products.filter((p) => p.category === category);
-}
-
-/**
- * Searches products by name, category, or ID (case-insensitive)
- */
-export function searchProducts(products = [], query = "") {
-  if (!query || !query.trim()) return products;
-  const cleanQuery = query.trim().toLowerCase();
-  return products.filter((p) => {
-    const nameMatch = p.name ? p.name.toLowerCase().includes(cleanQuery) : false;
-    const catMatch = p.category ? p.category.toLowerCase().includes(cleanQuery) : false;
-    const idMatch = p.id ? String(p.id).toLowerCase().includes(cleanQuery) : false;
-    return nameMatch || catMatch || idMatch;
-  });
-}
-
-/**
- * Filters products within a price range
- */
-export function filterProductsByPriceRange(products = [], minPrice = 0, maxPrice = Infinity) {
-  return products.filter((p) => {
-    const price = Number(p.price) || 0;
-    return price >= minPrice && price <= maxPrice;
-  });
-}
-
-/**
- * Sorts products according to sort type
- */
-export function sortProducts(products = [], sortBy = "featured") {
-  const sorted = [...products];
-  if (sortBy === "price-asc") {
-    return sorted.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
-  }
-  if (sortBy === "price-desc") {
-    return sorted.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
-  }
-  return sorted;
 }

@@ -32,7 +32,3 @@ export async function updateProductionStageApi({ opId, stageName, status, respon
     })
   });
 }
-
-// Backwards compatibility aliases
-export const updateStageApi = updateProductionStageApi;
-

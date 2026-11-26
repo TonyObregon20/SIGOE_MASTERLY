@@ -21,7 +21,6 @@ function AdminPage({
   setProducts,
   onAddProduct,
   onUpdateProduct,
-  onDeleteProduct,
   productionOrders,
   setProductionOrders,
   createProductionOrder,
@@ -31,6 +30,7 @@ function AdminPage({
   orders,
   setOrders,
   handleShipOrder,
+  onRegisterInPersonSale,
   kardex,
   onAddStock,
   warehouseMovements = [],
@@ -40,7 +40,6 @@ function AdminPage({
   invoices,
   setInvoices,
   suppliers,
-  setSuppliers,
   onAddSupplier,
   onUpdateSupplier,
   onDeleteSupplier,
@@ -63,6 +62,17 @@ userStatusHistory,
   const { currentUser: authCurrentUser, logout } = useAuth();
   const currentUser = propCurrentUser || authCurrentUser;
   const [adminTab, setAdminTab] = useState("dashboard");
+  const [warehouseSection, setWarehouseSection] = useState("stock");
+
+  const navigateToAdminTab = (tab) => {
+    if (tab === "inventory" && adminTab !== "inventory") setWarehouseSection("stock");
+    setAdminTab(tab);
+  };
+
+  const openWarehouseMovements = () => {
+    setWarehouseSection("movements");
+    setAdminTab("inventory");
+  };
 
   return (
     <>
@@ -70,7 +80,7 @@ userStatusHistory,
         <AdminLayout
           currentUser={currentUser}
           activeTab={adminTab}
-          onNavigate={setAdminTab}
+          onNavigate={navigateToAdminTab}
           onRefresh={() => {
             if (loadOrders) loadOrders();
             if (loadProductionOrders) loadProductionOrders();
@@ -106,6 +116,8 @@ userStatusHistory,
                 
                 {adminTab === "inventory" && (
                   <InventoryView
+                    activeSection={warehouseSection}
+                    onSectionChange={setWarehouseSection}
                     products={products}
                     kardex={kardex}
                     warehouseMovements={warehouseMovements}
@@ -122,7 +134,6 @@ userStatusHistory,
                 {adminTab === "invoices" && (
                   <InvoicesView
                     invoices={invoices}
-                    products={products}
                     onCancelInvoice={async (id) => {
                       try {
                         const data = await cancelInvoiceApi(id);
@@ -149,13 +160,11 @@ userStatusHistory,
                     products={products}
                     salesOrders={orders}
                     warehouseMovements={warehouseMovements}
-                    onOpenGenerateIngreso={() => setAdminTab("inventory")}
+                    onOpenGenerateIngreso={openWarehouseMovements}
                     updateStage={updateStage}
                     setProductionOrders={setProductionOrders}
                     createProductionOrder={createProductionOrder}
                     suppliers={suppliers}
-                    loadSuppliers={loadSuppliers}
-                    onAddSupplierRecord={onAddSupplierRecord}
                   />
                 )}
                 
@@ -173,11 +182,14 @@ userStatusHistory,
                 
                 {adminTab === "sales" && (
                   <SalesManagementView
+                    currentUser={currentUser}
+                    users={users}
+                    onRegisterInPersonSale={onRegisterInPersonSale}
                     orders={orders}
                     products={products}
                     warehouseMovements={warehouseMovements}
                     productionOrders={productionOrders}
-                    onNavigateToWarehouse={() => setAdminTab("inventory")}
+                    onNavigateToWarehouse={openWarehouseMovements}
                     onNavigateToProduction={() => setAdminTab("production")}
                     onShipOrder={handleShipOrder}
                     onUpdateOrder={(id, updates) => {
@@ -191,7 +203,6 @@ userStatusHistory,
                 {adminTab === "users" && (
                 <UsersManagementView
                       users={users}
-                          onUpdateUser={onUpdateUser}
                            onUpdateUserStatus={onUpdateUserStatus} 
                            loadUserStatusHistory={loadUserStatusHistory}
                             userStatusHistory={userStatusHistory}
@@ -203,11 +214,7 @@ userStatusHistory,
                    <WorkersManagementView
                      users={users}
                      onUpdateWorker={onUpdateUser}
-                     onAddWorker={async (worker) => {
-                       const result = await onCreateUser(worker);
-                       if (result?.success) loadUsers?.();
-                       return result;
-                     }}
+                     onAddWorker={onCreateUser}
                    />
                 )}
 

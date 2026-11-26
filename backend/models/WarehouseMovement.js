@@ -12,10 +12,20 @@ const WarehouseMovementSchema = new mongoose.Schema({
   opId: { type: String },
   orderId: { type: String },
   items: [mongoose.Schema.Types.Mixed],
+  guideNumber: { type: String },
+  carrier: { type: String },
+  guideIssuedAt: { type: String },
+  guideCustomerName: { type: String },
+  guideObservations: { type: String },
   date: { type: String, default: () => new Date().toISOString().split("T")[0] },
   createdAt: { type: String, default: () => new Date().toISOString() },
   processedAt: { type: String }
 }, { strict: false });
+
+WarehouseMovementSchema.index(
+  { guideNumber: 1 },
+  { unique: true, partialFilterExpression: { guideNumber: { $type: "string" } } }
+);
 
 export const WarehouseMovementModel = mongoose.models.WarehouseMovement || mongoose.model("WarehouseMovement", WarehouseMovementSchema);
 export const WarehouseMovement = WarehouseMovementModel;

@@ -47,5 +47,4 @@ export const invoicesService = {
 };
 
 // Compatibility export
-export const invoiceService = invoicesService;
 export default invoicesService;

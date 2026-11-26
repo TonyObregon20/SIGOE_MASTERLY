@@ -1,22 +1,6 @@
 import AdminDialog from "@/components/admin/AdminDialog";
 import React, { useState } from "react";
-import {
-  X,
-  Plus,
-  Trash2,
-  Calendar,
-  FileText,
-  DollarSign,
-  Package,
-  Layers,
-  CheckCircle2,
-  Clock,
-  Scissors,
-  Sparkles,
-  Flame,
-  Tags,
-  AlertCircle
-} from "lucide-react";
+import { X, Plus, Trash2, FileText, Clock, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export default function SupplierHistoryModal({

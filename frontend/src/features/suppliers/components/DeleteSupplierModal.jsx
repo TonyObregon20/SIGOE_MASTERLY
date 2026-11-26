@@ -1,6 +1,6 @@
 import AdminDialog from "@/components/admin/AdminDialog";
 import React, { useState } from "react";
-import { AlertTriangle, Trash2, X } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 
 export default function DeleteSupplierModal({ isOpen, onClose, onConfirm, supplier }) {
